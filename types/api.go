@@ -33,15 +33,15 @@ const (
 	SourceAttachment
 )
 
-// URIGeneratorInput defines the input format of requested resource
-type URIGeneratorInput struct {
+// GenerateURIInput defines the input format of requested resource
+type GenerateURIInput struct {
 	Source SourceType `json:"source"`
 	URI    string     `json:"uri"`
 	Data   string     `json:"data"`
 }
 
-// URIGeneratorOutput ...
-type URIGeneratorOutput struct {
+// GenerateURIOutput ...
+type GenerateURIOutput struct {
 	URL     string `json:"url"`
 	Message string `json:"msg"`
 }

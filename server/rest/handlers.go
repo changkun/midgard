@@ -31,7 +31,7 @@ func GetFromUniversalClipboard(c *gin.Context) {
 		// data, then let's encode it into base64.
 		raw = base64.StdEncoding.EncodeToString(buf)
 	} else {
-		raw = string(buf)
+		raw = utils.BytesToString(buf)
 	}
 
 	c.JSON(http.StatusOK, types.GetFromUniversalClipboardOutput{
@@ -63,7 +63,7 @@ func PutToUniversalClipboard(c *gin.Context) {
 			raw = []byte{}
 		}
 	} else {
-		raw = []byte(b.Data)
+		raw = utils.StringToBytes(b.Data)
 	}
 
 	clipboard.Universal.Put(b.Type, raw)
@@ -72,15 +72,15 @@ func PutToUniversalClipboard(c *gin.Context) {
 	})
 }
 
-// URIGenerator generates an universal access URL for the requested resource.
+// GenerateURI generates an universal access URL for the requested resource.
 // The requested resource can be an attached data, the midgard universal
 // clipboard, and etc.
-func URIGenerator(c *gin.Context) {
-	var in types.URIGeneratorInput
+func GenerateURI(c *gin.Context) {
+	var in types.GenerateURIInput
 	err := c.ShouldBindJSON(&in)
 	if err != nil {
 		err = fmt.Errorf("cannot bind requested data, err: %w", err)
-		c.JSON(http.StatusBadRequest, types.URIGeneratorOutput{
+		c.JSON(http.StatusBadRequest, types.GenerateURIOutput{
 			Message: err.Error(),
 		})
 		return
@@ -96,16 +96,15 @@ func URIGenerator(c *gin.Context) {
 	case types.SourceUniversalClipboard:
 		t, raw := clipboard.Universal.Read()
 		data = raw
-		fmt.Println("type: ", t)
 		if t == types.ClipboardDataTypeImagePNG {
 			ext = ".png"
 		}
 	case types.SourceAttachment:
-		data = []byte(in.Data)
+		data = utils.StringToBytes(in.Data)
 	}
 
 	if len(data) == 0 {
-		c.JSON(http.StatusBadRequest, types.URIGeneratorOutput{
+		c.JSON(http.StatusBadRequest, types.GenerateURIOutput{
 			Message: "nothing to persist, no data.",
 		})
 		return
@@ -128,7 +127,7 @@ func URIGenerator(c *gin.Context) {
 	}
 
 	if existed(path) {
-		c.JSON(http.StatusBadRequest, types.URIGeneratorOutput{
+		c.JSON(http.StatusBadRequest, types.GenerateURIOutput{
 			Message: "the requested uri already existed.",
 		})
 		return
@@ -139,7 +138,7 @@ func URIGenerator(c *gin.Context) {
 		err = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
 		if err != nil {
 			err = fmt.Errorf("failed to create uri, err: %w", err)
-			c.JSON(http.StatusInternalServerError, types.URIGeneratorOutput{
+			c.JSON(http.StatusInternalServerError, types.GenerateURIOutput{
 				Message: err.Error(),
 			})
 			return
@@ -150,13 +149,13 @@ func URIGenerator(c *gin.Context) {
 	err = ioutil.WriteFile(path, data, os.ModePerm)
 	if err != nil {
 		err = fmt.Errorf("failed to persist the data, err: %w", err)
-		c.JSON(http.StatusInternalServerError, types.URIGeneratorOutput{
+		c.JSON(http.StatusInternalServerError, types.GenerateURIOutput{
 			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, types.URIGeneratorOutput{
+	c.JSON(http.StatusOK, types.GenerateURIOutput{
 		URL:     "/midgard" + config.Get().Store.Prefix + strings.TrimPrefix(path, root),
 		Message: "success.",
 	})

@@ -48,9 +48,9 @@ where the `golang.design` hostname is configurable from configuration file.
 - [ ] installation script for daemon process
 - [ ] register keyboard hotkey
 - [ ] authenticated gRPC calls
-- [ ] OAuth/JWT authentication?
+- [x] ~~OAuth/JWT authentication?~~ basic auth with maximum failure control
 - [ ] Better clipboard listener, implement X11 convension
-- [ ] Webcoekt clipboard push registration/notification
+- [ ] websocket clipboard push registration/notification
 - [ ] UPDATE/DELETE existing resource
 - [ ] Search function?
 - [ ] iOS shortcut for clipboard data fetching

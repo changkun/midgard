@@ -14,6 +14,7 @@ import (
 
 	"golang.design/x/midgard/clipboard"
 	"golang.design/x/midgard/types"
+	"golang.design/x/midgard/utils"
 )
 
 func TestLocalClipboardImage(t *testing.T) {
@@ -25,17 +26,17 @@ func TestLocalClipboardImage(t *testing.T) {
 
 	r := clipboard.Read()
 	if !reflect.DeepEqual(r, data) {
-		t.Fatalf("inconsistent read of a write, got: %s", string(r))
+		t.Fatalf("inconsistent read of a write, got: %s", utils.BytesToString(r))
 	}
 }
 
 func TestLocalClipboardText(t *testing.T) {
-	data := []byte("golang.design/x/midgard")
+	data := utils.StringToBytes("golang.design/x/midgard")
 	clipboard.Write(data)
 
 	r := clipboard.Read()
 	if !reflect.DeepEqual(r, data) {
-		t.Fatalf("inconsistent read of a write, got: %s", string(r))
+		t.Fatalf("inconsistent read of a write, got: %s", utils.BytesToString(r))
 	}
 }
 
@@ -44,13 +45,13 @@ func TestLocalClipboardWatch(t *testing.T) {
 	defer cancel()
 
 	// clear clipboard
-	clipboard.Write([]byte(""))
+	clipboard.Write(utils.StringToBytes(""))
 	lastRead := clipboard.Read()
 
 	dataCh := make(chan []byte, 1)
 	clipboard.Watch(ctx, types.ClipboardDataTypePlainText, dataCh)
 
-	w := []byte("golang.design/x/midgard")
+	w := utils.StringToBytes("golang.design/x/midgard")
 	go func(ctx context.Context) {
 		t := time.NewTicker(time.Millisecond * 500)
 		for {
@@ -65,19 +66,19 @@ func TestLocalClipboardWatch(t *testing.T) {
 	for {
 		select {
 		case <-ctx.Done():
-			if string(lastRead) == "" {
+			if utils.BytesToString(lastRead) == "" {
 				t.Fatalf("clipboard watch never receives a notification")
 			}
 			return
 		case data, ok := <-dataCh:
 			if !ok {
-				if string(lastRead) == "" {
+				if utils.BytesToString(lastRead) == "" {
 					t.Fatalf("clipboard watch never receives a notification")
 				}
 				return
 			}
 			if bytes.Compare(data, w) != 0 {
-				t.Fatalf("received data from watch mismatch, want: %v, got %v", string(w), string(data))
+				t.Fatalf("received data from watch mismatch, want: %v, got %v", utils.BytesToString(w), utils.BytesToString(data))
 			}
 			lastRead = data
 		}

@@ -103,13 +103,13 @@ func (m *midgard) routers() (r *gin.Engine) {
 	})
 	mg.Static(config.Get().Store.Prefix, config.Get().Store.Path)
 
-	v1 := mg.Group("/api/v1", gin.BasicAuth(gin.Accounts{
+	v1 := mg.Group("/api/v1", rest.BasicAuthWithAttemptsControl(rest.Credentials{
 		config.Get().Auth.User: config.Get().Auth.Pass,
 	}))
 	{
 		v1.GET("/clipboard", rest.GetFromUniversalClipboard)
 		v1.POST("/clipboard", rest.PutToUniversalClipboard)
-		v1.PUT("/generate", rest.URIGenerator)
+		v1.PUT("/generate", rest.GenerateURI)
 	}
 
 	return

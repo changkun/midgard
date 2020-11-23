@@ -14,6 +14,7 @@ import (
 
 	"golang.design/x/midgard/clipboard/internal/cb"
 	"golang.design/x/midgard/types"
+	"golang.design/x/midgard/utils"
 )
 
 var (
@@ -35,7 +36,7 @@ func ReadString() (string, error) {
 	if buf == nil {
 		return "", ErrEmpty
 	}
-	return string(buf), nil
+	return utils.BytesToString(buf), nil
 }
 
 // ReadImage reads clipboard as an image.Image
@@ -56,7 +57,7 @@ func WriteString(s string) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	ok := cb.Write([]byte(s), types.ClipboardDataTypePlainText)
+	ok := cb.Write(utils.StringToBytes(s), types.ClipboardDataTypePlainText)
 	if !ok {
 		return ErrAccessDenied
 	}

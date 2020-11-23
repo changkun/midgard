@@ -56,7 +56,7 @@ func watchClipboard() {
 				return
 			}
 			utils.Request(http.MethodPost, url, &types.ClipboardData{
-				Type: types.ClipboardDataTypePlainText, Data: string(text),
+				Type: types.ClipboardDataTypePlainText, Data: utils.BytesToString(text),
 			})
 		case img, ok := <-imagCh:
 			if !ok {

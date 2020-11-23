@@ -33,7 +33,7 @@ func requestURI() {
 		if err != nil {
 			log.Fatalf("failed to read your file %v, err: %v", *fromfile, err)
 		}
-		data = string(b)
+		data = utils.BytesToString(b)
 
 		if *genpath != "" {
 			// we want to make sure the extension of the file is correct
@@ -43,18 +43,18 @@ func requestURI() {
 		}
 	}
 
-	res, err := utils.Request(http.MethodPut, apiGen, &types.URIGeneratorInput{
+	res, err := utils.Request(http.MethodPut, apiGen, &types.GenerateURIInput{
 		Source: source,
 		URI:    uri,
 		Data:   data,
 	})
-	var out types.URIGeneratorOutput
-	err = json.Unmarshal([]byte(res), &out)
+	var out types.GenerateURIOutput
+	err = json.Unmarshal(res, &out)
 	if err != nil {
 		log.Fatalf("cannot parse requested URL, err: %v", err)
 	}
 
 	url := config.Get().Addr.Host + config.Get().Addr.HTTP + out.URL
-	clipboard.Write([]byte(url))
+	clipboard.Write(utils.StringToBytes(url))
 	fmt.Println("DONE: ", url)
 }

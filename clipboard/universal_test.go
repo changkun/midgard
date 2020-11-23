@@ -10,10 +10,11 @@ import (
 
 	"golang.design/x/midgard/clipboard"
 	"golang.design/x/midgard/types"
+	"golang.design/x/midgard/utils"
 )
 
 func TestUniversalClipboard(t *testing.T) {
-	buf := []byte("hello")
+	buf := utils.StringToBytes("hello")
 	clipboard.Universal.Put(types.ClipboardDataTypePlainText, buf)
 
 	got := clipboard.Universal.Get(types.ClipboardDataTypePlainText)
@@ -23,7 +24,7 @@ func TestUniversalClipboard(t *testing.T) {
 
 	got = clipboard.Universal.Get(types.ClipboardDataTypeImagePNG)
 	if bytes.Compare(buf, got) == 0 {
-		t.Fatalf("unexpected read from ub, want blank, got %v", string(got))
+		t.Fatalf("unexpected read from ub, want blank, got %v", utils.BytesToString(got))
 	}
 
 	tt, got := clipboard.Universal.Read()
@@ -35,5 +36,5 @@ func TestUniversalClipboard(t *testing.T) {
 		t.Fatalf("incorrect data from clipboard")
 	}
 
-	t.Log(string(buf))
+	t.Log(utils.BytesToString(buf))
 }
