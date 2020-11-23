@@ -55,6 +55,12 @@ func watchClipboard() {
 			if !ok {
 				return
 			}
+
+			// don't send an '\n' character
+			if utils.BytesToString(text) == "\n" {
+				continue
+			}
+
 			utils.Request(http.MethodPost, url, &types.ClipboardData{
 				Type: types.ClipboardDataTypePlainText, Data: utils.BytesToString(text),
 			})

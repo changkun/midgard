@@ -54,7 +54,11 @@ func requestURI() {
 		log.Fatalf("cannot parse requested URL, err: %v", err)
 	}
 
-	url := config.Get().Addr.Host + config.Get().Addr.HTTP + out.URL
-	clipboard.Write(utils.StringToBytes(url))
-	fmt.Println("DONE: ", url)
+	if out.URL != "" {
+		url := config.Get().Addr.Host + config.Get().Addr.HTTP + out.URL
+		clipboard.Write(utils.StringToBytes(url))
+		fmt.Println("DONE: ", url)
+	} else {
+		fmt.Printf("DONE: %v\n", out.Message)
+	}
 }

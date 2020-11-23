@@ -103,7 +103,7 @@ func GenerateURI(c *gin.Context) {
 		data = utils.StringToBytes(in.Data)
 	}
 
-	if len(data) == 0 {
+	if len(data) == 0 || utils.BytesToString(data) == "\n" {
 		c.JSON(http.StatusBadRequest, types.GenerateURIOutput{
 			Message: "nothing to persist, no data.",
 		})
