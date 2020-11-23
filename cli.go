@@ -13,26 +13,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.design/x/midgard/api"
 	"golang.design/x/midgard/clipboard"
 	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/types"
+	"golang.design/x/midgard/utils"
 )
-
-var apiGen string
-
-func init() {
-	apiGen = "http://" + config.Get().Addr.HTTP + "/midgard/api/v1/generate"
-}
 
 func requestURI() {
 	var (
-		source = api.SourceUniversalClipboard
+		apiGen = "http://" + config.Get().Addr.HTTP + "/midgard/api/v1/generate"
+		source = types.SourceUniversalClipboard
 		data   string
 		uri    = *genpath
 	)
 
 	if *fromfile != "" {
-		source = api.SourceAttachment
+		source = types.SourceAttachment
 		b, err := ioutil.ReadFile(*fromfile)
 		if err != nil {
 			log.Fatalf("failed to read your file %v, err: %v", *fromfile, err)
@@ -47,12 +43,12 @@ func requestURI() {
 		}
 	}
 
-	res, err := request(http.MethodPut, apiGen, &api.URIGeneratorInput{
+	res, err := utils.Request(http.MethodPut, apiGen, &types.URIGeneratorInput{
 		Source: source,
 		URI:    uri,
 		Data:   data,
 	})
-	var out api.URIGeneratorOutput
+	var out types.URIGeneratorOutput
 	err = json.Unmarshal([]byte(res), &out)
 	if err != nil {
 		log.Fatalf("cannot parse requested URL, err: %v", err)

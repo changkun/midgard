@@ -13,9 +13,10 @@ import (
 	"time"
 
 	"golang.design/x/midgard/clipboard"
+	"golang.design/x/midgard/types"
 )
 
-func TestClipboardImage(t *testing.T) {
+func TestLocalClipboardImage(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/gold.png")
 	if err != nil {
 		t.Fatalf("failed to read gold file, err: %v", err)
@@ -28,7 +29,7 @@ func TestClipboardImage(t *testing.T) {
 	}
 }
 
-func TestClipboardText(t *testing.T) {
+func TestLocalClipboardText(t *testing.T) {
 	data := []byte("golang.design/x/midgard")
 	clipboard.Write(data)
 
@@ -38,7 +39,7 @@ func TestClipboardText(t *testing.T) {
 	}
 }
 
-func TestClipboardWatch(t *testing.T) {
+func TestLocalClipboardWatch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
@@ -47,7 +48,7 @@ func TestClipboardWatch(t *testing.T) {
 	lastRead := clipboard.Read()
 
 	dataCh := make(chan []byte, 1)
-	clipboard.Watch(ctx, clipboard.DataTypePlainText, dataCh)
+	clipboard.Watch(ctx, types.ClipboardDataTypePlainText, dataCh)
 
 	w := []byte("golang.design/x/midgard")
 	go func(ctx context.Context) {

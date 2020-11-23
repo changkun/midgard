@@ -4,13 +4,15 @@
 
 // +build freebsd linux netbsd openbsd solaris dragonfly
 
-package clipboard
+package cb
 
 import (
 	"bytes"
 	"context"
 	"os/exec"
 	"time"
+
+	"golang.design/x/midgard/types"
 )
 
 var (
@@ -26,10 +28,13 @@ func init() {
 	panic("please intall xclip on your system: sudo apt install xclip")
 }
 
-func read(t DataType) (buf []byte) {
+// Read reads the clipboard data of a given resource type.
+// It returns a buf that containing the clipboard data, and ok indicates
+// whether the read is success or fail.
+func Read(t types.ClipboardDataType) (buf []byte) {
 	cmds := make([]string, len(pasteCmdArgs))
 	copy(cmds, pasteCmdArgs)
-	if t == DataTypeImagePNG {
+	if t == types.ClipboardDataTypeImagePNG {
 		cmds = append(cmds, "-t", "image/png")
 	}
 	pasteCmd := exec.Command(cmds[0], cmds[1:]...)
@@ -39,7 +44,10 @@ func read(t DataType) (buf []byte) {
 	}
 	return out
 }
-func write(buf []byte, t DataType) (ret bool) {
+
+// Write writes the given buf as typ to system clipboard.
+// It returns true if the write is success.
+func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 	copyCmd := exec.Command(copyCmdArgs[0], copyCmdArgs[1:]...)
 	in, err := copyCmd.StdinPipe()
 	if err != nil {
@@ -61,19 +69,21 @@ func write(buf []byte, t DataType) (ret bool) {
 	return true
 }
 
-func watch(ctx context.Context, dt DataType, dataCh chan []byte) {
+// Watch watches the changes of system clipboard, and sends the data of
+// clipboard to the given dataCh.
+func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
 	// FIXME: this is not the ideal approach. On linux, we can interact
 	// with X11 ICCCM to listen to the selection notification event,
 	// then trigger the watch as needed to avoid frequent Read().
 	t := time.NewTicker(time.Second)
-	last := Read()
+	last := Read(dt)
 	for {
 		select {
 		case <-ctx.Done():
 			close(dataCh)
 			return
 		case <-t.C:
-			b := read(dt)
+			b := Read(dt)
 			if b == nil {
 				continue
 			}

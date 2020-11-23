@@ -11,14 +11,16 @@ import (
 	"os"
 
 	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/daemon"
+	"golang.design/x/midgard/server"
 )
 
 var (
 	// server options
-	server = flag.Bool("s", false, "run midgard server")
+	serv = flag.Bool("s", false, "run midgard server")
 
 	// client deamon options
-	daemon = flag.Bool("d", false, "run midgard daemon")
+	daem = flag.Bool("d", false, "run midgard daemon")
 
 	// client cli options
 	genpath  = flag.String("p", "", "a specified uri for persistent")
@@ -42,14 +44,13 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	if *server {
-		m := newServer()
-		m.serve()
+	if *serv {
+		server.Run()
 		return
 	}
 
-	if *daemon {
-		runDaemon()
+	if *daem {
+		daemon.Run()
 		return
 	}
 

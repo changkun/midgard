@@ -7,7 +7,7 @@ package rpc
 import (
 	"context"
 
-	"golang.design/x/midgard/api/proto"
+	"golang.design/x/midgard/types/proto"
 )
 
 // Server implements midgard protobuf protocol

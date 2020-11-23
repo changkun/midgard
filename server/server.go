@@ -2,7 +2,7 @@
 // All rights reserved. Use of this source code is governed by
 // a GNU GPL-3.0 license that can be found in the LICENSE file.
 
-package main
+package server
 
 import (
 	"context"
@@ -15,25 +15,34 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.design/x/midgard/api"
-	"golang.design/x/midgard/api/proto"
-	"golang.design/x/midgard/api/rpc"
 	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/server/rest"
+	"golang.design/x/midgard/server/rpc"
+	"golang.design/x/midgard/types/proto"
 	"google.golang.org/grpc"
 )
 
-// midgard is the midgard server that serves all routers
+// Run runs the midgard server.
+func Run() {
+	m := newMidgard()
+	m.Serve()
+}
+
+// midgard is the midgard server that serves all API endpoints.
 type midgard struct {
 	s1 *http.Server
 	s2 *grpc.Server
 }
 
-// New creates a new Midgard server
-func newServer() *midgard {
+// newMidgard creates a new midgard server
+func newMidgard() *midgard {
 	return &midgard{}
 }
 
-func (m *midgard) serve() {
+// Serve serves Midgard servers, this contains two parts:
+// 1. HTTP server: serves RESTful APIs
+// 2. gRPC server: serves RPC endpoints for the Midgard CLI
+func (m *midgard) Serve() {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 	go func() {
@@ -80,8 +89,8 @@ func (m *midgard) routers() (r *gin.Engine) {
 	gin.SetMode(config.Get().Mode)
 
 	r = gin.Default()
-	midgard := r.Group("/midgard")
-	midgard.GET("/ping", func(c *gin.Context) {
+	mg := r.Group("/midgard")
+	mg.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, struct {
 			Version   string `json:"version"`
 			GoVersion string `json:"go_version"`
@@ -92,15 +101,15 @@ func (m *midgard) routers() (r *gin.Engine) {
 			BuildTime: config.BuildTime,
 		})
 	})
-	midgard.Static(config.Get().Store.Prefix, config.Get().Store.Path)
+	mg.Static(config.Get().Store.Prefix, config.Get().Store.Path)
 
-	v1 := midgard.Group("/api/v1", gin.BasicAuth(gin.Accounts{
+	v1 := mg.Group("/api/v1", gin.BasicAuth(gin.Accounts{
 		config.Get().Auth.User: config.Get().Auth.Pass,
 	}))
 	{
-		v1.GET("/clipboard", api.GetFromUniversalClipboard)
-		v1.POST("/clipboard", api.PutToUniversalClipboard)
-		v1.PUT("/generate", api.URIGenerator)
+		v1.GET("/clipboard", rest.GetFromUniversalClipboard)
+		v1.POST("/clipboard", rest.PutToUniversalClipboard)
+		v1.PUT("/generate", rest.URIGenerator)
 	}
 
 	return

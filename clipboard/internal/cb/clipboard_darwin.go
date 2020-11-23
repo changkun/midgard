@@ -4,7 +4,7 @@
 
 // +build darwin
 
-package clipboard
+package cb
 
 // Interact with NSPasteboard using Objective-C
 // https://developer.apple.com/documentation/appkit/nspasteboard?language=objc
@@ -70,10 +70,10 @@ import (
 	"unsafe"
 )
 
-// read reads the clipboard data of a given resource type.
+// Read reads the clipboard data of a given resource type.
 // It returns a buf that containing the clipboard data, and ok indicates
 // whether the read is success or fail.
-func read(t DataType) (buf []byte) {
+func Read(t DataType) (buf []byte) {
 	var (
 		data unsafe.Pointer
 		n    C.uint
@@ -94,9 +94,9 @@ func read(t DataType) (buf []byte) {
 	return C.GoBytes(data, C.int(n))
 }
 
-// write writes the given buf as typ to system clipboard.
+// Write writes the given buf as typ to system clipboard.
 // It returns true if the write is success.
-func write(buf []byte, t DataType) (ret bool) {
+func Write(buf []byte, t DataType) (ret bool) {
 	var ok C.int
 
 	switch t {
@@ -126,7 +126,7 @@ func write(buf []byte, t DataType) (ret bool) {
 //
 // TODO: Alternatively, we could watch keyboard hotkeys, for instance,
 // a double cmd+c triggers the watch? Needs invesgitation.
-func watch(ctx context.Context, dt DataType, dataCh chan []byte) {
+func Watch(ctx context.Context, dt DataType, dataCh chan []byte) {
 	// we try to watch the clipboard every second, this should be enough
 	// for the watch purpose. If the user is too fast, meaning be able
 	// to paste the content within a second, then it is very unfortunate.

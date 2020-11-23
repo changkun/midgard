@@ -2,7 +2,7 @@
 // All rights reserved. Use of this source code is governed by
 // a GNU GPL-3.0 license that can be found in the LICENSE file.
 
-package api
+package rest
 
 import (
 	"encoding/base64"
@@ -17,24 +17,16 @@ import (
 	"github.com/renstrom/shortuuid"
 	"golang.design/x/midgard/clipboard"
 	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/types"
 )
-
-// GetFromUniversalClipboardInput is the standard input format of
-// the universal clipboard put request.
-type GetFromUniversalClipboardInput struct {
-}
-
-// GetFromUniversalClipboardOutput is the standard output format of
-// the universal clipboard put request.
-type GetFromUniversalClipboardOutput clipboard.Data
 
 // GetFromUniversalClipboard returns the in-memory clipboard data inside
 // the midgard server
 func GetFromUniversalClipboard(c *gin.Context) {
-	t, buf := uc0.read()
+	t, buf := clipboard.Universal.Read()
 
 	var raw string
-	if t == clipboard.DataTypeImagePNG {
+	if t == types.ClipboardDataTypeImagePNG {
 		// We stored our clipboard in bytes, if client is retriving this
 		// data, then let's encode it into base64.
 		raw = base64.StdEncoding.EncodeToString(buf)
@@ -42,38 +34,28 @@ func GetFromUniversalClipboard(c *gin.Context) {
 		raw = string(buf)
 	}
 
-	c.JSON(http.StatusOK, GetFromUniversalClipboardOutput{
+	c.JSON(http.StatusOK, types.GetFromUniversalClipboardOutput{
 		Type: t,
 		Data: raw,
 	})
 }
 
-// PutToUniversalClipboardInput is the standard input format of
-// the universal clipboard put request.
-type PutToUniversalClipboardInput clipboard.Data
-
-// PutToUniversalClipboardOutput is the standard output format of
-// the universal clipboard put request.
-type PutToUniversalClipboardOutput struct {
-	Message string `json:"msg"`
-}
-
 // PutToUniversalClipboard saves data to the in-memory clipboard data
 // inside the midgrad server.
 func PutToUniversalClipboard(c *gin.Context) {
-	var b PutToUniversalClipboardInput
+	var b types.PutToUniversalClipboardInput
 
 	err := c.ShouldBindJSON(&b)
 	if err != nil {
 		err = fmt.Errorf("cannot bind requested data, err: %w", err)
-		c.JSON(http.StatusBadRequest, PutToUniversalClipboardOutput{
+		c.JSON(http.StatusBadRequest, types.PutToUniversalClipboardOutput{
 			Message: err.Error(),
 		})
 		return
 	}
 
 	var raw []byte
-	if b.Type == clipboard.DataTypeImagePNG {
+	if b.Type == types.ClipboardDataTypeImagePNG {
 		// We assume the client send us a base64 encoded image data,
 		// Let's decode it into bytes.
 		raw, err = base64.StdEncoding.DecodeString(b.Data)
@@ -84,44 +66,21 @@ func PutToUniversalClipboard(c *gin.Context) {
 		raw = []byte(b.Data)
 	}
 
-	uc0.put(b.Type, raw)
-	c.JSON(http.StatusOK, PutToUniversalClipboardOutput{
+	clipboard.Universal.Put(b.Type, raw)
+	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{
 		Message: "clipboard data is saved.",
 	})
-}
-
-// SourceType ...
-type SourceType int
-
-const (
-	// SourceUniversalClipboard ...
-	SourceUniversalClipboard SourceType = iota
-	// SourceAttachment ...
-	SourceAttachment
-)
-
-// URIGeneratorInput defines the input format of requested resource
-type URIGeneratorInput struct {
-	Source SourceType `json:"source"`
-	URI    string     `json:"uri"`
-	Data   string     `json:"data"`
-}
-
-// URIGeneratorOutput ...
-type URIGeneratorOutput struct {
-	URL     string `json:"url"`
-	Message string `json:"msg"`
 }
 
 // URIGenerator generates an universal access URL for the requested resource.
 // The requested resource can be an attached data, the midgard universal
 // clipboard, and etc.
 func URIGenerator(c *gin.Context) {
-	var in URIGeneratorInput
+	var in types.URIGeneratorInput
 	err := c.ShouldBindJSON(&in)
 	if err != nil {
 		err = fmt.Errorf("cannot bind requested data, err: %w", err)
-		c.JSON(http.StatusBadRequest, URIGeneratorOutput{
+		c.JSON(http.StatusBadRequest, types.URIGeneratorOutput{
 			Message: err.Error(),
 		})
 		return
@@ -134,19 +93,19 @@ func URIGenerator(c *gin.Context) {
 		data []byte
 	)
 	switch in.Source {
-	case SourceUniversalClipboard:
-		t, raw := uc0.read()
+	case types.SourceUniversalClipboard:
+		t, raw := clipboard.Universal.Read()
 		data = raw
 		fmt.Println("type: ", t)
-		if t == clipboard.DataTypeImagePNG {
+		if t == types.ClipboardDataTypeImagePNG {
 			ext = ".png"
 		}
-	case SourceAttachment:
+	case types.SourceAttachment:
 		data = []byte(in.Data)
 	}
 
 	if len(data) == 0 {
-		c.JSON(http.StatusBadRequest, URIGeneratorOutput{
+		c.JSON(http.StatusBadRequest, types.URIGeneratorOutput{
 			Message: "nothing to persist, no data.",
 		})
 		return
@@ -169,7 +128,7 @@ func URIGenerator(c *gin.Context) {
 	}
 
 	if existed(path) {
-		c.JSON(http.StatusBadRequest, URIGeneratorOutput{
+		c.JSON(http.StatusBadRequest, types.URIGeneratorOutput{
 			Message: "the requested uri already existed.",
 		})
 		return
@@ -180,7 +139,7 @@ func URIGenerator(c *gin.Context) {
 		err = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
 		if err != nil {
 			err = fmt.Errorf("failed to create uri, err: %w", err)
-			c.JSON(http.StatusInternalServerError, URIGeneratorOutput{
+			c.JSON(http.StatusInternalServerError, types.URIGeneratorOutput{
 				Message: err.Error(),
 			})
 			return
@@ -191,13 +150,13 @@ func URIGenerator(c *gin.Context) {
 	err = ioutil.WriteFile(path, data, os.ModePerm)
 	if err != nil {
 		err = fmt.Errorf("failed to persist the data, err: %w", err)
-		c.JSON(http.StatusInternalServerError, URIGeneratorOutput{
+		c.JSON(http.StatusInternalServerError, types.URIGeneratorOutput{
 			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, URIGeneratorOutput{
+	c.JSON(http.StatusOK, types.URIGeneratorOutput{
 		URL:     "/midgard" + config.Get().Store.Prefix + strings.TrimPrefix(path, root),
 		Message: "success.",
 	})

@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 )
@@ -20,12 +21,10 @@ var (
 	GoVersion = runtime.Version()
 )
 
-var conf *Config
-
-func init() {
-	conf = &Config{}
-	conf.parse()
-}
+var (
+	conf *Config
+	once sync.Once
+)
 
 // Config is a read-only midgard configuration center
 type Config struct {
@@ -37,7 +36,7 @@ type Config struct {
 	} `yaml:"addr"`
 	Mode string `yaml:"mode"`
 	Log  struct {
-		Prefix string `yaml:"log"`
+		Prefix string `yaml:"prefix"`
 	} `yaml:"log"`
 	Store struct {
 		Prefix string `yaml:"prefix"`
@@ -51,6 +50,10 @@ type Config struct {
 
 // Get returns the midgard configuration
 func Get() *Config {
+	once.Do(func() {
+		conf = &Config{}
+		conf.parse()
+	})
 	return conf
 }
 

@@ -4,10 +4,10 @@
 
 // +build !(freebsd,linux,netbsd,openbsd,solaris,dragonfly,darwin)
 
-package clipboard
+package cb
 
 import "context"
 
-func read(t resType) (buf []byte, ok bool)          { panic("unimplemented") }
-func write(buf []byte, t resType) (ret bool)        { panic("unimplemented") }
-func watch(ctx context.Context, dataCh chan []byte) { panic("unimplemented") }
+func Read(t resType) (buf []byte, ok bool)          { panic("unimplemented") }
+func Write(buf []byte, t resType) (ret bool)        { panic("unimplemented") }
+func Watch(ctx context.Context, dataCh chan []byte) { panic("unimplemented") }

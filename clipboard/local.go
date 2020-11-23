@@ -11,6 +11,9 @@ import (
 	"image"
 	"image/png"
 	"sync"
+
+	"golang.design/x/midgard/clipboard/internal/cb"
+	"golang.design/x/midgard/types"
 )
 
 var (
@@ -20,22 +23,6 @@ var (
 	ErrAccessDenied = errors.New("access denied")
 )
 
-// DataType indicates clipboard data type
-type DataType int
-
-const (
-	// DataTypePlainText indicates plain text data type
-	DataTypePlainText DataType = iota
-	// DataTypeImagePNG indicates image/png data type
-	DataTypeImagePNG
-)
-
-// Data is a clipboard data
-type Data struct {
-	Type DataType `json:"type"`
-	Data string   `json:"data"` // base64 encode if type is an image data
-}
-
 // lock locks clipboard operation
 var lock = sync.Mutex{}
 
@@ -44,7 +31,7 @@ func ReadString() (string, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	buf := read(DataTypePlainText)
+	buf := cb.Read(types.ClipboardDataTypePlainText)
 	if buf == nil {
 		return "", ErrEmpty
 	}
@@ -56,7 +43,7 @@ func ReadImage() (image.Image, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	buf := read(DataTypeImagePNG)
+	buf := cb.Read(types.ClipboardDataTypeImagePNG)
 	if buf == nil {
 		return nil, ErrEmpty
 	}
@@ -69,7 +56,7 @@ func WriteString(s string) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	ok := write([]byte(s), DataTypePlainText)
+	ok := cb.Write([]byte(s), types.ClipboardDataTypePlainText)
 	if !ok {
 		return ErrAccessDenied
 	}
@@ -87,7 +74,7 @@ func WriteImage(img image.Image) error {
 		return err
 	}
 
-	ok := write(buf.Bytes(), DataTypeImagePNG)
+	ok := cb.Write(buf.Bytes(), types.ClipboardDataTypeImagePNG)
 	if !ok {
 		return ErrAccessDenied
 	}
@@ -99,10 +86,10 @@ func Read() []byte {
 	lock.Lock()
 	defer lock.Unlock()
 
-	buf := read(DataTypePlainText)
+	buf := cb.Read(types.ClipboardDataTypePlainText)
 	if buf == nil {
 		// if we still have nothing, then just ignore it.
-		buf = read(DataTypeImagePNG)
+		buf = cb.Read(types.ClipboardDataTypeImagePNG)
 	}
 	return buf
 }
@@ -112,15 +99,15 @@ func Write(buf []byte) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	ok := write(buf, DataTypePlainText)
+	ok := cb.Write(buf, types.ClipboardDataTypePlainText)
 	if !ok {
 		// if we still have nothing, then just ignore it.
-		_ = write(buf, DataTypeImagePNG)
+		_ = cb.Write(buf, types.ClipboardDataTypeImagePNG)
 	}
 }
 
 // Watch watches clipboard changes and closes the dataCh channel if
 // the the watch context is canceled.
-func Watch(ctx context.Context, dt DataType, dataCh chan []byte) {
-	go watch(ctx, dt, dataCh)
+func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
+	go cb.Watch(ctx, dt, dataCh)
 }
