@@ -140,8 +140,8 @@ func watch(ctx context.Context, dt DataType, dataCh chan []byte) {
 		case <-t.C:
 			this := C.long(C.clipboard_change_count())
 			if lastCount != this {
-				bytes, err := read(dt)
-				if !ok {
+				bytes := read(dt)
+				if bytes == nil {
 					continue
 				}
 				dataCh <- bytes

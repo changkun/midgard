@@ -17,11 +17,6 @@ import (
 )
 
 func runDaemon() {
-	buf := clipboard.Read()
-	if len(buf) == 0 {
-		return
-	}
-
 	// TODO: we have several remaining task for the daemon:
 	//
 	// 1. register a websocket connection for universal clipboard push
@@ -43,7 +38,6 @@ func runDaemon() {
 	// }()
 	//
 	// 2. register to system hotkey, trigger special handlers
-
 	watchClipboard()
 }
 
