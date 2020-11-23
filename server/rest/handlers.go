@@ -14,10 +14,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/renstrom/shortuuid"
 	"golang.design/x/midgard/clipboard"
 	"golang.design/x/midgard/config"
 	"golang.design/x/midgard/types"
+	"golang.design/x/midgard/utils"
 )
 
 // GetFromUniversalClipboard returns the in-memory clipboard data inside
@@ -116,7 +116,7 @@ func URIGenerator(c *gin.Context) {
 
 	// if URI is empty, then generate a random path
 	if in.URI == "" {
-		path = root + "/wild/" + shortuuid.New() + ext
+		path = root + "/wild/" + utils.NewUUID() + ext
 	} else {
 		path = root + "/" + strings.TrimPrefix(in.URI, "/")
 	}
