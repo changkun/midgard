@@ -1,0 +1,30 @@
+# Copyright 2020 The golang.design Initiative authors.
+# All rights reserved. Use of this source code is governed
+# by a MIT license that can be found in the LICENSE file.
+
+version: "3"
+
+services:
+  midgard:
+    container_name: midgard
+    restart: always
+    volumes:
+      - ../data:/app/data
+    image: midgard:latest
+    environment:
+      MIDGARD_CONF: ../server.yml
+    cap_add:
+      - SYS_PTRACE # for debugging
+    ports:
+      - "9124:8080"
+      - "9125:8081"
+    networks:
+      midgardnet:
+        ipv4_address: 172.16.2.10
+networks:
+  midgardnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.2.0/24
