@@ -10,25 +10,46 @@ package proto;
 
 service Midgard {
     rpc Ping(PingInput) returns (PingOutput) {}
-    rpc GetClipboard(GetClipboardInput) returns (GetClipboardOutput) {}
-    rpc PutClipboard(PutClipboardInput) returns (PutClipboardOutput) {}
-    rpc GetURI(GetURIInput) returns (GetURIOutput) {}
+    rpc GetFromUniversalClipboard(GetFromUniversalClipboardInput) returns (GetFromUniversalClipboardOutput) {}
+    rpc PutToUniversalClipboard(PutToUniversalClipboardInput) returns (PutToUniversalClipboardOutput) {}
+    rpc AllocateURL(AllocateURLInput) returns (AllocateURLOutput) {}
 }
 
 message PingInput {}
-message PingOutput {}
-
-message GetClipboardInput {}
-message GetClipboardOutput {
-    bytes Data = 1;
+message PingOutput {
+    string Message = 1;
 }
 
-message PutClipboardInput {
-    bytes Data = 1;
+enum ClipboardDataType {
+    PlainText = 0;
+    ImagePNG  = 1;
 }
-message PutClipboardOutput {}
+message GetFromUniversalClipboardInput {
+}
+message GetFromUniversalClipboardOutput {
+    ClipboardDataType Type = 1;
+    string Data = 2;
+}
 
-message GetURIInput {}
-message GetURIOutput {
-    string Address = 1; 
+message PutToUniversalClipboardInput {
+    ClipboardDataType Type = 1;
+    string Data = 2;
+}
+message PutToUniversalClipboardOutput {
+    string Message = 1;
+}
+
+enum SourceType {
+    UniversalClipboard = 0;
+    Attachment = 1;
+}
+
+message AllocateURLInput {
+    SourceType Source = 1;
+    string URI = 2;
+    string Data = 3;
+}
+message AllocateURLOutput {
+    string URL = 1;
+    string Message = 2;
 }

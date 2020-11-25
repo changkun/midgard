@@ -42,7 +42,10 @@ type Server struct {
 
 // Daemon is the midgard daemon configuration
 type Daemon struct {
-	ServerAddr string `yaml:"server_addr"`
+	ServerAddr struct {
+		HTTP string `yaml:"http"`
+		RPC  string `yaml:"rpc"`
+	} `yaml:"server_addr"`
 }
 
 // S returns the midgard server configuration

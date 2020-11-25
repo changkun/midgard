@@ -15,20 +15,20 @@ type Server struct{}
 
 // Ping response a pong
 func (s *Server) Ping(ctx context.Context, in *proto.PingInput) (*proto.PingOutput, error) {
-	return &proto.PingOutput{}, nil
+	return &proto.PingOutput{Message: "pong"}, nil
 }
 
-// GetClipboard ...
-func (s *Server) GetClipboard(context.Context, *proto.GetClipboardInput) (*proto.GetClipboardOutput, error) {
+// GetFromUniversalClipboard ...
+func (s *Server) GetFromUniversalClipboard(context.Context, *proto.GetFromUniversalClipboardInput) (*proto.GetFromUniversalClipboardOutput, error) {
 	panic("unimplemented")
 }
 
-// PutClipboard ...
-func (s *Server) PutClipboard(context.Context, *proto.PutClipboardInput) (*proto.PutClipboardOutput, error) {
+// PutToUniversalClipboard ...
+func (s *Server) PutToUniversalClipboard(context.Context, *proto.PutToUniversalClipboardInput) (*proto.PutToUniversalClipboardOutput, error) {
 	panic("unimplemented")
 }
 
-// GetURI ...
-func (s *Server) GetURI(context.Context, *proto.GetURIInput) (*proto.GetURIOutput, error) {
+// AllocateURL ...
+func (s *Server) AllocateURL(context.Context, *proto.AllocateURLInput) (*proto.AllocateURLOutput, error) {
 	panic("unimplemented")
 }

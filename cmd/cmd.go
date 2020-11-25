@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.design/x/midgard/cmd/daemon"
 	"golang.design/x/midgard/cmd/gen"
+	"golang.design/x/midgard/cmd/ping"
 	"golang.design/x/midgard/cmd/server"
 	"golang.design/x/midgard/cmd/version"
 )
@@ -74,6 +75,7 @@ See: https://golang.design/s/midgard for more details.
 		cmdServer,
 		cmdDaemon,
 		gen.Cmd,
+		ping.Cmd,
 	)
 	rootCmd.Execute()
 }

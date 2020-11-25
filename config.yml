@@ -21,4 +21,6 @@ server:
 # daemon includes all midgard daemon settings
 # these settings are only used in daemon mode (run under `midgard daemon`)
 daemon:
-  server_addr: https://golang.design
+  server_addr:
+    http: localhost:8080
+    rpc: localhost:8081

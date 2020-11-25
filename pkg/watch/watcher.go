@@ -23,7 +23,7 @@ func Clipboard() {
 	clipboard.Watch(context.Background(), types.ClipboardDataTypePlainText, textCh)
 	imagCh := make(chan []byte, 1)
 	clipboard.Watch(context.Background(), types.ClipboardDataTypeImagePNG, imagCh)
-	url := "http://" + config.D().ServerAddr + "/midgard/api/v1/clipboard"
+	url := "http://" + config.D().ServerAddr.HTTP + "/midgard/api/v1/clipboard"
 	for {
 		select {
 		case text, ok := <-textCh:

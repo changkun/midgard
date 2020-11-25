@@ -28,6 +28,98 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ClipboardDataType int32
+
+const (
+	ClipboardDataType_PlainText ClipboardDataType = 0
+	ClipboardDataType_ImagePNG  ClipboardDataType = 1
+)
+
+// Enum value maps for ClipboardDataType.
+var (
+	ClipboardDataType_name = map[int32]string{
+		0: "PlainText",
+		1: "ImagePNG",
+	}
+	ClipboardDataType_value = map[string]int32{
+		"PlainText": 0,
+		"ImagePNG":  1,
+	}
+)
+
+func (x ClipboardDataType) Enum() *ClipboardDataType {
+	p := new(ClipboardDataType)
+	*p = x
+	return p
+}
+
+func (x ClipboardDataType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ClipboardDataType) Descriptor() protoreflect.EnumDescriptor {
+	return file_midgard_proto_enumTypes[0].Descriptor()
+}
+
+func (ClipboardDataType) Type() protoreflect.EnumType {
+	return &file_midgard_proto_enumTypes[0]
+}
+
+func (x ClipboardDataType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ClipboardDataType.Descriptor instead.
+func (ClipboardDataType) EnumDescriptor() ([]byte, []int) {
+	return file_midgard_proto_rawDescGZIP(), []int{0}
+}
+
+type SourceType int32
+
+const (
+	SourceType_UniversalClipboard SourceType = 0
+	SourceType_Attachment         SourceType = 1
+)
+
+// Enum value maps for SourceType.
+var (
+	SourceType_name = map[int32]string{
+		0: "UniversalClipboard",
+		1: "Attachment",
+	}
+	SourceType_value = map[string]int32{
+		"UniversalClipboard": 0,
+		"Attachment":         1,
+	}
+)
+
+func (x SourceType) Enum() *SourceType {
+	p := new(SourceType)
+	*p = x
+	return p
+}
+
+func (x SourceType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SourceType) Descriptor() protoreflect.EnumDescriptor {
+	return file_midgard_proto_enumTypes[1].Descriptor()
+}
+
+func (SourceType) Type() protoreflect.EnumType {
+	return &file_midgard_proto_enumTypes[1]
+}
+
+func (x SourceType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SourceType.Descriptor instead.
+func (SourceType) EnumDescriptor() ([]byte, []int) {
+	return file_midgard_proto_rawDescGZIP(), []int{1}
+}
+
 type PingInput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -70,6 +162,8 @@ type PingOutput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Message string `protobuf:"bytes,1,opt,name=Message,proto3" json:"Message,omitempty"`
 }
 
 func (x *PingOutput) Reset() {
@@ -104,14 +198,21 @@ func (*PingOutput) Descriptor() ([]byte, []int) {
 	return file_midgard_proto_rawDescGZIP(), []int{1}
 }
 
-type GetClipboardInput struct {
+func (x *PingOutput) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type GetFromUniversalClipboardInput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *GetClipboardInput) Reset() {
-	*x = GetClipboardInput{}
+func (x *GetFromUniversalClipboardInput) Reset() {
+	*x = GetFromUniversalClipboardInput{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_midgard_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -119,13 +220,13 @@ func (x *GetClipboardInput) Reset() {
 	}
 }
 
-func (x *GetClipboardInput) String() string {
+func (x *GetFromUniversalClipboardInput) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetClipboardInput) ProtoMessage() {}
+func (*GetFromUniversalClipboardInput) ProtoMessage() {}
 
-func (x *GetClipboardInput) ProtoReflect() protoreflect.Message {
+func (x *GetFromUniversalClipboardInput) ProtoReflect() protoreflect.Message {
 	mi := &file_midgard_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -137,21 +238,22 @@ func (x *GetClipboardInput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetClipboardInput.ProtoReflect.Descriptor instead.
-func (*GetClipboardInput) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetFromUniversalClipboardInput.ProtoReflect.Descriptor instead.
+func (*GetFromUniversalClipboardInput) Descriptor() ([]byte, []int) {
 	return file_midgard_proto_rawDescGZIP(), []int{2}
 }
 
-type GetClipboardOutput struct {
+type GetFromUniversalClipboardOutput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Data []byte `protobuf:"bytes,1,opt,name=Data,proto3" json:"Data,omitempty"`
+	Type ClipboardDataType `protobuf:"varint,1,opt,name=Type,proto3,enum=proto.ClipboardDataType" json:"Type,omitempty"`
+	Data string            `protobuf:"bytes,2,opt,name=Data,proto3" json:"Data,omitempty"`
 }
 
-func (x *GetClipboardOutput) Reset() {
-	*x = GetClipboardOutput{}
+func (x *GetFromUniversalClipboardOutput) Reset() {
+	*x = GetFromUniversalClipboardOutput{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_midgard_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -159,13 +261,13 @@ func (x *GetClipboardOutput) Reset() {
 	}
 }
 
-func (x *GetClipboardOutput) String() string {
+func (x *GetFromUniversalClipboardOutput) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetClipboardOutput) ProtoMessage() {}
+func (*GetFromUniversalClipboardOutput) ProtoMessage() {}
 
-func (x *GetClipboardOutput) ProtoReflect() protoreflect.Message {
+func (x *GetFromUniversalClipboardOutput) ProtoReflect() protoreflect.Message {
 	mi := &file_midgard_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -177,28 +279,36 @@ func (x *GetClipboardOutput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetClipboardOutput.ProtoReflect.Descriptor instead.
-func (*GetClipboardOutput) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetFromUniversalClipboardOutput.ProtoReflect.Descriptor instead.
+func (*GetFromUniversalClipboardOutput) Descriptor() ([]byte, []int) {
 	return file_midgard_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetClipboardOutput) GetData() []byte {
+func (x *GetFromUniversalClipboardOutput) GetType() ClipboardDataType {
+	if x != nil {
+		return x.Type
+	}
+	return ClipboardDataType_PlainText
+}
+
+func (x *GetFromUniversalClipboardOutput) GetData() string {
 	if x != nil {
 		return x.Data
 	}
-	return nil
+	return ""
 }
 
-type PutClipboardInput struct {
+type PutToUniversalClipboardInput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Data []byte `protobuf:"bytes,1,opt,name=Data,proto3" json:"Data,omitempty"`
+	Type ClipboardDataType `protobuf:"varint,1,opt,name=Type,proto3,enum=proto.ClipboardDataType" json:"Type,omitempty"`
+	Data string            `protobuf:"bytes,2,opt,name=Data,proto3" json:"Data,omitempty"`
 }
 
-func (x *PutClipboardInput) Reset() {
-	*x = PutClipboardInput{}
+func (x *PutToUniversalClipboardInput) Reset() {
+	*x = PutToUniversalClipboardInput{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_midgard_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -206,13 +316,13 @@ func (x *PutClipboardInput) Reset() {
 	}
 }
 
-func (x *PutClipboardInput) String() string {
+func (x *PutToUniversalClipboardInput) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PutClipboardInput) ProtoMessage() {}
+func (*PutToUniversalClipboardInput) ProtoMessage() {}
 
-func (x *PutClipboardInput) ProtoReflect() protoreflect.Message {
+func (x *PutToUniversalClipboardInput) ProtoReflect() protoreflect.Message {
 	mi := &file_midgard_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -224,26 +334,35 @@ func (x *PutClipboardInput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PutClipboardInput.ProtoReflect.Descriptor instead.
-func (*PutClipboardInput) Descriptor() ([]byte, []int) {
+// Deprecated: Use PutToUniversalClipboardInput.ProtoReflect.Descriptor instead.
+func (*PutToUniversalClipboardInput) Descriptor() ([]byte, []int) {
 	return file_midgard_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *PutClipboardInput) GetData() []byte {
+func (x *PutToUniversalClipboardInput) GetType() ClipboardDataType {
+	if x != nil {
+		return x.Type
+	}
+	return ClipboardDataType_PlainText
+}
+
+func (x *PutToUniversalClipboardInput) GetData() string {
 	if x != nil {
 		return x.Data
 	}
-	return nil
+	return ""
 }
 
-type PutClipboardOutput struct {
+type PutToUniversalClipboardOutput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Message string `protobuf:"bytes,1,opt,name=Message,proto3" json:"Message,omitempty"`
 }
 
-func (x *PutClipboardOutput) Reset() {
-	*x = PutClipboardOutput{}
+func (x *PutToUniversalClipboardOutput) Reset() {
+	*x = PutToUniversalClipboardOutput{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_midgard_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -251,13 +370,13 @@ func (x *PutClipboardOutput) Reset() {
 	}
 }
 
-func (x *PutClipboardOutput) String() string {
+func (x *PutToUniversalClipboardOutput) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PutClipboardOutput) ProtoMessage() {}
+func (*PutToUniversalClipboardOutput) ProtoMessage() {}
 
-func (x *PutClipboardOutput) ProtoReflect() protoreflect.Message {
+func (x *PutToUniversalClipboardOutput) ProtoReflect() protoreflect.Message {
 	mi := &file_midgard_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -269,19 +388,30 @@ func (x *PutClipboardOutput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PutClipboardOutput.ProtoReflect.Descriptor instead.
-func (*PutClipboardOutput) Descriptor() ([]byte, []int) {
+// Deprecated: Use PutToUniversalClipboardOutput.ProtoReflect.Descriptor instead.
+func (*PutToUniversalClipboardOutput) Descriptor() ([]byte, []int) {
 	return file_midgard_proto_rawDescGZIP(), []int{5}
 }
 
-type GetURIInput struct {
+func (x *PutToUniversalClipboardOutput) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type AllocateURLInput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Source SourceType `protobuf:"varint,1,opt,name=Source,proto3,enum=proto.SourceType" json:"Source,omitempty"`
+	URI    string     `protobuf:"bytes,2,opt,name=URI,proto3" json:"URI,omitempty"`
+	Data   string     `protobuf:"bytes,3,opt,name=Data,proto3" json:"Data,omitempty"`
 }
 
-func (x *GetURIInput) Reset() {
-	*x = GetURIInput{}
+func (x *AllocateURLInput) Reset() {
+	*x = AllocateURLInput{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_midgard_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -289,13 +419,13 @@ func (x *GetURIInput) Reset() {
 	}
 }
 
-func (x *GetURIInput) String() string {
+func (x *AllocateURLInput) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetURIInput) ProtoMessage() {}
+func (*AllocateURLInput) ProtoMessage() {}
 
-func (x *GetURIInput) ProtoReflect() protoreflect.Message {
+func (x *AllocateURLInput) ProtoReflect() protoreflect.Message {
 	mi := &file_midgard_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -307,21 +437,43 @@ func (x *GetURIInput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetURIInput.ProtoReflect.Descriptor instead.
-func (*GetURIInput) Descriptor() ([]byte, []int) {
+// Deprecated: Use AllocateURLInput.ProtoReflect.Descriptor instead.
+func (*AllocateURLInput) Descriptor() ([]byte, []int) {
 	return file_midgard_proto_rawDescGZIP(), []int{6}
 }
 
-type GetURIOutput struct {
+func (x *AllocateURLInput) GetSource() SourceType {
+	if x != nil {
+		return x.Source
+	}
+	return SourceType_UniversalClipboard
+}
+
+func (x *AllocateURLInput) GetURI() string {
+	if x != nil {
+		return x.URI
+	}
+	return ""
+}
+
+func (x *AllocateURLInput) GetData() string {
+	if x != nil {
+		return x.Data
+	}
+	return ""
+}
+
+type AllocateURLOutput struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Address string `protobuf:"bytes,1,opt,name=Address,proto3" json:"Address,omitempty"`
+	URL     string `protobuf:"bytes,1,opt,name=URL,proto3" json:"URL,omitempty"`
+	Message string `protobuf:"bytes,2,opt,name=Message,proto3" json:"Message,omitempty"`
 }
 
-func (x *GetURIOutput) Reset() {
-	*x = GetURIOutput{}
+func (x *AllocateURLOutput) Reset() {
+	*x = AllocateURLOutput{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_midgard_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -329,13 +481,13 @@ func (x *GetURIOutput) Reset() {
 	}
 }
 
-func (x *GetURIOutput) String() string {
+func (x *AllocateURLOutput) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetURIOutput) ProtoMessage() {}
+func (*AllocateURLOutput) ProtoMessage() {}
 
-func (x *GetURIOutput) ProtoReflect() protoreflect.Message {
+func (x *AllocateURLOutput) ProtoReflect() protoreflect.Message {
 	mi := &file_midgard_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -347,14 +499,21 @@ func (x *GetURIOutput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetURIOutput.ProtoReflect.Descriptor instead.
-func (*GetURIOutput) Descriptor() ([]byte, []int) {
+// Deprecated: Use AllocateURLOutput.ProtoReflect.Descriptor instead.
+func (*AllocateURLOutput) Descriptor() ([]byte, []int) {
 	return file_midgard_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *GetURIOutput) GetAddress() string {
+func (x *AllocateURLOutput) GetURL() string {
 	if x != nil {
-		return x.Address
+		return x.URL
+	}
+	return ""
+}
+
+func (x *AllocateURLOutput) GetMessage() string {
+	if x != nil {
+		return x.Message
 	}
 	return ""
 }
@@ -364,36 +523,67 @@ var File_midgard_proto protoreflect.FileDescriptor
 var file_midgard_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x6d, 0x69, 0x64, 0x67, 0x61, 0x72, 0x64, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
 	0x05, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x0b, 0x0a, 0x09, 0x50, 0x69, 0x6e, 0x67, 0x49, 0x6e,
-	0x70, 0x75, 0x74, 0x22, 0x0c, 0x0a, 0x0a, 0x50, 0x69, 0x6e, 0x67, 0x4f, 0x75, 0x74, 0x70, 0x75,
-	0x74, 0x22, 0x13, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72,
-	0x64, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x22, 0x28, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x43, 0x6c, 0x69,
-	0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x12, 0x12, 0x0a, 0x04,
-	0x44, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x44, 0x61, 0x74, 0x61,
-	0x22, 0x27, 0x0a, 0x11, 0x50, 0x75, 0x74, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64,
-	0x49, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x44, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0c, 0x52, 0x04, 0x44, 0x61, 0x74, 0x61, 0x22, 0x14, 0x0a, 0x12, 0x50, 0x75, 0x74,
-	0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x22,
-	0x0d, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x55, 0x52, 0x49, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x22, 0x28,
-	0x0a, 0x0c, 0x47, 0x65, 0x74, 0x55, 0x52, 0x49, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x12, 0x18,
-	0x0a, 0x07, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x07, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x32, 0xfb, 0x01, 0x0a, 0x07, 0x4d, 0x69, 0x64,
-	0x67, 0x61, 0x72, 0x64, 0x12, 0x2d, 0x0a, 0x04, 0x50, 0x69, 0x6e, 0x67, 0x12, 0x10, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x1a, 0x11,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x4f, 0x75, 0x74, 0x70, 0x75,
-	0x74, 0x22, 0x00, 0x12, 0x45, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f,
-	0x61, 0x72, 0x64, 0x12, 0x18, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x47, 0x65, 0x74, 0x43,
-	0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x1a, 0x19, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x47, 0x65, 0x74, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61,
-	0x72, 0x64, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x22, 0x00, 0x12, 0x45, 0x0a, 0x0c, 0x50, 0x75,
-	0x74, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x12, 0x18, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x2e, 0x50, 0x75, 0x74, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x49,
-	0x6e, 0x70, 0x75, 0x74, 0x1a, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x50, 0x75, 0x74,
-	0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x22,
-	0x00, 0x12, 0x33, 0x0a, 0x06, 0x47, 0x65, 0x74, 0x55, 0x52, 0x49, 0x12, 0x12, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x52, 0x49, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x1a,
-	0x13, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x52, 0x49, 0x4f, 0x75,
-	0x74, 0x70, 0x75, 0x74, 0x22, 0x00, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x3b, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x75, 0x74, 0x22, 0x26, 0x0a, 0x0a, 0x50, 0x69, 0x6e, 0x67, 0x4f, 0x75, 0x74, 0x70, 0x75,
+	0x74, 0x12, 0x18, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x20, 0x0a, 0x1e, 0x47,
+	0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x55, 0x6e, 0x69, 0x76, 0x65, 0x72, 0x73, 0x61, 0x6c, 0x43,
+	0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x22, 0x63, 0x0a,
+	0x1f, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x55, 0x6e, 0x69, 0x76, 0x65, 0x72, 0x73, 0x61,
+	0x6c, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74,
+	0x12, 0x2c, 0x0a, 0x04, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x18,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64,
+	0x44, 0x61, 0x74, 0x61, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x12,
+	0x0a, 0x04, 0x44, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x44, 0x61,
+	0x74, 0x61, 0x22, 0x60, 0x0a, 0x1c, 0x50, 0x75, 0x74, 0x54, 0x6f, 0x55, 0x6e, 0x69, 0x76, 0x65,
+	0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x49, 0x6e, 0x70,
+	0x75, 0x74, 0x12, 0x2c, 0x0a, 0x04, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x18, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61,
+	0x72, 0x64, 0x44, 0x61, 0x74, 0x61, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x54, 0x79, 0x70, 0x65,
+	0x12, 0x12, 0x0a, 0x04, 0x44, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x44, 0x61, 0x74, 0x61, 0x22, 0x39, 0x0a, 0x1d, 0x50, 0x75, 0x74, 0x54, 0x6f, 0x55, 0x6e, 0x69,
+	0x76, 0x65, 0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x4f,
+	0x75, 0x74, 0x70, 0x75, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22,
+	0x63, 0x0a, 0x10, 0x41, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x65, 0x55, 0x52, 0x4c, 0x49, 0x6e,
+	0x70, 0x75, 0x74, 0x12, 0x29, 0x0a, 0x06, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0e, 0x32, 0x11, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x53, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x06, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x10,
+	0x0a, 0x03, 0x55, 0x52, 0x49, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x52, 0x49,
+	0x12, 0x12, 0x0a, 0x04, 0x44, 0x61, 0x74, 0x61, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x44, 0x61, 0x74, 0x61, 0x22, 0x3f, 0x0a, 0x11, 0x41, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x65,
+	0x55, 0x52, 0x4c, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x55, 0x52, 0x4c,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x52, 0x4c, 0x12, 0x18, 0x0a, 0x07, 0x4d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x4d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x2a, 0x30, 0x0a, 0x11, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61,
+	0x72, 0x64, 0x44, 0x61, 0x74, 0x61, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0d, 0x0a, 0x09, 0x50, 0x6c,
+	0x61, 0x69, 0x6e, 0x54, 0x65, 0x78, 0x74, 0x10, 0x00, 0x12, 0x0c, 0x0a, 0x08, 0x49, 0x6d, 0x61,
+	0x67, 0x65, 0x50, 0x4e, 0x47, 0x10, 0x01, 0x2a, 0x34, 0x0a, 0x0a, 0x53, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x16, 0x0a, 0x12, 0x55, 0x6e, 0x69, 0x76, 0x65, 0x72, 0x73,
+	0x61, 0x6c, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x10, 0x00, 0x12, 0x0e, 0x0a,
+	0x0a, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x6d, 0x65, 0x6e, 0x74, 0x10, 0x01, 0x32, 0xd2, 0x02,
+	0x0a, 0x07, 0x4d, 0x69, 0x64, 0x67, 0x61, 0x72, 0x64, 0x12, 0x2d, 0x0a, 0x04, 0x50, 0x69, 0x6e,
+	0x67, 0x12, 0x10, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x49, 0x6e,
+	0x70, 0x75, 0x74, 0x1a, 0x11, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x50, 0x69, 0x6e, 0x67,
+	0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x22, 0x00, 0x12, 0x6c, 0x0a, 0x19, 0x47, 0x65, 0x74, 0x46,
+	0x72, 0x6f, 0x6d, 0x55, 0x6e, 0x69, 0x76, 0x65, 0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c, 0x69, 0x70,
+	0x62, 0x6f, 0x61, 0x72, 0x64, 0x12, 0x25, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x47, 0x65,
+	0x74, 0x46, 0x72, 0x6f, 0x6d, 0x55, 0x6e, 0x69, 0x76, 0x65, 0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c,
+	0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x1a, 0x26, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x47, 0x65, 0x74, 0x46, 0x72, 0x6f, 0x6d, 0x55, 0x6e, 0x69, 0x76,
+	0x65, 0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x4f, 0x75,
+	0x74, 0x70, 0x75, 0x74, 0x22, 0x00, 0x12, 0x66, 0x0a, 0x17, 0x50, 0x75, 0x74, 0x54, 0x6f, 0x55,
+	0x6e, 0x69, 0x76, 0x65, 0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72,
+	0x64, 0x12, 0x23, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x50, 0x75, 0x74, 0x54, 0x6f, 0x55,
+	0x6e, 0x69, 0x76, 0x65, 0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c, 0x69, 0x70, 0x62, 0x6f, 0x61, 0x72,
+	0x64, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x1a, 0x24, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x50,
+	0x75, 0x74, 0x54, 0x6f, 0x55, 0x6e, 0x69, 0x76, 0x65, 0x72, 0x73, 0x61, 0x6c, 0x43, 0x6c, 0x69,
+	0x70, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x22, 0x00, 0x12, 0x42,
+	0x0a, 0x0b, 0x41, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x65, 0x55, 0x52, 0x4c, 0x12, 0x17, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x41, 0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x65, 0x55, 0x52,
+	0x4c, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x1a, 0x18, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x41,
+	0x6c, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x65, 0x55, 0x52, 0x4c, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74,
+	0x22, 0x00, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x3b, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -408,31 +598,37 @@ func file_midgard_proto_rawDescGZIP() []byte {
 	return file_midgard_proto_rawDescData
 }
 
+var file_midgard_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_midgard_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_midgard_proto_goTypes = []interface{}{
-	(*PingInput)(nil),          // 0: proto.PingInput
-	(*PingOutput)(nil),         // 1: proto.PingOutput
-	(*GetClipboardInput)(nil),  // 2: proto.GetClipboardInput
-	(*GetClipboardOutput)(nil), // 3: proto.GetClipboardOutput
-	(*PutClipboardInput)(nil),  // 4: proto.PutClipboardInput
-	(*PutClipboardOutput)(nil), // 5: proto.PutClipboardOutput
-	(*GetURIInput)(nil),        // 6: proto.GetURIInput
-	(*GetURIOutput)(nil),       // 7: proto.GetURIOutput
+	(ClipboardDataType)(0),                  // 0: proto.ClipboardDataType
+	(SourceType)(0),                         // 1: proto.SourceType
+	(*PingInput)(nil),                       // 2: proto.PingInput
+	(*PingOutput)(nil),                      // 3: proto.PingOutput
+	(*GetFromUniversalClipboardInput)(nil),  // 4: proto.GetFromUniversalClipboardInput
+	(*GetFromUniversalClipboardOutput)(nil), // 5: proto.GetFromUniversalClipboardOutput
+	(*PutToUniversalClipboardInput)(nil),    // 6: proto.PutToUniversalClipboardInput
+	(*PutToUniversalClipboardOutput)(nil),   // 7: proto.PutToUniversalClipboardOutput
+	(*AllocateURLInput)(nil),                // 8: proto.AllocateURLInput
+	(*AllocateURLOutput)(nil),               // 9: proto.AllocateURLOutput
 }
 var file_midgard_proto_depIdxs = []int32{
-	0, // 0: proto.Midgard.Ping:input_type -> proto.PingInput
-	2, // 1: proto.Midgard.GetClipboard:input_type -> proto.GetClipboardInput
-	4, // 2: proto.Midgard.PutClipboard:input_type -> proto.PutClipboardInput
-	6, // 3: proto.Midgard.GetURI:input_type -> proto.GetURIInput
-	1, // 4: proto.Midgard.Ping:output_type -> proto.PingOutput
-	3, // 5: proto.Midgard.GetClipboard:output_type -> proto.GetClipboardOutput
-	5, // 6: proto.Midgard.PutClipboard:output_type -> proto.PutClipboardOutput
-	7, // 7: proto.Midgard.GetURI:output_type -> proto.GetURIOutput
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: proto.GetFromUniversalClipboardOutput.Type:type_name -> proto.ClipboardDataType
+	0, // 1: proto.PutToUniversalClipboardInput.Type:type_name -> proto.ClipboardDataType
+	1, // 2: proto.AllocateURLInput.Source:type_name -> proto.SourceType
+	2, // 3: proto.Midgard.Ping:input_type -> proto.PingInput
+	4, // 4: proto.Midgard.GetFromUniversalClipboard:input_type -> proto.GetFromUniversalClipboardInput
+	6, // 5: proto.Midgard.PutToUniversalClipboard:input_type -> proto.PutToUniversalClipboardInput
+	8, // 6: proto.Midgard.AllocateURL:input_type -> proto.AllocateURLInput
+	3, // 7: proto.Midgard.Ping:output_type -> proto.PingOutput
+	5, // 8: proto.Midgard.GetFromUniversalClipboard:output_type -> proto.GetFromUniversalClipboardOutput
+	7, // 9: proto.Midgard.PutToUniversalClipboard:output_type -> proto.PutToUniversalClipboardOutput
+	9, // 10: proto.Midgard.AllocateURL:output_type -> proto.AllocateURLOutput
+	7, // [7:11] is the sub-list for method output_type
+	3, // [3:7] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_midgard_proto_init() }
@@ -466,7 +662,7 @@ func file_midgard_proto_init() {
 			}
 		}
 		file_midgard_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetClipboardInput); i {
+			switch v := v.(*GetFromUniversalClipboardInput); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -478,7 +674,7 @@ func file_midgard_proto_init() {
 			}
 		}
 		file_midgard_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetClipboardOutput); i {
+			switch v := v.(*GetFromUniversalClipboardOutput); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -490,7 +686,7 @@ func file_midgard_proto_init() {
 			}
 		}
 		file_midgard_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutClipboardInput); i {
+			switch v := v.(*PutToUniversalClipboardInput); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -502,7 +698,7 @@ func file_midgard_proto_init() {
 			}
 		}
 		file_midgard_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutClipboardOutput); i {
+			switch v := v.(*PutToUniversalClipboardOutput); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -514,7 +710,7 @@ func file_midgard_proto_init() {
 			}
 		}
 		file_midgard_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetURIInput); i {
+			switch v := v.(*AllocateURLInput); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -526,7 +722,7 @@ func file_midgard_proto_init() {
 			}
 		}
 		file_midgard_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetURIOutput); i {
+			switch v := v.(*AllocateURLOutput); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -543,13 +739,14 @@ func file_midgard_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_midgard_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      2,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_midgard_proto_goTypes,
 		DependencyIndexes: file_midgard_proto_depIdxs,
+		EnumInfos:         file_midgard_proto_enumTypes,
 		MessageInfos:      file_midgard_proto_msgTypes,
 	}.Build()
 	File_midgard_proto = out.File
@@ -571,9 +768,9 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MidgardClient interface {
 	Ping(ctx context.Context, in *PingInput, opts ...grpc.CallOption) (*PingOutput, error)
-	GetClipboard(ctx context.Context, in *GetClipboardInput, opts ...grpc.CallOption) (*GetClipboardOutput, error)
-	PutClipboard(ctx context.Context, in *PutClipboardInput, opts ...grpc.CallOption) (*PutClipboardOutput, error)
-	GetURI(ctx context.Context, in *GetURIInput, opts ...grpc.CallOption) (*GetURIOutput, error)
+	GetFromUniversalClipboard(ctx context.Context, in *GetFromUniversalClipboardInput, opts ...grpc.CallOption) (*GetFromUniversalClipboardOutput, error)
+	PutToUniversalClipboard(ctx context.Context, in *PutToUniversalClipboardInput, opts ...grpc.CallOption) (*PutToUniversalClipboardOutput, error)
+	AllocateURL(ctx context.Context, in *AllocateURLInput, opts ...grpc.CallOption) (*AllocateURLOutput, error)
 }
 
 type midgardClient struct {
@@ -593,27 +790,27 @@ func (c *midgardClient) Ping(ctx context.Context, in *PingInput, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *midgardClient) GetClipboard(ctx context.Context, in *GetClipboardInput, opts ...grpc.CallOption) (*GetClipboardOutput, error) {
-	out := new(GetClipboardOutput)
-	err := c.cc.Invoke(ctx, "/proto.Midgard/GetClipboard", in, out, opts...)
+func (c *midgardClient) GetFromUniversalClipboard(ctx context.Context, in *GetFromUniversalClipboardInput, opts ...grpc.CallOption) (*GetFromUniversalClipboardOutput, error) {
+	out := new(GetFromUniversalClipboardOutput)
+	err := c.cc.Invoke(ctx, "/proto.Midgard/GetFromUniversalClipboard", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *midgardClient) PutClipboard(ctx context.Context, in *PutClipboardInput, opts ...grpc.CallOption) (*PutClipboardOutput, error) {
-	out := new(PutClipboardOutput)
-	err := c.cc.Invoke(ctx, "/proto.Midgard/PutClipboard", in, out, opts...)
+func (c *midgardClient) PutToUniversalClipboard(ctx context.Context, in *PutToUniversalClipboardInput, opts ...grpc.CallOption) (*PutToUniversalClipboardOutput, error) {
+	out := new(PutToUniversalClipboardOutput)
+	err := c.cc.Invoke(ctx, "/proto.Midgard/PutToUniversalClipboard", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *midgardClient) GetURI(ctx context.Context, in *GetURIInput, opts ...grpc.CallOption) (*GetURIOutput, error) {
-	out := new(GetURIOutput)
-	err := c.cc.Invoke(ctx, "/proto.Midgard/GetURI", in, out, opts...)
+func (c *midgardClient) AllocateURL(ctx context.Context, in *AllocateURLInput, opts ...grpc.CallOption) (*AllocateURLOutput, error) {
+	out := new(AllocateURLOutput)
+	err := c.cc.Invoke(ctx, "/proto.Midgard/AllocateURL", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -623,9 +820,9 @@ func (c *midgardClient) GetURI(ctx context.Context, in *GetURIInput, opts ...grp
 // MidgardServer is the server API for Midgard service.
 type MidgardServer interface {
 	Ping(context.Context, *PingInput) (*PingOutput, error)
-	GetClipboard(context.Context, *GetClipboardInput) (*GetClipboardOutput, error)
-	PutClipboard(context.Context, *PutClipboardInput) (*PutClipboardOutput, error)
-	GetURI(context.Context, *GetURIInput) (*GetURIOutput, error)
+	GetFromUniversalClipboard(context.Context, *GetFromUniversalClipboardInput) (*GetFromUniversalClipboardOutput, error)
+	PutToUniversalClipboard(context.Context, *PutToUniversalClipboardInput) (*PutToUniversalClipboardOutput, error)
+	AllocateURL(context.Context, *AllocateURLInput) (*AllocateURLOutput, error)
 }
 
 // UnimplementedMidgardServer can be embedded to have forward compatible implementations.
@@ -635,14 +832,14 @@ type UnimplementedMidgardServer struct {
 func (*UnimplementedMidgardServer) Ping(context.Context, *PingInput) (*PingOutput, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (*UnimplementedMidgardServer) GetClipboard(context.Context, *GetClipboardInput) (*GetClipboardOutput, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetClipboard not implemented")
+func (*UnimplementedMidgardServer) GetFromUniversalClipboard(context.Context, *GetFromUniversalClipboardInput) (*GetFromUniversalClipboardOutput, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFromUniversalClipboard not implemented")
 }
-func (*UnimplementedMidgardServer) PutClipboard(context.Context, *PutClipboardInput) (*PutClipboardOutput, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PutClipboard not implemented")
+func (*UnimplementedMidgardServer) PutToUniversalClipboard(context.Context, *PutToUniversalClipboardInput) (*PutToUniversalClipboardOutput, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutToUniversalClipboard not implemented")
 }
-func (*UnimplementedMidgardServer) GetURI(context.Context, *GetURIInput) (*GetURIOutput, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetURI not implemented")
+func (*UnimplementedMidgardServer) AllocateURL(context.Context, *AllocateURLInput) (*AllocateURLOutput, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllocateURL not implemented")
 }
 
 func RegisterMidgardServer(s *grpc.Server, srv MidgardServer) {
@@ -667,56 +864,56 @@ func _Midgard_Ping_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Midgard_GetClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetClipboardInput)
+func _Midgard_GetFromUniversalClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFromUniversalClipboardInput)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MidgardServer).GetClipboard(ctx, in)
+		return srv.(MidgardServer).GetFromUniversalClipboard(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Midgard/GetClipboard",
+		FullMethod: "/proto.Midgard/GetFromUniversalClipboard",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MidgardServer).GetClipboard(ctx, req.(*GetClipboardInput))
+		return srv.(MidgardServer).GetFromUniversalClipboard(ctx, req.(*GetFromUniversalClipboardInput))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Midgard_PutClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PutClipboardInput)
+func _Midgard_PutToUniversalClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutToUniversalClipboardInput)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MidgardServer).PutClipboard(ctx, in)
+		return srv.(MidgardServer).PutToUniversalClipboard(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Midgard/PutClipboard",
+		FullMethod: "/proto.Midgard/PutToUniversalClipboard",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MidgardServer).PutClipboard(ctx, req.(*PutClipboardInput))
+		return srv.(MidgardServer).PutToUniversalClipboard(ctx, req.(*PutToUniversalClipboardInput))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Midgard_GetURI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetURIInput)
+func _Midgard_AllocateURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AllocateURLInput)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MidgardServer).GetURI(ctx, in)
+		return srv.(MidgardServer).AllocateURL(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Midgard/GetURI",
+		FullMethod: "/proto.Midgard/AllocateURL",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MidgardServer).GetURI(ctx, req.(*GetURIInput))
+		return srv.(MidgardServer).AllocateURL(ctx, req.(*AllocateURLInput))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -730,16 +927,16 @@ var _Midgard_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Midgard_Ping_Handler,
 		},
 		{
-			MethodName: "GetClipboard",
-			Handler:    _Midgard_GetClipboard_Handler,
+			MethodName: "GetFromUniversalClipboard",
+			Handler:    _Midgard_GetFromUniversalClipboard_Handler,
 		},
 		{
-			MethodName: "PutClipboard",
-			Handler:    _Midgard_PutClipboard_Handler,
+			MethodName: "PutToUniversalClipboard",
+			Handler:    _Midgard_PutToUniversalClipboard_Handler,
 		},
 		{
-			MethodName: "GetURI",
-			Handler:    _Midgard_GetURI_Handler,
+			MethodName: "AllocateURL",
+			Handler:    _Midgard_AllocateURL_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
