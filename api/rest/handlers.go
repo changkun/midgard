@@ -14,10 +14,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"golang.design/x/midgard/clipboard"
 	"golang.design/x/midgard/config"
-	"golang.design/x/midgard/types"
-	"golang.design/x/midgard/utils"
+	"golang.design/x/midgard/pkg/clipboard"
+	"golang.design/x/midgard/pkg/types"
+	"golang.design/x/midgard/pkg/utils"
 )
 
 // GetFromUniversalClipboard returns the in-memory clipboard data inside
@@ -72,15 +72,15 @@ func PutToUniversalClipboard(c *gin.Context) {
 	})
 }
 
-// GenerateURI generates an universal access URL for the requested resource.
+// AllocateURL generates an universal access URL for the requested resource.
 // The requested resource can be an attached data, the midgard universal
 // clipboard, and etc.
-func GenerateURI(c *gin.Context) {
-	var in types.GenerateURIInput
+func AllocateURL(c *gin.Context) {
+	var in types.AllocateURLInput
 	err := c.ShouldBindJSON(&in)
 	if err != nil {
 		err = fmt.Errorf("cannot bind requested data, err: %w", err)
-		c.JSON(http.StatusBadRequest, types.GenerateURIOutput{
+		c.JSON(http.StatusBadRequest, types.AllocateURLOutput{
 			Message: err.Error(),
 		})
 		return
@@ -104,13 +104,13 @@ func GenerateURI(c *gin.Context) {
 	}
 
 	if len(data) == 0 || utils.BytesToString(data) == "\n" {
-		c.JSON(http.StatusBadRequest, types.GenerateURIOutput{
+		c.JSON(http.StatusBadRequest, types.AllocateURLOutput{
 			Message: "nothing to persist, no data.",
 		})
 		return
 	}
 
-	root := config.Get().Store.Path
+	root := config.S().Store.Path
 	var path string
 
 	// if URI is empty, then generate a random path
@@ -127,7 +127,7 @@ func GenerateURI(c *gin.Context) {
 	}
 
 	if existed(path) {
-		c.JSON(http.StatusBadRequest, types.GenerateURIOutput{
+		c.JSON(http.StatusBadRequest, types.AllocateURLOutput{
 			Message: "the requested uri already existed.",
 		})
 		return
@@ -138,7 +138,7 @@ func GenerateURI(c *gin.Context) {
 		err = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
 		if err != nil {
 			err = fmt.Errorf("failed to create uri, err: %w", err)
-			c.JSON(http.StatusInternalServerError, types.GenerateURIOutput{
+			c.JSON(http.StatusInternalServerError, types.AllocateURLOutput{
 				Message: err.Error(),
 			})
 			return
@@ -149,14 +149,14 @@ func GenerateURI(c *gin.Context) {
 	err = ioutil.WriteFile(path, data, os.ModePerm)
 	if err != nil {
 		err = fmt.Errorf("failed to persist the data, err: %w", err)
-		c.JSON(http.StatusInternalServerError, types.GenerateURIOutput{
+		c.JSON(http.StatusInternalServerError, types.AllocateURLOutput{
 			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, types.GenerateURIOutput{
-		URL:     "/midgard" + config.Get().Store.Prefix + strings.TrimPrefix(path, root),
+	c.JSON(http.StatusOK, types.AllocateURLOutput{
+		URL:     "/midgard" + config.S().Store.Prefix + strings.TrimPrefix(path, root),
 		Message: "success.",
 	})
 }

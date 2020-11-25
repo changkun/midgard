@@ -1,0 +1,24 @@
+# Copyright 2020 The golang.design Initiative authors.
+# All rights reserved. Use of this source code is governed by
+# a GNU GPL-3.0 license that can be found in the LICENSE file.
+
+---
+title: "The golang.design Initiative"
+# server includes all midgard server side settings
+# these settings are only used in server mode (run under `midgard serve`)
+server:
+  http: :8080
+  rpc: :8081
+  mode: debug # or debug/release/test
+  store:
+    prefix: /fs  # this will be your namespace prefix, i.e. golang.design/midgard/fs/*
+    path: ./data # this is where your data stored on your server
+  auth:
+    # the following two configures your midgard credentials
+    user: golang-design
+    pass: aBWJnteJbt!j3G!qehLnJmbcgLqkkXuEusz9m4@JeqUqwZD*Dc
+
+# daemon includes all midgard daemon settings
+# these settings are only used in daemon mode (run under `midgard daemon`)
+daemon:
+  server_addr: https://golang.design

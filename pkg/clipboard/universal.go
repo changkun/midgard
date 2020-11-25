@@ -11,7 +11,7 @@ import (
 	"image/png"
 	"sync"
 
-	"golang.design/x/midgard/types"
+	"golang.design/x/midgard/pkg/types"
 )
 
 var (

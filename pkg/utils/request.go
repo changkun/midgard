@@ -26,7 +26,7 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 
 	c := &http.Client{}
 	req, err := http.NewRequest(method, api, bytes.NewBuffer(body))
-	req.SetBasicAuth(config.Get().Auth.User, config.Get().Auth.Pass)
+	req.SetBasicAuth(config.Get().Server.Auth.User, config.Get().Server.Auth.Pass)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.Do(req)
 	if err != nil {

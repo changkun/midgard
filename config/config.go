@@ -8,17 +8,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"runtime"
 	"sync"
 
 	"gopkg.in/yaml.v3"
-)
-
-// build info, assign by compile time or runtime.
-var (
-	Version   string
-	BuildTime string
-	GoVersion = runtime.Version()
 )
 
 var (
@@ -26,18 +18,18 @@ var (
 	once sync.Once
 )
 
-// Config is a read-only midgard configuration center
+// Config is a combination of all possible midgard configuration.
 type Config struct {
-	Title string `yaml:"title"`
-	Addr  struct {
-		Host string `yaml:"host"`
-		HTTP string `yaml:"http"`
-		RPC  string `yaml:"rpc"`
-	} `yaml:"addr"`
-	Mode string `yaml:"mode"`
-	Log  struct {
-		Prefix string `yaml:"prefix"`
-	} `yaml:"log"`
+	Title  string  `yaml:"title"`
+	Server *Server `yaml:"server"`
+	Daemon *Daemon `yaml:"daemon"`
+}
+
+// Server is the midgard server side configuration
+type Server struct {
+	HTTP  string `yaml:"http"`
+	RPC   string `yaml:"rpc"`
+	Mode  string `yaml:"mode"`
 	Store struct {
 		Prefix string `yaml:"prefix"`
 		Path   string `yaml:"path"`
@@ -48,20 +40,41 @@ type Config struct {
 	} `json:"auth"`
 }
 
-// Get returns the midgard configuration
+// Daemon is the midgard daemon configuration
+type Daemon struct {
+	ServerAddr string `yaml:"server_addr"`
+}
+
+// S returns the midgard server configuration
+func S() *Server {
+	load()
+	return conf.Server
+}
+
+// D returns the midgard daemon configuration
+func D() *Daemon {
+	load()
+	return conf.Daemon
+}
+
+// Get returns the whole midgard configuration
 func Get() *Config {
+	load()
+	return conf
+}
+
+func load() {
 	once.Do(func() {
 		conf = &Config{}
 		conf.parse()
 	})
-	return conf
 }
 
 func (c *Config) parse() {
 	f := os.Getenv("MIDGARD_CONF")
 	d, err := ioutil.ReadFile(f)
 	if err != nil {
-		d, err = ioutil.ReadFile("./server.yml")
+		d, err = ioutil.ReadFile("./config.yml")
 		if err != nil {
 			log.Fatalf("cannot read configuration, err: %v\n", err)
 		}

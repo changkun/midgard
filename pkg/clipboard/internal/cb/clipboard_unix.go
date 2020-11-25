@@ -12,7 +12,7 @@ import (
 	"os/exec"
 	"time"
 
-	"golang.design/x/midgard/types"
+	"golang.design/x/midgard/pkg/types"
 )
 
 var (

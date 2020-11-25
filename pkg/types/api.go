@@ -33,15 +33,15 @@ const (
 	SourceAttachment
 )
 
-// GenerateURIInput defines the input format of requested resource
-type GenerateURIInput struct {
+// AllocateURLInput defines the input format of requested resource
+type AllocateURLInput struct {
 	Source SourceType `json:"source"`
 	URI    string     `json:"uri"`
 	Data   string     `json:"data"`
 }
 
-// GenerateURIOutput ...
-type GenerateURIOutput struct {
+// AllocateURLOutput ...
+type AllocateURLOutput struct {
 	URL     string `json:"url"`
 	Message string `json:"msg"`
 }

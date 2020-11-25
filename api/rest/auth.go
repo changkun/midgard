@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.design/x/midgard/utils"
+	"golang.design/x/midgard/pkg/utils"
 )
 
 // BasicAuth with attempt control

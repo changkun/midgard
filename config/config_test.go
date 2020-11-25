@@ -14,7 +14,7 @@ import (
 )
 
 func TestParseConfig(t *testing.T) {
-	os.Setenv("MIDGARD_CONF", "../server.yml")
+	os.Setenv("MIDGARD_CONF", "../config.yml")
 	t.Cleanup(func() {
 		os.Setenv("MIDGARD_CONF", "")
 	})

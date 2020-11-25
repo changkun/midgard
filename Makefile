@@ -9,7 +9,7 @@ IMAGE = midgard
 BINARY = midgard
 TARGET = -o $(BINARY)
 MIDGARD_HOME = golang.design/x/midgard
-BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/config.Version=$(VERSION) -X $(MIDGARD_HOME)/config.BuildTime=$(BUILDTIME)"
+BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/cmd/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/cmd/version.BuildTime=$(BUILDTIME)"
 BUILD_FLAGS = $(TARGET) $(BUILD_SETTINGS) -mod=vendor
 
 all:

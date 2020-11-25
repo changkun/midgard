@@ -5,16 +5,12 @@
 package clipboard
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"image"
-	"image/png"
 	"sync"
 
-	"golang.design/x/midgard/clipboard/internal/cb"
-	"golang.design/x/midgard/types"
-	"golang.design/x/midgard/utils"
+	"golang.design/x/midgard/pkg/clipboard/internal/cb"
+	"golang.design/x/midgard/pkg/types"
 )
 
 var (
@@ -26,61 +22,6 @@ var (
 
 // lock locks clipboard operation
 var lock = sync.Mutex{}
-
-// ReadString reads clipboard as plain text string.
-func ReadString() (string, error) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	buf := cb.Read(types.ClipboardDataTypePlainText)
-	if buf == nil {
-		return "", ErrEmpty
-	}
-	return utils.BytesToString(buf), nil
-}
-
-// ReadImage reads clipboard as an image.Image
-func ReadImage() (image.Image, error) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	buf := cb.Read(types.ClipboardDataTypeImagePNG)
-	if buf == nil {
-		return nil, ErrEmpty
-	}
-
-	return png.Decode(bytes.NewBuffer(buf))
-}
-
-// WriteString writes a given string to the clipboard
-func WriteString(s string) error {
-	lock.Lock()
-	defer lock.Unlock()
-
-	ok := cb.Write(utils.StringToBytes(s), types.ClipboardDataTypePlainText)
-	if !ok {
-		return ErrAccessDenied
-	}
-	return nil
-}
-
-// WriteImage writes a given image to the clipboard
-func WriteImage(img image.Image) error {
-	lock.Lock()
-	defer lock.Unlock()
-
-	var buf bytes.Buffer
-	err := png.Encode(&buf, img)
-	if err != nil {
-		return err
-	}
-
-	ok := cb.Write(buf.Bytes(), types.ClipboardDataTypeImagePNG)
-	if !ok {
-		return ErrAccessDenied
-	}
-	return nil
-}
 
 // Read reads and returns byte-based clipboard data.
 func Read() []byte {

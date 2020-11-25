@@ -2,7 +2,7 @@
 // All rights reserved. Use of this source code is governed by
 // a GNU GPL-3.0 license that can be found in the LICENSE file.
 
-package server
+package api
 
 import (
 	"context"
@@ -15,34 +15,29 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.design/x/midgard/api/rest"
+	"golang.design/x/midgard/api/rpc"
+	"golang.design/x/midgard/cmd/version"
 	"golang.design/x/midgard/config"
-	"golang.design/x/midgard/server/rest"
-	"golang.design/x/midgard/server/rpc"
-	"golang.design/x/midgard/types/proto"
+	"golang.design/x/midgard/pkg/types/proto"
 	"google.golang.org/grpc"
 )
 
-// Run runs the midgard server.
-func Run() {
-	m := newMidgard()
-	m.Serve()
-}
-
-// midgard is the midgard server that serves all API endpoints.
-type midgard struct {
+// Midgard is the midgard server that serves all API endpoints.
+type Midgard struct {
 	s1 *http.Server
 	s2 *grpc.Server
 }
 
-// newMidgard creates a new midgard server
-func newMidgard() *midgard {
-	return &midgard{}
+// NewMidgard creates a new midgard server
+func NewMidgard() *Midgard {
+	return &Midgard{}
 }
 
 // Serve serves Midgard servers, this contains two parts:
 // 1. HTTP server: serves RESTful APIs
 // 2. gRPC server: serves RPC endpoints for the Midgard CLI
-func (m *midgard) Serve() {
+func (m *Midgard) Serve() {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 	go func() {
@@ -75,9 +70,9 @@ func (m *midgard) Serve() {
 	log.Printf("server is down, good bye!")
 }
 
-func (m *midgard) serveHTTP() {
-	m.s1 = &http.Server{Handler: m.routers(), Addr: config.Get().Addr.HTTP}
-	log.Printf("http server starting at http://%s", config.Get().Addr.HTTP)
+func (m *Midgard) serveHTTP() {
+	m.s1 = &http.Server{Handler: m.routers(), Addr: config.S().HTTP}
+	log.Printf("http server starting at http://%s", config.S().HTTP)
 	err := m.s1.ListenAndServe()
 	if err != http.ErrServerClosed {
 		log.Printf("close with error: %v", err)
@@ -85,8 +80,8 @@ func (m *midgard) serveHTTP() {
 	return
 }
 
-func (m *midgard) routers() (r *gin.Engine) {
-	gin.SetMode(config.Get().Mode)
+func (m *Midgard) routers() (r *gin.Engine) {
+	gin.SetMode(config.S().Mode)
 
 	r = gin.Default()
 	mg := r.Group("/midgard")
@@ -96,20 +91,20 @@ func (m *midgard) routers() (r *gin.Engine) {
 			GoVersion string `json:"go_version"`
 			BuildTime string `json:"build_time"`
 		}{
-			Version:   config.Version,
-			GoVersion: config.GoVersion,
-			BuildTime: config.BuildTime,
+			Version:   version.GitVersion,
+			GoVersion: version.GoVersion,
+			BuildTime: version.BuildTime,
 		})
 	})
-	mg.Static(config.Get().Store.Prefix, config.Get().Store.Path)
+	mg.Static(config.S().Store.Prefix, config.S().Store.Path)
 
 	v1 := mg.Group("/api/v1", rest.BasicAuthWithAttemptsControl(rest.Credentials{
-		config.Get().Auth.User: config.Get().Auth.Pass,
+		config.S().Auth.User: config.S().Auth.Pass,
 	}))
 	{
 		v1.GET("/clipboard", rest.GetFromUniversalClipboard)
 		v1.POST("/clipboard", rest.PutToUniversalClipboard)
-		v1.PUT("/generate", rest.GenerateURI)
+		v1.PUT("/allocate", rest.AllocateURL)
 	}
 
 	return
@@ -117,8 +112,8 @@ func (m *midgard) routers() (r *gin.Engine) {
 
 const maxMessageSize = 10 << 20 // 10 MB
 
-func (m *midgard) serveRPC() {
-	l, err := net.Listen("tcp", config.Get().Addr.RPC)
+func (m *Midgard) serveRPC() {
+	l, err := net.Listen("tcp", config.S().RPC)
 	if err != nil {
 		log.Fatalf("fail to init rpc server, err: %v", err)
 	}
@@ -130,7 +125,7 @@ func (m *midgard) serveRPC() {
 		grpc.ConnectionTimeout(time.Minute*5),
 	)
 	proto.RegisterMidgardServer(m.s2, &rpc.Server{})
-	log.Printf("rpc server starting at rpc://%s", config.Get().Addr.RPC)
+	log.Printf("rpc server starting at rpc://%s", config.S().RPC)
 	if err := m.s2.Serve(l); err != nil {
 		log.Fatalf("fail to serve rpc server, err: %v", err)
 	}
