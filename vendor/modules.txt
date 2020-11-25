@@ -23,19 +23,26 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/uuid v1.1.2
 ## explicit
 github.com/google/uuid
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
 # github.com/json-iterator/go v1.1.9
 github.com/json-iterator/go
 # github.com/leodido/go-urn v1.2.0
 github.com/leodido/go-urn
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
-# github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421
+# github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742
+# github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
+# github.com/spf13/cobra v1.1.1
+## explicit
+github.com/spf13/cobra
+# github.com/spf13/pflag v1.0.5
+github.com/spf13/pflag
 # github.com/ugorji/go/codec v1.1.7
 github.com/ugorji/go/codec
-# golang.org/x/net v0.0.0-20190311183353-d8887717615a
+# golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
