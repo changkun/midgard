@@ -68,20 +68,22 @@ import (
 	"context"
 	"time"
 	"unsafe"
+
+	"golang.design/x/midgard/pkg/types"
 )
 
 // Read reads the clipboard data of a given resource type.
 // It returns a buf that containing the clipboard data, and ok indicates
 // whether the read is success or fail.
-func Read(t DataType) (buf []byte) {
+func Read(t types.ClipboardDataType) (buf []byte) {
 	var (
 		data unsafe.Pointer
 		n    C.uint
 	)
 	switch t {
-	case DataTypePlainText:
+	case types.ClipboardDataTypePlainText:
 		n = C.clipboard_read_string(&data)
-	case DataTypeImagePNG:
+	case types.ClipboardDataTypeImagePNG:
 		n = C.clipboard_read_image(&data)
 	}
 	if data == nil {
@@ -96,14 +98,14 @@ func Read(t DataType) (buf []byte) {
 
 // Write writes the given buf as typ to system clipboard.
 // It returns true if the write is success.
-func Write(buf []byte, t DataType) (ret bool) {
+func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 	var ok C.int
 
 	switch t {
-	case DataTypePlainText:
+	case types.ClipboardDataTypePlainText:
 		ok = C.clipboard_write_string(unsafe.Pointer(&buf[0]),
 			C.NSInteger(len(buf)))
-	case DataTypeImagePNG:
+	case types.ClipboardDataTypeImagePNG:
 		ok = C.clipboard_write_image(unsafe.Pointer(&buf[0]),
 			C.NSInteger(len(buf)))
 	}
@@ -114,7 +116,7 @@ func Write(buf []byte, t DataType) (ret bool) {
 	return true
 }
 
-// watch watches the changes of system clipboard, and sends the data of
+// Watch watches the changes of system clipboard, and sends the data of
 // clipboard to the given dataCh.
 //
 // Unfortunately, on macOS, NSPasteboard does not offer a way to listen
@@ -126,7 +128,7 @@ func Write(buf []byte, t DataType) (ret bool) {
 //
 // TODO: Alternatively, we could watch keyboard hotkeys, for instance,
 // a double cmd+c triggers the watch? Needs invesgitation.
-func Watch(ctx context.Context, dt DataType, dataCh chan []byte) {
+func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
 	// we try to watch the clipboard every second, this should be enough
 	// for the watch purpose. If the user is too fast, meaning be able
 	// to paste the content within a second, then it is very unfortunate.
@@ -140,7 +142,7 @@ func Watch(ctx context.Context, dt DataType, dataCh chan []byte) {
 		case <-t.C:
 			this := C.long(C.clipboard_change_count())
 			if lastCount != this {
-				bytes := read(dt)
+				bytes := Read(dt)
 				if bytes == nil {
 					continue
 				}
