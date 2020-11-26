@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 
-	"golang.design/x/midgard/config"
 	"golang.design/x/midgard/pkg/clipboard"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/utils"
@@ -23,7 +22,6 @@ func Clipboard() {
 	clipboard.Watch(context.Background(), types.ClipboardDataTypePlainText, textCh)
 	imagCh := make(chan []byte, 1)
 	clipboard.Watch(context.Background(), types.ClipboardDataTypeImagePNG, imagCh)
-	url := "http://" + config.D().ServerAddr.HTTP + "/midgard/api/v1/clipboard"
 	for {
 		select {
 		case text, ok := <-textCh:
@@ -36,7 +34,7 @@ func Clipboard() {
 				continue
 			}
 
-			_, err := utils.Request(http.MethodPost, url, &types.ClipboardData{
+			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, &types.ClipboardData{
 				Type: types.ClipboardDataTypePlainText, Data: utils.BytesToString(text),
 			})
 			if err != nil {
@@ -46,7 +44,7 @@ func Clipboard() {
 			if !ok {
 				return
 			}
-			_, err := utils.Request(http.MethodPost, url, &types.ClipboardData{
+			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, &types.ClipboardData{
 				Type: types.ClipboardDataTypeImagePNG,
 				Data: base64.StdEncoding.EncodeToString(img),
 			})

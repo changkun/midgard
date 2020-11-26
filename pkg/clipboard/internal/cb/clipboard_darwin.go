@@ -14,9 +14,9 @@ package cb
 #cgo LDFLAGS: -framework Foundation -framework Cocoa
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
+
 unsigned int clipboard_read_string(void **out) {
-	NSPasteboard * pasteboard = [NSPasteboard generalPasteboard];
-	NSData *data = [pasteboard dataForType:NSPasteboardTypeString];
+	NSData *data = [[NSPasteboard generalPasteboard] dataForType:NSPasteboardTypeString];
 	if (data == nil) {
 		return 0;
 	}
@@ -25,9 +25,9 @@ unsigned int clipboard_read_string(void **out) {
 	[data getBytes: *out length: siz];
 	return siz;
 }
+
 unsigned int clipboard_read_image(void **out) {
-	NSPasteboard * pasteboard = [NSPasteboard generalPasteboard];
-	NSData *data = [pasteboard dataForType:NSPasteboardTypePNG];
+	NSData *data = [[NSPasteboard generalPasteboard] dataForType:NSPasteboardTypePNG];
 	if (data == nil) {
 		return 0;
 	}
@@ -36,6 +36,7 @@ unsigned int clipboard_read_image(void **out) {
 	[data getBytes: *out length: siz];
 	return siz;
 }
+
 int clipboard_write_string(const void *bytes, NSInteger n) {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
 	NSData *data = [NSData dataWithBytes: bytes length: n];
@@ -46,6 +47,7 @@ int clipboard_write_string(const void *bytes, NSInteger n) {
 	}
 	return 0;
 }
+
 int clipboard_write_image(const void *bytes, NSInteger n) {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
 	NSData *data = [NSData dataWithBytes: bytes length: n];
@@ -58,14 +60,14 @@ int clipboard_write_image(const void *bytes, NSInteger n) {
 }
 
 NSInteger clipboard_change_count() {
-	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-	return pasteboard.changeCount;
+	return [[NSPasteboard generalPasteboard] changeCount];
 }
 
 */
 import "C"
 import (
 	"context"
+	"runtime"
 	"time"
 	"unsafe"
 
@@ -86,13 +88,11 @@ func Read(t types.ClipboardDataType) (buf []byte) {
 	case types.ClipboardDataTypeImagePNG:
 		n = C.clipboard_read_image(&data)
 	}
-	if data == nil {
+	if data == nil || n == 0 {
 		return nil
 	}
-	defer C.free(unsafe.Pointer(data))
-	if n == 0 {
-		return nil
-	}
+	// FIXME: somtimes crash because of double free
+	// defer C.free(unsafe.Pointer(data))
 	return C.GoBytes(data, C.int(n))
 }
 
@@ -129,6 +129,9 @@ func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 // TODO: Alternatively, we could watch keyboard hotkeys, for instance,
 // a double cmd+c triggers the watch? Needs invesgitation.
 func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
+	// FIXME: not sure if this is necesary.
+	runtime.LockOSThread()
+
 	// we try to watch the clipboard every second, this should be enough
 	// for the watch purpose. If the user is too fast, meaning be able
 	// to paste the content within a second, then it is very unfortunate.
@@ -142,11 +145,11 @@ func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) 
 		case <-t.C:
 			this := C.long(C.clipboard_change_count())
 			if lastCount != this {
-				bytes := Read(dt)
-				if bytes == nil {
+				b := Read(dt)
+				if b == nil {
 					continue
 				}
-				dataCh <- bytes
+				dataCh <- b
 				lastCount = this
 			}
 		}

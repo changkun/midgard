@@ -4,11 +4,11 @@
 
 ---
 title: "The golang.design Initiative"
+domain: localhost:8080
 # server includes all midgard server side settings
 # these settings are only used in server mode (run under `midgard serve`)
 server:
-  http: :8080
-  rpc: :8081
+  addr: localhost:8080
   mode: debug # or debug/release/test
   store:
     prefix: /fs  # this will be your namespace prefix, i.e. golang.design/midgard/fs/*
@@ -21,6 +21,4 @@ server:
 # daemon includes all midgard daemon settings
 # these settings are only used in daemon mode (run under `midgard daemon`)
 daemon:
-  server_addr:
-    http: localhost:8080
-    rpc: localhost:8081
+  addr: localhost:8081

@@ -10,45 +10,21 @@ package proto;
 
 service Midgard {
     rpc Ping(PingInput) returns (PingOutput) {}
-    rpc GetFromUniversalClipboard(GetFromUniversalClipboardInput) returns (GetFromUniversalClipboardOutput) {}
-    rpc PutToUniversalClipboard(PutToUniversalClipboardInput) returns (PutToUniversalClipboardOutput) {}
     rpc AllocateURL(AllocateURLInput) returns (AllocateURLOutput) {}
 }
 
 message PingInput {}
 message PingOutput {
-    string Message = 1;
-}
-
-enum ClipboardDataType {
-    PlainText = 0;
-    ImagePNG  = 1;
-}
-message GetFromUniversalClipboardInput {
-}
-message GetFromUniversalClipboardOutput {
-    ClipboardDataType Type = 1;
-    string Data = 2;
-}
-
-message PutToUniversalClipboardInput {
-    ClipboardDataType Type = 1;
-    string Data = 2;
-}
-message PutToUniversalClipboardOutput {
-    string Message = 1;
-}
-
-enum SourceType {
-    UniversalClipboard = 0;
-    Attachment = 1;
+    string Version = 1;
+    string GoVersion = 2;
+    string BuildTime = 3;
 }
 
 message AllocateURLInput {
-    SourceType Source = 1;
-    string URI = 2;
-    string Data = 3;
+    string DesiredPath = 1;
+    string SourcePath = 2;
 }
+
 message AllocateURLOutput {
     string URL = 1;
     string Message = 2;

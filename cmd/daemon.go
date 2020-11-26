@@ -2,15 +2,28 @@
 // All rights reserved. Use of this source code is governed by
 // a GNU GPL-3.0 license that can be found in the LICENSE file.
 
-package daemon
+package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"golang.design/x/midgard/api/rpc"
 	"golang.design/x/midgard/pkg/watch"
 )
 
-// Run runs the midgard's daemon process.
-func Run(*cobra.Command, []string) {
+// daemonCmd runs the midgard's daemon process.
+var daemonCmd = &cobra.Command{
+	Use:   "daemon",
+	Short: "Run the Midgard daemon",
+	Long:  `Run the Midgard daemon`,
+	Args:  cobra.ExactArgs(0),
+	Run: func(*cobra.Command, []string) {
+		watchdog()
+		m := rpc.NewMidgard()
+		m.Serve()
+	},
+}
+
+func watchdog() {
 	// TODO: we have several remaining task for the daemon:
 	//
 	// 1. register a websocket connection for universal clipboard push
@@ -32,5 +45,5 @@ func Run(*cobra.Command, []string) {
 	// }()
 	//
 	// 2. register to system hotkey, trigger special handlers
-	watch.Clipboard()
+	go watch.Clipboard()
 }

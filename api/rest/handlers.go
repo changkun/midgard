@@ -18,7 +18,17 @@ import (
 	"golang.design/x/midgard/pkg/clipboard"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/utils"
+	"golang.design/x/midgard/pkg/version"
 )
+
+// PingPong is a naive handler for health checking
+func PingPong(c *gin.Context) {
+	c.JSON(http.StatusOK, types.PingOutput{
+		Version:   version.GitVersion,
+		GoVersion: version.GoVersion,
+		BuildTime: version.BuildTime,
+	})
+}
 
 // GetFromUniversalClipboard returns the in-memory clipboard data inside
 // the midgard server

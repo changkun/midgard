@@ -21,14 +21,14 @@ var (
 // Config is a combination of all possible midgard configuration.
 type Config struct {
 	Title  string  `yaml:"title"`
+	Domain string  `yaml:"domain"`
 	Server *Server `yaml:"server"`
 	Daemon *Daemon `yaml:"daemon"`
 }
 
 // Server is the midgard server side configuration
 type Server struct {
-	HTTP  string `yaml:"http"`
-	RPC   string `yaml:"rpc"`
+	Addr  string `yaml:"addr"`
 	Mode  string `yaml:"mode"`
 	Store struct {
 		Prefix string `yaml:"prefix"`
@@ -42,10 +42,8 @@ type Server struct {
 
 // Daemon is the midgard daemon configuration
 type Daemon struct {
-	ServerAddr struct {
-		HTTP string `yaml:"http"`
-		RPC  string `yaml:"rpc"`
-	} `yaml:"server_addr"`
+	Addr   string `yaml:"addr"`
+	Server string `yaml:"serfver"`
 }
 
 // S returns the midgard server configuration

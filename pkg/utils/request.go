@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.design/x/midgard/config"
@@ -29,6 +30,10 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 		body, err = json.Marshal(data)
 	}
 
+	if !strings.HasPrefix(api, "https://") || !strings.HasPrefix(api, "http://") {
+		api = "http://" + api
+	}
+
 	c := &http.Client{}
 	req, err := http.NewRequest(method, api, bytes.NewBuffer(body))
 	req.SetBasicAuth(config.Get().Server.Auth.User, config.Get().Server.Auth.Pass)
@@ -44,7 +49,7 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 // Connect connects to a midgard client
 func Connect(callback func(ctx context.Context, c proto.MidgardClient)) {
 	// TODO: authentication.
-	conn, err := grpc.Dial(config.D().ServerAddr.RPC, grpc.WithInsecure())
+	conn, err := grpc.Dial(config.D().Addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: \n\t%v", err)
 	}

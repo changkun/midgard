@@ -12,9 +12,9 @@ and global resource namespace allocation.
 
 <!-- https://en.wikipedia.org/wiki/Box-drawing_character -->
 ```
-cli <---> daemon <-----┐   via RPC/Websocket             via HTTP 
-                       ├-------- /~/ --------> server <------------> public
-cli <---> daemon <-----┘                         ^
+cli <-------> daemon <-----┐  via HTTP/Websocket             via HTTP 
+       RPC                 ├-------- /~/ --------> server <------------> public
+cli <-------> daemon <-----┘                         ^
  |                                               |
  └- - - - - - - - - - - - - - - - - - - - - - - -┘
                     via RPC/Websocket

@@ -4,6 +4,24 @@
 
 package types
 
+import "golang.design/x/midgard/config"
+
+// Endpoints
+var (
+	ClipboardEndpoint   = config.Get().Domain + "/midgard/api/v1/clipboard"
+	AllocateURLEndpoint = config.Get().Domain + "/midgard/api/v1/allocate"
+)
+
+// PingInput is the input for /ping
+type PingInput struct{}
+
+// PingOutput is the output for /ping
+type PingOutput struct {
+	Version   string `json:"version"`
+	GoVersion string `json:"go_version"`
+	BuildTime string `json:"build_time"`
+}
+
 // GetFromUniversalClipboardInput is the standard input format of
 // the universal clipboard put request.
 type GetFromUniversalClipboardInput struct {
