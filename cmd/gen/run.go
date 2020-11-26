@@ -31,5 +31,5 @@ func run(_ *cobra.Command, args []string) {
 	if len(args) > 0 {
 		uri = args[0]
 	}
-	cli.AllocateURLgRPC(uri, fpath)
+	cli.AllocateURL(uri, fpath)
 }
