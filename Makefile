@@ -9,17 +9,16 @@ IMAGE = midgard
 BINARY = midgard
 TARGET = -o $(BINARY)
 MIDGARD_HOME = golang.design/x/midgard
-BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/cmd/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/cmd/version.BuildTime=$(BUILDTIME)"
+BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/pkg/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/pkg/version.BuildTime=$(BUILDTIME)"
 BUILD_FLAGS = $(TARGET) $(BUILD_SETTINGS) -mod=vendor
 
 all:
-	go generate ./...
 	go build $(BUILD_FLAGS)
 install:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
          google.golang.org/grpc/cmd/protoc-gen-go-grpc
-run:
-	./$(BINARY) -s
+gen:
+	go generate ./...
 build:
 	go generate ./...
 	GOOS=linux go build $(BUILD_FLAGS)
