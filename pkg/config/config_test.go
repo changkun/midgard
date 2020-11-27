@@ -6,18 +6,13 @@ package config_test
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
-	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/pkg/config"
 )
 
 func TestParseConfig(t *testing.T) {
-	os.Setenv("MIDGARD_CONF", "../config.yml")
-	t.Cleanup(func() {
-		os.Setenv("MIDGARD_CONF", "")
-	})
 	conf := config.Get()
 	fmt.Println(conf)
 

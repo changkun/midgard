@@ -7,7 +7,7 @@ package types
 import (
 	"encoding/json"
 
-	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/pkg/config"
 )
 
 // Endpoints

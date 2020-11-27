@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/clipboard"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/utils"

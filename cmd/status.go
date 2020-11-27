@@ -11,7 +11,7 @@ import (
 	"net/http"
 
 	"github.com/spf13/cobra"
-	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/term"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/types/proto"

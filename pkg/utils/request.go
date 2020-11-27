@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/types/proto"
 	"google.golang.org/grpc"
 )

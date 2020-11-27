@@ -81,7 +81,7 @@ func (c *Config) parse() {
 		if !ok {
 			log.Fatalf("cannot get runtime caller")
 		}
-		p := path.Join(path.Dir(filename), "../config.yml")
+		p := path.Join(path.Dir(filename), "../../config.yml")
 		d, err = ioutil.ReadFile(p)
 		if err != nil {
 			log.Fatalf("cannot read configuration, err: %v\n", err)

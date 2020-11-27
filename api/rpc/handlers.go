@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/clipboard"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/types/proto"

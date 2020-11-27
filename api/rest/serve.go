@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.design/x/midgard/config"
+	"golang.design/x/midgard/pkg/config"
 )
 
 // Midgard is the midgard server that serves all API endpoints.
