@@ -10,7 +10,6 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"golang.design/x/midgard/config"
 	"golang.design/x/midgard/pkg/clipboard"
 	"golang.design/x/midgard/pkg/types/proto"
 	"golang.design/x/midgard/pkg/utils"
@@ -51,9 +50,8 @@ func allocate(dstpath, srcpath string) {
 			log.Fatalf("cannot interact with midgard daemon, err:\n%v", err)
 		}
 		if out.URL != "" {
-			url := config.Get().Domain + out.URL
-			clipboard.Write(utils.StringToBytes(url))
-			fmt.Println(url)
+			clipboard.Write(utils.StringToBytes(out.URL))
+			fmt.Println(out.URL)
 		} else {
 			fmt.Printf("%v\n", out.Message)
 		}

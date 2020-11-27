@@ -3,8 +3,8 @@
 
 - [ ] installation script for daemon process
 - [ ] register keyboard hotkey
-- [ ] authenticated gRPC calls
-- [x] ~~OAuth/JWT authentication?~~ basic auth with maximum failure control
+- [x] authenticated gRPC calls: no need because rpc are served from local
+- [x] basic auth with maximum failure control
 - [ ] Better clipboard listener, implement X11 convension
 - [ ] websocket clipboard push registration/notification
 - [ ] UPDATE/DELETE existing resource

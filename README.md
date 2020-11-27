@@ -9,7 +9,7 @@ In order to setup `midgard`, you must configure the two `midgard` components:
 
 ### `midgard` Server
 
-`midgard` server should be deployed on a server, one can use the following command:
+`midgard` server should be **deployed on a server**, one can use the following command:
 
 ```sh
 $ midgard server
@@ -17,7 +17,7 @@ $ midgard server
 
 ### `midgard` Daemon
 
-`midgard` daemon process runs on your local machine, it responsible for
+`midgard` daemon process **runs on your local machine**, it responsible for
 listening the clipboard, hotkey, and server push events.
 
 ```sh
@@ -26,34 +26,22 @@ $ midgard daemon
 
 ### Configuration
 
-```yaml
----
-title: "The golang.design Initiative"
-
-# server includes all midgard server side settings
-# these settings are only used in server mode (run under `midgard serve`)
-server:
-  http: :8080
-  rpc: :8081
-  mode: debug # or debug/release/test
-  store:
-    prefix: /fs  # this will be your namespace prefix, i.e. golang.design/midgard/fs/*
-    path: ./data # this is where your data stored on your server
-  auth:
-    # the following two configures your midgard credentials
-    user: golang-design
-    pass: aBWJnteJbt!j3G!qehLnJmbcgLqkkXuEusz9m4@JeqUqwZD*Dc
-
-# daemon includes all midgard daemon settings
-# these settings are only used in daemon mode (run under `midgard daemon`)
-daemon:
-  server_addr: https://golang.design
-```
+See [config.yml](./config.yml)
 
 ## Usage
 
 `midgard` command line interface (CLI) offers several command to interact
 with the midgard server and daemon.
+
+### Status check
+
+Status check gives you option to check if everything is setup correctly:
+
+```sh
+$ midgard status
+server status: OK
+daemon status: OK
+```
 
 ### Allocate A Global URL
 
@@ -96,6 +84,15 @@ clipboard so that you can immediately paste to anywhere you want.
 
 Furthermore, with the built-in universal clipboard, you can even share
 your clipboard cross platforms (e.g. between Mac and Linux).
+
+## iOS Shortcuts support
+
+- `midgard-getclipboard`: https://www.icloud.com/shortcuts/501fe001ebcc444aad1517fdccdbd740
+- `midgard-putclipboard`: https://www.icloud.com/shortcuts/587ae52bb5b447e699eb8876107b2e31
+
+With these shortcuts, you can create an automation that runs
+the `midgard-getclipboard` when an application is opened (or multiples),
+so that the clipboard is fetch from the midgard server automatically.
 
 ## Contributes
 

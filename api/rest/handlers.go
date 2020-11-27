@@ -80,6 +80,8 @@ func PutToUniversalClipboard(c *gin.Context) {
 	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{
 		Message: "clipboard data is saved.",
 	})
+
+	// TODO: notify all daemons
 }
 
 // AllocateURL generates an universal access URL for the requested resource.

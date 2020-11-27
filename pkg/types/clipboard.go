@@ -11,11 +11,14 @@ type ClipboardData struct {
 }
 
 // ClipboardDataType indicates clipboard data type
-type ClipboardDataType int
+//
+// Note: We use string for the data type because this is better
+// for post body in iOS shortcut.
+type ClipboardDataType string
 
 const (
 	// ClipboardDataTypePlainText indicates plain text data type
-	ClipboardDataTypePlainText ClipboardDataType = iota
+	ClipboardDataTypePlainText ClipboardDataType = "text"
 	// ClipboardDataTypeImagePNG indicates image/png data type
-	ClipboardDataTypeImagePNG
+	ClipboardDataTypeImagePNG = "image/png"
 )
