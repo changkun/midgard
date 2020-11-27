@@ -22,7 +22,7 @@ import (
 )
 
 // PingPong is a naive handler for health checking
-func PingPong(c *gin.Context) {
+func (m *Midgard) PingPong(c *gin.Context) {
 	c.JSON(http.StatusOK, types.PingOutput{
 		Version:   version.GitVersion,
 		GoVersion: version.GoVersion,
@@ -32,7 +32,7 @@ func PingPong(c *gin.Context) {
 
 // GetFromUniversalClipboard returns the in-memory clipboard data inside
 // the midgard server
-func GetFromUniversalClipboard(c *gin.Context) {
+func (m *Midgard) GetFromUniversalClipboard(c *gin.Context) {
 	t, buf := clipboard.Universal.Read()
 
 	var raw string
@@ -52,7 +52,7 @@ func GetFromUniversalClipboard(c *gin.Context) {
 
 // PutToUniversalClipboard saves data to the in-memory clipboard data
 // inside the midgrad server.
-func PutToUniversalClipboard(c *gin.Context) {
+func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 	var b types.PutToUniversalClipboardInput
 
 	err := c.ShouldBindJSON(&b)
@@ -81,13 +81,17 @@ func PutToUniversalClipboard(c *gin.Context) {
 		Message: "clipboard data is saved.",
 	})
 
-	// TODO: notify all daemons
+	if b.DaemonID == "" {
+		b.DaemonID = c.ClientIP()
+	}
+
+	m.notifyOtherDaemons(b.DaemonID, types.ActionClipboardChanged)
 }
 
 // AllocateURL generates an universal access URL for the requested resource.
 // The requested resource can be an attached data, the midgard universal
 // clipboard, and etc.
-func AllocateURL(c *gin.Context) {
+func (m *Midgard) AllocateURL(c *gin.Context) {
 	var in types.AllocateURLInput
 	err := c.ShouldBindJSON(&in)
 	if err != nil {

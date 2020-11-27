@@ -7,9 +7,12 @@ package watch
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"log"
 	"net/http"
 
+	"github.com/gorilla/websocket"
+	"golang.design/x/midgard/config"
 	"golang.design/x/midgard/pkg/clipboard"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/utils"
@@ -17,6 +20,55 @@ import (
 
 // Clipboard listen to the clipboard for a given data
 func Clipboard() {
+	// connect to midgard server via websocket
+	creds := config.Get().Server.Auth.User + ":" + config.Get().Server.Auth.Pass
+	token := base64.StdEncoding.EncodeToString(utils.StringToBytes(creds))
+	h := http.Header{"Authorization": {"Basic " + token}}
+
+	// FIXME: is ws:// safe with basic auth?
+	conn, _, err := websocket.DefaultDialer.Dial("ws://"+types.ClipboardWSEndpoint, h)
+	if err != nil {
+		log.Print("failed to connect clipboard channel", err)
+		return
+	}
+	defer conn.Close()
+
+	conn.WriteMessage(websocket.BinaryMessage, (&types.SubscribeMessage{
+		Action: types.ActionRegister,
+	}).Encode())
+	_, msg, err := conn.ReadMessage()
+	var sm types.SubscribeMessage
+	err = json.Unmarshal(msg, &sm)
+	if err != nil {
+		log.Print("failed to connect clipboard channel", err)
+		return
+	}
+
+	// message loop
+	go func(id string) {
+		for {
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				log.Printf("failed to read message from the clipboard channel: %v", err)
+				return
+			}
+			var sm types.SubscribeMessage
+			err = json.Unmarshal(msg, &sm)
+			if err != nil {
+				log.Printf("failed to read message: %v", err)
+			}
+			switch sm.Action {
+			case types.ActionClipboardChanged:
+				// TODO:
+				// 1. read from universal
+
+				// 2. update local
+				clipboard.Write(utils.StringToBytes("working."))
+			}
+		}
+	}(sm.DaemonID)
+	log.Println("daemon id:", sm.DaemonID)
+
 	// run daemon and watch clipboard data
 	textCh := make(chan []byte, 1)
 	clipboard.Watch(context.Background(), types.ClipboardDataTypePlainText, textCh)
@@ -34,9 +86,11 @@ func Clipboard() {
 				continue
 			}
 
-			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, &types.ClipboardData{
-				Type: types.ClipboardDataTypePlainText, Data: utils.BytesToString(text),
-			})
+			d := &types.PutToUniversalClipboardInput{}
+			d.Type = types.ClipboardDataTypePlainText
+			d.Data = utils.BytesToString(text)
+			d.DaemonID = sm.DaemonID
+			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, d)
 			if err != nil {
 				log.Printf("failed to sync clipboard, err: %v", err)
 			}
@@ -44,10 +98,12 @@ func Clipboard() {
 			if !ok {
 				return
 			}
-			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, &types.ClipboardData{
-				Type: types.ClipboardDataTypeImagePNG,
-				Data: base64.StdEncoding.EncodeToString(img),
-			})
+			d := &types.PutToUniversalClipboardInput{}
+			d.Type = types.ClipboardDataTypeImagePNG
+			d.Data = base64.StdEncoding.EncodeToString(img)
+			d.DaemonID = sm.DaemonID
+
+			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, d)
 			if err != nil {
 				log.Printf("failed to sync clipboard, err: %v", err)
 			}

@@ -5,6 +5,7 @@
 package rest
 
 import (
+	"container/list"
 	"context"
 	"log"
 	"net/http"
@@ -20,11 +21,14 @@ import (
 // Midgard is the midgard server that serves all API endpoints.
 type Midgard struct {
 	s *http.Server
+
+	mu      sync.Mutex
+	daemons *list.List
 }
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{}
+	return &Midgard{daemons: list.New()}
 }
 
 // Serve serves Midgard RESTful APIs.
@@ -69,16 +73,17 @@ func (m *Midgard) routers() (r *gin.Engine) {
 
 	r = gin.Default()
 	mg := r.Group("/midgard")
-	mg.GET("/ping", PingPong)
+	mg.GET("/ping", m.PingPong)
 	mg.Static(config.S().Store.Prefix, config.S().Store.Path)
 
 	v1 := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
 		config.S().Auth.User: config.S().Auth.Pass,
 	}))
 	{
-		v1.GET("/clipboard", GetFromUniversalClipboard)
-		v1.POST("/clipboard", PutToUniversalClipboard)
-		v1.PUT("/allocate", AllocateURL)
+		v1.GET("/clipboard", m.GetFromUniversalClipboard)
+		v1.POST("/clipboard", m.PutToUniversalClipboard)
+		v1.GET("/clipboard/ws", m.SubscribeClipboard)
+		v1.PUT("/allocate", m.AllocateURL)
 	}
 
 	return

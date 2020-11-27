@@ -66,7 +66,7 @@ func (m *Midgard) serveRPC() {
 		grpc.ConnectionTimeout(time.Minute*5),
 	)
 	proto.RegisterMidgardServer(m.s, &Server{})
-	log.Printf("midgard daemon running at rpc://%s", config.D().Addr)
+	log.Printf("daemon running at rpc://%s", config.D().Addr)
 	if err := m.s.Serve(l); err != nil {
 		log.Fatalf("fail to serve midgard daemon, err: %v", err)
 	}
