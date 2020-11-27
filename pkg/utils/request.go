@@ -31,7 +31,11 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 	}
 
 	if !strings.HasPrefix(api, "https://") || !strings.HasPrefix(api, "http://") {
-		api = "http://" + api
+		if strings.Contains(config.Get().Domain, "localhost") {
+			api = "http://" + api
+		} else {
+			api = "https://" + api
+		}
 	}
 
 	c := &http.Client{}

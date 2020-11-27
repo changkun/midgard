@@ -39,6 +39,7 @@ func (m *Midgard) SubscribeClipboard(c *gin.Context) {
 	upgrader := websocket.Upgrader{}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		log.Printf("failed to upgrade the connection: %v", err)
 		return
 	}
 
@@ -54,6 +55,7 @@ func (m *Midgard) SubscribeClipboard(c *gin.Context) {
 			Message: "invalid message format",
 		}).Encode())
 		conn.Close()
+		log.Printf("failed to parse handshake information: %v", err)
 		return
 	}
 

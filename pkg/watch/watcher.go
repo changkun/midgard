@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"golang.design/x/midgard/config"
@@ -25,8 +26,13 @@ func Clipboard() {
 	token := base64.StdEncoding.EncodeToString(utils.StringToBytes(creds))
 	h := http.Header{"Authorization": {"Basic " + token}}
 
-	// FIXME: is ws:// safe with basic auth?
-	conn, _, err := websocket.DefaultDialer.Dial("ws://"+types.ClipboardWSEndpoint, h)
+	api := types.ClipboardWSEndpoint
+	if strings.Contains(config.Get().Domain, "localhost") {
+		api = "ws://" + api
+	} else {
+		api = "wss://" + api
+	}
+	conn, _, err := websocket.DefaultDialer.Dial(api, h)
 	if err != nil {
 		log.Print("failed to connect clipboard channel", err)
 		return
