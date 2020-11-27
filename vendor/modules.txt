@@ -23,6 +23,9 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/uuid v1.1.2
 ## explicit
 github.com/google/uuid
+# github.com/gorilla/websocket v1.4.2
+## explicit
+github.com/gorilla/websocket
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/json-iterator/go v1.1.9
