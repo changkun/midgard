@@ -67,17 +67,24 @@ NSInteger clipboard_change_count() {
 import "C"
 import (
 	"context"
-	"runtime"
+	"sync"
 	"time"
 	"unsafe"
 
 	"golang.design/x/midgard/pkg/types"
 )
 
+var lock sync.Mutex
+
 // Read reads the clipboard data of a given resource type.
 // It returns a buf that containing the clipboard data, and ok indicates
 // whether the read is success or fail.
 func Read(t types.ClipboardDataType) (buf []byte) {
+	// Concurrent read/write clipboard on macOS can cause crashes
+	// One must serialize the operation to the clipboard.
+	lock.Lock()
+	defer lock.Unlock()
+
 	var (
 		data unsafe.Pointer
 		n    C.uint
@@ -91,16 +98,23 @@ func Read(t types.ClipboardDataType) (buf []byte) {
 	if data == nil || n == 0 {
 		return nil
 	}
-	// FIXME: somtimes crash because of double free
-	// defer C.free(unsafe.Pointer(data))
+	defer C.free(unsafe.Pointer(data)) // malloced from C
 	return C.GoBytes(data, C.int(n))
 }
 
 // Write writes the given buf as typ to system clipboard.
 // It returns true if the write is success.
 func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
-	var ok C.int
+	// Concurrent read/write clipboard on macOS can cause crashes
+	// One must serialize the operation to the clipboard.
+	lock.Lock()
+	defer lock.Unlock()
 
+	if buf == nil {
+		return true
+	}
+
+	var ok C.int
 	switch t {
 	case types.ClipboardDataTypePlainText:
 		ok = C.clipboard_write_string(unsafe.Pointer(&buf[0]),
@@ -129,9 +143,6 @@ func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 // TODO: Alternatively, we could watch keyboard hotkeys, for instance,
 // a double cmd+c triggers the watch? Needs invesgitation.
 func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
-	// FIXME: not sure if this is necesary.
-	runtime.LockOSThread()
-
 	// we try to watch the clipboard every second, this should be enough
 	// for the watch purpose. If the user is too fast, meaning be able
 	// to paste the content within a second, then it is very unfortunate.

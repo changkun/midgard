@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"golang.design/x/midgard/clipboard"
-	"golang.design/x/midgard/types"
-	"golang.design/x/midgard/utils"
+	"golang.design/x/midgard/pkg/clipboard"
+	"golang.design/x/midgard/pkg/types"
+	"golang.design/x/midgard/pkg/utils"
 )
 
 func TestLocalClipboardImage(t *testing.T) {

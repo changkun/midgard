@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
+	"runtime"
 	"sync"
 
 	"gopkg.in/yaml.v3"
@@ -75,7 +77,12 @@ func (c *Config) parse() {
 	f := os.Getenv("MIDGARD_CONF")
 	d, err := ioutil.ReadFile(f)
 	if err != nil {
-		d, err = ioutil.ReadFile("./config.yml")
+		_, filename, _, ok := runtime.Caller(1)
+		if !ok {
+			log.Fatalf("cannot get runtime caller")
+		}
+		p := path.Join(path.Dir(filename), "../config.yml")
+		d, err = ioutil.ReadFile(p)
 		if err != nil {
 			log.Fatalf("cannot read configuration, err: %v\n", err)
 		}
