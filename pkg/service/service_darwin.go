@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"os/user"
 	"text/template"
+
+	"github.com/kardianos/osext"
 )
 
 func newService(c *config) (s *darwinLaunchdService, err error) {
@@ -50,13 +52,8 @@ func (s *darwinLaunchdService) Install() error {
 	}
 	defer f.Close()
 
-	dir, err := os.Getwd()
+	path, err := osext.Executable()
 	if err != nil {
-		return err
-	}
-	path := dir + "/" + s.name
-	_, err = os.Stat(path)
-	if os.IsNotExist(err) {
 		return fmt.Errorf("%s executable does not exists, err: %w", s.name, err)
 	}
 

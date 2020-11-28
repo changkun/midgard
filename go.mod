@@ -7,6 +7,7 @@ require (
 	github.com/golang/protobuf v1.4.1
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/spf13/cobra v1.1.1
 	google.golang.org/grpc v1.27.0
 	google.golang.org/protobuf v1.25.0

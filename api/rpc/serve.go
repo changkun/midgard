@@ -56,7 +56,7 @@ const maxMessageSize = 10 << 20 // 10 MB
 func (m *Midgard) serveRPC() {
 	l, err := net.Listen("tcp", config.D().Addr)
 	if err != nil {
-		log.Fatalf("fail to init midgard daemon, err: %v", err)
+		log.Fatalf("fail to initalize midgard daemon, err: %v", err)
 	}
 
 	m.s = grpc.NewServer(

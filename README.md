@@ -2,17 +2,27 @@
 
 `midgard` is a lightweight solution for managing personal resource namespace.
 
-## Setup
+## Installation
 
 In order to setup `midgard`, you must configure the two `midgard` components:
 `midgard` server and `midgard` daemon.
 
 ### `midgard` Server
 
-`midgard` server should be **deployed on a server**, one can use the following command:
+`midgard` server should be **deployed on a server**, to enable midgard
+server, one can:
 
 ```sh
-$ midgard server
+$ sudo midgard server install   # install midgard server as system service
+$ sudo midgard server start     # start midgard server after installation
+$ sudo midgard server stop      # stop the running midgard server
+$ sudo midgard server uninstall # uninstall midgard from system service
+```
+
+Or, if you just want run midgard server directly:
+
+```sh
+$ midgard server ryb            # run midgard server directly
 ```
 
 ### `midgard` Daemon
@@ -21,12 +31,24 @@ $ midgard server
 listening the clipboard, hotkey, and server push events.
 
 ```sh
-$ midgard daemon
+$ sudo midgard daemon install   # install midgard daemon as system service
+$ sudo midgard daemon start     # start midgard daemon after installation
+$ sudo midgard daemon stop      # stop the running midgard daemon
+$ sudo midgard daemon uninstall # uninstall midgard from system service
+```
+
+Or, if you just want run midgard daemon directly:
+
+```sh
+$ midgard daemon run            # run midgard daemon directly
 ```
 
 ### Configuration
 
-See [config.yml](./config.yml)
+By default, midgard reads configuration from `./config.yml`, but
+you can always override this behavior by environment variable `MIDGARD_CONF`
+to specify your customized configuration. For the detailed configuration
+items, see [config.yml](./config.yml).
 
 ## Usage
 
