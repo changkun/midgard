@@ -11,11 +11,12 @@ import (
 var log service.Logger
 
 func main() {
-	var name = "midgard"
-	var displayName = "midgard service test"
-	var desc = "midgard service tests description"
+	var name = "test"
+	var displayName = "test is test service"
+	var desc = "test service tests description"
+	var args = "daemon"
 
-	var s, err = service.NewService(name, displayName, desc)
+	var s, err = service.NewService(name, displayName, desc, args)
 	log = s
 
 	if err != nil {

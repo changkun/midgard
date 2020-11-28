@@ -1,7 +1,5 @@
 package service
 
-package service
-
 import (
 	"bytes"
 	"fmt"
@@ -13,8 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-
-	"github.com/kardianos/osext"
 )
 
 const (
@@ -57,7 +53,7 @@ func getFlavor() (initFlavor, error) {
 	return initSystemV, nil
 }
 
-func newService(c *Config) (Service, error) {
+func newService(c *config) (Service, error) {
 	var err error
 	flavor, err := getFlavor()
 	if err != nil {
@@ -68,6 +64,7 @@ func newService(c *Config) (Service, error) {
 		name:        c.Name,
 		displayName: c.DisplayName,
 		description: c.Description,
+		args:        c.Args,
 	}
 	s.logger, err = syslog.New(syslog.LOG_INFO, s.name)
 	if err != nil {
@@ -77,9 +74,9 @@ func newService(c *Config) (Service, error) {
 }
 
 type linuxService struct {
-	flavor                         initFlavor
-	name, displayName, description string
-	logger                         *syslog.Writer
+	flavor                               initFlavor
+	name, displayName, description, args string
+	logger                               *syslog.Writer
 }
 
 type initFlavor uint8
@@ -127,7 +124,7 @@ func (s *linuxService) Install() error {
 	confPath := s.flavor.ConfigPath(s.name)
 	_, err := os.Stat(confPath)
 	if err == nil {
-		return fmt.Errorf("Init already exists: %s", confPath)
+		return fmt.Errorf("service already exists: %s", confPath)
 	}
 
 	f, err := os.Create(confPath)
@@ -136,19 +133,26 @@ func (s *linuxService) Install() error {
 	}
 	defer f.Close()
 
-	path, err := osext.Executable()
+	dir, err := os.Getwd()
 	if err != nil {
 		return err
+	}
+	path := dir + "/" + s.name
+	_, err = os.Stat(path)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("%s executable does not exists, err: %w", s.name, err)
 	}
 
 	var to = &struct {
 		Display     string
 		Description string
 		Path        string
+		Args        string
 	}{
 		s.displayName,
 		s.description,
 		path,
+		s.args,
 	}
 
 	err = s.flavor.GetTemplate().Execute(f, to)
@@ -202,11 +206,9 @@ func (s *linuxService) Run(onStart, onStop func() error) (err error) {
 		err = onStop()
 	}()
 
-	sigChan := make(chan os.Signal, 3)
-
-	signal.Notify(sigChan, os.Interrupt, os.Kill)
-
-	<-sigChan
+	sig := make(chan os.Signal, 3)
+	signal.Notify(sig, os.Interrupt, os.Kill)
+	<-sig
 
 	return nil
 }
@@ -259,7 +261,7 @@ const systemVScript = `#!/bin/sh
 # Description:       {{.Description}}
 ### END INIT INFO
 
-cmd="{{.Path}}"
+cmd="{{.Path}} {{.Args}}"
 
 name=$(basename $0)
 pid_file="/var/run/$name.pid"
@@ -344,8 +346,6 @@ description     "{{.Display}}"
 start on filesystem or runlevel [2345]
 stop on runlevel [!2345]
 
-#setuid username
-
 # stop the respawn is process fails to start 5 times within 5 minutes
 respawn
 respawn limit 5 300
@@ -354,11 +354,11 @@ umask 022
 console none
 
 pre-start script
-    test -x {{.Path}} || { stop; exit 0; }
+    test -x {{.Path}} {{.Args}} || { stop; exit 0; }
 end script
 
 # Start
-exec {{.Path}}
+exec {{.Path}} {{.Args}}
 `
 
 const systemdScript = `[Unit]
@@ -367,7 +367,7 @@ ConditionFileIsExecutable={{.Path}}
 After=network.target
 
 [Service]
-ExecStart={{.Path}}
+ExecStart={{.Path}} {{.Args}}
 # respawn process on crash after a 3s wait
 # if fails to start 5 times within 5 minutes, stop trying
 Restart=on-failure

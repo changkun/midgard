@@ -56,27 +56,20 @@ type Logger interface {
 // and should not contain spaces. Display name is the pretty print
 // name. The description is an arbitrary string used to describe the
 // service.
-func NewService(name, displayName, description string) (Service, error) {
+func NewService(name, displayName, description, args string) (Service, error) {
 	return newService(&config{
 		Name:        name,
 		DisplayName: displayName,
 		Description: description,
+		Args:        args,
 	})
 }
 
 type config struct {
-	Name, DisplayName, Description string
-
-	DarwinIntervalJob bool // Job is an interval job in launchd
-	DarwinInterval    int  // Interval to use for interval job
-
-	UserName  string   // Run as username.
-	Arguments []string // Run with arguments.
-
-	DependsOn        []string // Other services that this depends on.
-	WorkingDirectory string   // Service working directory.
-	ChRoot           string
-	UserService      bool // Install as a current user service.
+	Name        string
+	DisplayName string
+	Description string
+	Args        string
 
 	// System specific parameters.
 	KV KeyValue

@@ -1,5 +1,3 @@
-// +build darwin
-
 package service
 
 import (
@@ -10,11 +8,7 @@ import (
 	"os/signal"
 	"os/user"
 	"text/template"
-
-	"github.com/kardianos/osext"
 )
-
-const maxPathSize = 32 * 1024
 
 func newService(c *config) (s *darwinLaunchdService, err error) {
 	s = &darwinLaunchdService{
@@ -34,25 +28,20 @@ type darwinLaunchdService struct {
 	logger *syslog.Writer
 }
 
-func (s *darwinLaunchdService) getServiceFilePath() (string, error) {
-	if s.UserService {
-		u, err := user.Current()
-		if err != nil {
-			return "", err
-		}
-		return u.HomeDir + "/Library/LaunchAgents/" + s.Name + ".plist", nil
+func (s *darwinLaunchdService) getServiceFilePath() string {
+	u, err := user.Current()
+	if err != nil {
+		return "/Library/LaunchDaemons/" + s.Name + ".plist"
 	}
-	return "/Library/LaunchDaemons/" + s.Name + ".plist", nil
+	// need sudo?
+	return u.HomeDir + "/Library/LaunchAgents/" + s.Name + ".plist"
 }
 
 func (s *darwinLaunchdService) Install() error {
-	confPath, err := s.getServiceFilePath()
-	if err != nil {
-		return err
-	}
+	confPath := s.getServiceFilePath()
 	_, err = os.Stat(confPath)
 	if err == nil {
-		return fmt.Errorf("Init already exists: %s", confPath)
+		return fmt.Errorf("service already exists: %s", confPath)
 	}
 
 	f, err := os.Create(confPath)
@@ -61,23 +50,27 @@ func (s *darwinLaunchdService) Install() error {
 	}
 	defer f.Close()
 
-	path, err := osext.Executable()
+	dir, err := os.Getwd()
 	if err != nil {
 		return err
+	}
+	path := dir + "/" + s.name
+	_, err = os.Stat(path)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("%s executable does not exists, err: %w", s.name, err)
 	}
 
 	var to = &struct {
 		*config
-		Path           string
-		DarwinInterval int
+		Path string
 
 		KeepAlive, RunAtLoad bool
 	}{
-		config:         s.config,
-		Path:           path,
-		DarwinInterval: s.DarwinInterval,
-		KeepAlive:      s.KV.bool("KeepAlive", true),
-		RunAtLoad:      s.KV.bool("RunAtLoad", false),
+		config:    s.config,
+		Path:      path,
+		Args:      s.Args,
+		KeepAlive: s.KV.bool("KeepAlive", true),
+		RunAtLoad: s.KV.bool("RunAtLoad", false),
 	}
 
 	functions := template.FuncMap{
@@ -96,26 +89,17 @@ func (s *darwinLaunchdService) Install() error {
 func (s *darwinLaunchdService) Remove() error {
 	s.Stop()
 
-	confPath, err := s.getServiceFilePath()
-	if err != nil {
-		return err
-	}
+	confPath := s.getServiceFilePath()
 	return os.Remove(confPath)
 }
 
 func (s *darwinLaunchdService) Start() error {
-	confPath, err := s.getServiceFilePath()
-	if err != nil {
-		return err
-	}
+	confPath := s.getServiceFilePath()
 	cmd := exec.Command("launchctl", "load", confPath)
 	return cmd.Run()
 }
 func (s *darwinLaunchdService) Stop() error {
-	confPath, err := s.getServiceFilePath()
-	if err != nil {
-		return err
-	}
+	confPath := s.getServiceFilePath()
 	cmd := exec.Command("launchctl", "unload", confPath)
 	return cmd.Run()
 }
@@ -157,7 +141,7 @@ var launchdConfigPersistent = `<?xml version='1.0' encoding='UTF-8'?>
 <key>ProgramArguments</key>
 <array>
 		<string>{{.Path}}</string>
-		<string>daemon</string>
+		<string>{{.Args}}</string>
 </array>
 <key>KeepAlive</key><{{bool .KeepAlive}}/>
 <key>RunAtLoad</key><{{bool .RunAtLoad}}/>
