@@ -56,7 +56,7 @@ type Logger interface {
 // and should not contain spaces. Display name is the pretty print
 // name. The description is an arbitrary string used to describe the
 // service.
-func NewService(name, displayName, description, args string) (Service, error) {
+func NewService(name, displayName, description string, args []string) (Service, error) {
 	return newService(&config{
 		Name:        name,
 		DisplayName: displayName,
@@ -69,7 +69,7 @@ type config struct {
 	Name        string
 	DisplayName string
 	Description string
-	Args        string
+	Args        []string
 
 	// System specific parameters.
 	KV KeyValue

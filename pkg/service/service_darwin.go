@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"os/user"
+	"strings"
 	"text/template"
 
 	"github.com/kardianos/osext"
@@ -58,13 +59,14 @@ func (s *darwinLaunchdService) Install() error {
 
 	var to = &struct {
 		*config
-		Path, Args string
+		Path string
+		Args string
 
 		KeepAlive, RunAtLoad bool
 	}{
 		config:    s.config,
 		Path:      path,
-		Args:      s.Args,
+		Args:      strings.Join(s.Args, "</string><string>"),
 		KeepAlive: s.KV.bool("KeepAlive", true),
 		RunAtLoad: s.KV.bool("RunAtLoad", false),
 	}

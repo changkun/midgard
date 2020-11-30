@@ -76,9 +76,10 @@ func newService(c *config) (Service, error) {
 }
 
 type linuxService struct {
-	flavor                               initFlavor
-	name, displayName, description, args string
-	logger                               *syslog.Writer
+	flavor                         initFlavor
+	name, displayName, description string
+	args                           []string
+	logger                         *syslog.Writer
 }
 
 type initFlavor uint8
@@ -149,7 +150,7 @@ func (s *linuxService) Install() error {
 		s.displayName,
 		s.description,
 		path,
-		s.args,
+		strings.Join(s.args, " "),
 	}
 
 	err = s.flavor.GetTemplate().Execute(f, to)

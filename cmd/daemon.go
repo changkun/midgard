@@ -25,7 +25,7 @@ var daemonCmd = &cobra.Command{
 			"midgard-daemon",
 			"midgard daemon",
 			"the Midgard daemon process",
-			"daemon run",
+			[]string{"daemon", "run"},
 		)
 		if err != nil {
 			log.Printf("failed to start daemon, err: %v", err)

@@ -24,7 +24,7 @@ var serverCmd = &cobra.Command{
 			"midgard-server",
 			"midgard server",
 			"the Midgard server process",
-			"server run",
+			[]string{"server", "run"},
 		)
 		if err != nil {
 			log.Printf("failed to start server, err: %v", err)
