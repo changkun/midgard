@@ -2,7 +2,7 @@
 // All rights reserved. Use of this source code is governed by
 // a GNU GPL-3.0 license that can be found in the LICENSE file.
 
-package watch
+package rpc
 
 import (
 	"context"
@@ -19,8 +19,7 @@ import (
 	"golang.design/x/midgard/pkg/utils"
 )
 
-// Clipboard listen to the clipboard for a given data
-func Clipboard() {
+func (m *Midgard) wsConnect() {
 	// connect to midgard server via websocket
 	creds := config.Get().Server.Auth.User + ":" + config.Get().Server.Auth.Pass
 	token := base64.StdEncoding.EncodeToString(utils.StringToBytes(creds))
@@ -37,71 +36,83 @@ func Clipboard() {
 		log.Print("failed to connect clipboard channel", err)
 		return
 	}
-	defer conn.Close()
 
-	conn.WriteMessage(websocket.BinaryMessage, (&types.SubscribeMessage{
+	m.ws = conn
+}
+
+func (m *Midgard) wsClose() {
+	m.ws.Close()
+}
+
+func (m *Midgard) wsHandshake() {
+	m.ws.WriteMessage(websocket.BinaryMessage, (&types.SubscribeMessage{
 		Action: types.ActionRegister,
 	}).Encode())
-	_, msg, err := conn.ReadMessage()
+	_, msg, err := m.ws.ReadMessage()
 	var sm types.SubscribeMessage
 	err = json.Unmarshal(msg, &sm)
 	if err != nil {
-		log.Print("failed to connect clipboard channel", err)
+		log.Printf("failed to on handhsake phase: %v", err)
 		return
 	}
+	m.Lock()
+	m.id = sm.DaemonID
+	m.Unlock()
+}
 
-	// message loop
-	go func(id string) {
-		for {
-			_, msg, err := conn.ReadMessage()
+func (m *Midgard) wsListen() {
+	log.Println("daemon id:", m.id)
+	for {
+		_, msg, err := m.ws.ReadMessage()
+		if err != nil {
+			log.Printf("failed to read message from the clipboard channel: %v", err)
+			return
+		}
+		var sm types.SubscribeMessage
+		err = json.Unmarshal(msg, &sm)
+		if err != nil {
+			log.Printf("failed to read message: %v", err)
+			continue
+		}
+		switch sm.Action {
+		case types.ActionClipboardChanged:
+			// read from universal
+			res, err := utils.Request(http.MethodGet, types.ClipboardEndpoint, nil)
 			if err != nil {
-				log.Printf("failed to read message from the clipboard channel: %v", err)
-				// TODO: reconnecting
-				return
-			}
-			var sm types.SubscribeMessage
-			err = json.Unmarshal(msg, &sm)
-			if err != nil {
-				log.Printf("failed to read message: %v", err)
+				log.Printf("failed to read universal clipboard: %v", err)
 				continue
 			}
-			switch sm.Action {
-			case types.ActionClipboardChanged:
-				// 1. read from universal
-				res, err := utils.Request(http.MethodGet, types.ClipboardEndpoint, nil)
-				if err != nil {
-					log.Printf("failed to read universal clipboard: %v", err)
-					continue
-				}
-				var out types.GetFromUniversalClipboardOutput
-				err = json.Unmarshal(res, &out)
-				if err != nil {
-					log.Printf("failed to parse clipboard data: %v", err)
-					continue
-				}
-
-				var raw []byte
-				if out.Type == types.ClipboardDataTypeImagePNG {
-					raw, err = base64.StdEncoding.DecodeString(out.Data)
-					if err != nil {
-						raw = []byte{}
-					}
-				} else {
-					raw = utils.StringToBytes(out.Data)
-				}
-				clipboard.Write(raw)
+			var out types.GetFromUniversalClipboardOutput
+			err = json.Unmarshal(res, &out)
+			if err != nil {
+				log.Printf("failed to parse clipboard data: %v", err)
+				continue
 			}
-		}
-	}(sm.DaemonID)
-	log.Println("daemon id:", sm.DaemonID)
 
-	// run daemon and watch clipboard data
+			// decode and write to local
+			var raw []byte
+			if out.Type == types.ClipboardDataTypeImagePNG {
+				raw, err = base64.StdEncoding.DecodeString(out.Data)
+				if err != nil {
+					raw = []byte{}
+				}
+			} else {
+				raw = utils.StringToBytes(out.Data)
+			}
+			clipboard.Write(raw)
+		}
+	}
+}
+
+func (m *Midgard) watchLocalClipboard(ctx context.Context) {
 	textCh := make(chan []byte, 1)
-	clipboard.Watch(context.Background(), types.ClipboardDataTypePlainText, textCh)
+	clipboard.Watch(ctx, types.ClipboardDataTypePlainText, textCh)
 	imagCh := make(chan []byte, 1)
-	clipboard.Watch(context.Background(), types.ClipboardDataTypeImagePNG, imagCh)
+	clipboard.Watch(ctx, types.ClipboardDataTypeImagePNG, imagCh)
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case text, ok := <-textCh:
 			if !ok {
 				return
@@ -115,7 +126,7 @@ func Clipboard() {
 			d := &types.PutToUniversalClipboardInput{}
 			d.Type = types.ClipboardDataTypePlainText
 			d.Data = utils.BytesToString(text)
-			d.DaemonID = sm.DaemonID
+			d.DaemonID = m.id
 			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, d)
 			if err != nil {
 				log.Printf("failed to sync clipboard, err: %v", err)
@@ -127,7 +138,7 @@ func Clipboard() {
 			d := &types.PutToUniversalClipboardInput{}
 			d.Type = types.ClipboardDataTypeImagePNG
 			d.Data = base64.StdEncoding.EncodeToString(img)
-			d.DaemonID = sm.DaemonID
+			d.DaemonID = m.id
 
 			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, d)
 			if err != nil {

@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"golang.design/x/midgard/api/rpc"
 	"golang.design/x/midgard/pkg/service"
-	"golang.design/x/midgard/pkg/watch"
 )
 
 // daemonCmd runs the midgard's daemon process.
@@ -49,36 +48,10 @@ var daemonCmd = &cobra.Command{
 		case "stop":
 			err = s.Stop()
 		case "run":
-			runDaemon()
+			m := rpc.NewMidgard()
+			m.Serve()
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])
 		}
 	},
-}
-
-func runDaemon() {
-	// TODO: we have several remaining task for the daemon:
-	//
-	// 1. register a websocket connection for universal clipboard push
-	// notification: if the cloud is changed, then it should notify all
-	// subscribers, instead of the following deadloop:
-	//
-	// go func() {
-	// 	url := "http://" + config.Get().Addr.HTTP + "/midgard/api/v1/clipboard"
-	// 	t := time.NewTicker(time.Second * 2)
-	// 	for {
-	// 		select {
-	// 		case <-t.C:
-	// 			_, err := request(http.MethodGet, url, nil)
-	// 			if err != nil {
-	// 				fmt.Println(err)
-	// 			}
-	// 		}
-	// 	}
-	// }()
-	//
-	// 2. register to system hotkey, trigger special handlers
-	go watch.Clipboard()
-	m := rpc.NewMidgard()
-	m.Serve()
 }

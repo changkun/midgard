@@ -48,14 +48,10 @@ var serverCmd = &cobra.Command{
 		case "stop":
 			err = s.Stop()
 		case "run":
-			runServer()
+			m := rest.NewMidgard()
+			m.Serve()
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])
 		}
 	},
-}
-
-func runServer() {
-	m := rest.NewMidgard()
-	m.Serve()
 }

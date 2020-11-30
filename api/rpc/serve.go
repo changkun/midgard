@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"context"
 	"log"
 	"net"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/types/proto"
 	"google.golang.org/grpc"
@@ -19,7 +21,10 @@ import (
 
 // Midgard is the midgard daemon that interact with midgard server.
 type Midgard struct {
-	s *grpc.Server
+	sync.Mutex
+	id string
+	s  *grpc.Server
+	ws *websocket.Conn
 }
 
 // NewMidgard creates a new midgard daemon
@@ -27,12 +32,12 @@ func NewMidgard() *Midgard {
 	return &Midgard{}
 }
 
-// Serve serves Midgard servers, this contains two parts:
-// 1. HTTP server: serves RESTful APIs
-// 2. gRPC server: serves RPC endpoints for the Midgard CLI
+// Serve serves Midgard daemon:
+// 1. maintaining midgard daemon rpc;
+// 2. maintaining midgard daemon to server websocket.
 func (m *Midgard) Serve() {
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		q := make(chan os.Signal, 1)
@@ -42,10 +47,23 @@ func (m *Midgard) Serve() {
 		log.Printf("shutting down midgard daemon ...")
 		m.s.GracefulStop()
 	}()
+	wg.Add(1)
+	go func() {
+		m.wsConnect()
+		m.wsHandshake()
+		m.wsListen()
+		m.wsClose()
+	}()
+	wg.Add(1)
+	go func() {
+		m.watchLocalClipboard(context.Background())
+	}()
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		m.serveRPC()
 	}()
+	wg.Add(1)
 	wg.Wait()
 
 	log.Printf("daemon is down, good bye!")
