@@ -35,13 +35,12 @@ func (s *darwinLaunchdService) getServiceFilePath() string {
 	if err != nil {
 		return "/Library/LaunchDaemons/" + s.Name + ".plist"
 	}
-	// need sudo?
 	return u.HomeDir + "/Library/LaunchAgents/" + s.Name + ".plist"
 }
 
 func (s *darwinLaunchdService) Install() error {
 	confPath := s.getServiceFilePath()
-	_, err = os.Stat(confPath)
+	_, err := os.Stat(confPath)
 	if err == nil {
 		return fmt.Errorf("service already exists: %s", confPath)
 	}
@@ -54,12 +53,12 @@ func (s *darwinLaunchdService) Install() error {
 
 	path, err := osext.Executable()
 	if err != nil {
-		return fmt.Errorf("%s executable does not exists, err: %w", s.name, err)
+		return fmt.Errorf("%s executable does not exists, err: %w", s.Name, err)
 	}
 
 	var to = &struct {
 		*config
-		Path string
+		Path, Args string
 
 		KeepAlive, RunAtLoad bool
 	}{

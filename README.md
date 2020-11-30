@@ -13,16 +13,16 @@ In order to setup `midgard`, you must configure the two `midgard` components:
 server, one can:
 
 ```sh
-$ sudo midgard server install   # install midgard server as system service
-$ sudo midgard server start     # start midgard server after installation
-$ sudo midgard server stop      # stop the running midgard server
-$ sudo midgard server uninstall # uninstall midgard from system service
+$ midgard server install   # install midgard server as system service
+$ midgard server start     # start midgard server after installation
+$ midgard server stop      # stop the running midgard server
+$ midgard server uninstall # uninstall midgard from system service
 ```
 
 Or, if you just want run midgard server directly:
 
 ```sh
-$ midgard server ryb            # run midgard server directly
+$ midgard server run            # run midgard server directly
 ```
 
 ### `midgard` Daemon
@@ -31,11 +31,13 @@ $ midgard server ryb            # run midgard server directly
 listening the clipboard, hotkey, and server push events.
 
 ```sh
-$ sudo midgard daemon install   # install midgard daemon as system service
-$ sudo midgard daemon start     # start midgard daemon after installation
-$ sudo midgard daemon stop      # stop the running midgard daemon
-$ sudo midgard daemon uninstall # uninstall midgard from system service
+$ midgard daemon install   # install midgard daemon as system service
+$ midgard daemon start     # start midgard daemon after installation
+$ midgard daemon stop      # stop the running midgard daemon
+$ midgard daemon uninstall # uninstall midgard from system service
 ```
+
+> Linux requires `sudo`
 
 Or, if you just want run midgard daemon directly:
 
