@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/clipboard"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/types/proto"
 	"golang.design/x/midgard/pkg/utils"
@@ -66,6 +66,9 @@ func (s *Server) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 			URI:    uri,
 			Data:   data,
 		})
+	if err != nil {
+		return nil, fmt.Errorf("cannot perform allocate request, err %w", err)
+	}
 	var out types.AllocateURLOutput
 	err = json.Unmarshal(res, &out)
 	if err != nil {

@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
-	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/clipboard"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/utils"
 )
@@ -56,20 +56,40 @@ func Clipboard() {
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
 				log.Printf("failed to read message from the clipboard channel: %v", err)
+				// TODO: reconnecting
 				return
 			}
 			var sm types.SubscribeMessage
 			err = json.Unmarshal(msg, &sm)
 			if err != nil {
 				log.Printf("failed to read message: %v", err)
+				continue
 			}
 			switch sm.Action {
 			case types.ActionClipboardChanged:
-				// TODO:
 				// 1. read from universal
+				res, err := utils.Request(http.MethodGet, types.ClipboardEndpoint, nil)
+				if err != nil {
+					log.Printf("failed to read universal clipboard: %v", err)
+					continue
+				}
+				var out types.GetFromUniversalClipboardOutput
+				err = json.Unmarshal(res, &out)
+				if err != nil {
+					log.Printf("failed to parse clipboard data: %v", err)
+					continue
+				}
 
-				// 2. update local
-				clipboard.Write(utils.StringToBytes("working."))
+				var raw []byte
+				if out.Type == types.ClipboardDataTypeImagePNG {
+					raw, err = base64.StdEncoding.DecodeString(out.Data)
+					if err != nil {
+						raw = []byte{}
+					}
+				} else {
+					raw = utils.StringToBytes(out.Data)
+				}
+				clipboard.Write(raw)
 			}
 		}
 	}(sm.DaemonID)
