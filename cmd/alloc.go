@@ -19,11 +19,11 @@ var (
 	fpath string
 )
 
-// newCmd allocate new midgard namespace (aka URL)
-var newCmd = &cobra.Command{
-	Use:   "new",
-	Short: "new creates a public accessible url for a specific resource",
-	Long:  `new creates a public accessible url for a specific resource`,
+// allocCmd allocate new midgard namespace (aka URL)
+var allocCmd = &cobra.Command{
+	Use:   "alloc",
+	Short: "alloc creates a public accessible url for a specific resource",
+	Long:  `alloc creates a public accessible url for a specific resource`,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		uri := ""
@@ -35,7 +35,7 @@ var newCmd = &cobra.Command{
 }
 
 func init() {
-	newCmd.PersistentFlags().StringVarP(&fpath, "for", "f", "", "path to a file you want to create its public url")
+	allocCmd.PersistentFlags().StringVarP(&fpath, "for", "f", "", "path to a file you want to create its public url")
 }
 
 // allocate request the midgard daemon to allocate a given URL for

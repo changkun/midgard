@@ -1,18 +1,22 @@
 
 ## TODO
 
-- [ ] installation script for daemon process
-- [ ] register keyboard hotkey
+- [x] installation script for daemon process
 - [x] authenticated gRPC calls: no need because rpc are served from local
 - [x] basic auth with maximum failure control
-- [ ] Better clipboard listener, implement X11 convension
 - [x] websocket clipboard push registration/notification
+- [x] iOS shortcut for clipboard data fetching
+- [x] config initialization, both for client and server (can we use init for daemon/server installation?)
+- [x] news page
+- [ ] list all daemons, stream shell commands
+- [ ] clipboard history
+- [ ] VCS backup
+- [ ] Better clipboard listener, implement X11 convension
+- [ ] register keyboard hotkey
 - [ ] UPDATE/DELETE existing resource
 - [ ] Search function?
-- [x] iOS shortcut for clipboard data fetching
-- [ ] VCS backup
 - [ ] list folder tree
-- [x] config initialization, both for client and server (can we use init for daemon/server installation?)
+- [ ] code2img, img2text
 
 ```
 location /midgard {

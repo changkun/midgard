@@ -68,6 +68,7 @@ var (
 	ActionRegister         SubscribeAction = "register"
 	ActionReady            SubscribeAction = "ready"
 	ActionClipboardChanged SubscribeAction = "cbchanged"
+	ActionGetClipboard     SubscribeAction = "getucb"
 	ActionTerminate        SubscribeAction = "terminate"
 )
 
@@ -77,6 +78,7 @@ type SubscribeMessage struct {
 	Action   SubscribeAction `json:"action"`
 	DaemonID string          `json:"daemon_id"`
 	Message  string          `json:"msg"`
+	Data     []byte          `json:"data"`
 }
 
 // Encode encodes a subscribe message

@@ -44,8 +44,9 @@ See: https://golang.design/s/midgard for more details.
 		versionCmd,
 		serverCmd,
 		daemonCmd,
-		newCmd,
+		allocCmd,
 		statusCmd,
+		newsCmd,
 	)
 	rootCmd.Execute()
 }

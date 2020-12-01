@@ -21,11 +21,8 @@ import (
 	"golang.design/x/midgard/pkg/version"
 )
 
-// Server implements midgard protobuf protocol
-type Server struct{}
-
 // Ping response a pong
-func (s *Server) Ping(ctx context.Context, in *proto.PingInput) (*proto.PingOutput, error) {
+func (m *Midgard) Ping(ctx context.Context, in *proto.PingInput) (*proto.PingOutput, error) {
 	return &proto.PingOutput{
 		Version:   version.GitVersion,
 		GoVersion: version.GoVersion,
@@ -35,12 +32,14 @@ func (s *Server) Ping(ctx context.Context, in *proto.PingInput) (*proto.PingOutp
 
 // AllocateURL request the midgard server to allocate a given URL for
 // a given resource, or the content from the midgard universal clipboard.
-func (s *Server) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*proto.AllocateURLOutput, error) {
+func (m *Midgard) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*proto.AllocateURLOutput, error) {
 	var (
 		source = types.SourceUniversalClipboard
 		data   string
 		uri    string
 	)
+
+	// TODO: allocate urls using websocket action
 
 	if in.SourcePath != "" {
 		source = types.SourceAttachment
@@ -82,5 +81,19 @@ func (s *Server) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 	clipboard.Write(utils.StringToBytes(url))
 	return &proto.AllocateURLOutput{
 		URL: url, Message: "Done.",
+	}, nil
+}
+
+// CreateNews creates a news
+func (m *Midgard) CreateNews(ctx context.Context, in *proto.CreateNewsInput) (out *proto.CreateNewsOutput, err error) {
+
+	// TODO: create news using websocket action
+	fmt.Println(in.Date)
+	fmt.Println(in.Title)
+	fmt.Println(in.Body)
+	m.writeCh <- action{}
+
+	return &proto.CreateNewsOutput{
+		Message: "hello world",
 	}, nil
 }

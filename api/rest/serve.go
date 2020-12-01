@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"runtime"
 	"sync"
 	"time"
 
@@ -72,8 +74,11 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	gin.SetMode(config.S().Mode)
 
 	r = gin.Default()
+	r.LoadHTMLGlob(FixPath("./templates/*"))
+
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
+	mg.GET("/news", m.News)
 	mg.Static(config.S().Store.Prefix, config.S().Store.Path)
 
 	v1 := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
@@ -87,4 +92,13 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	}
 
 	return
+}
+
+// FixPath fixes a relative path
+func FixPath(p string) string {
+	_, filename, _, ok := runtime.Caller(1)
+	if !ok {
+		log.Fatalf("cannot get runtime caller")
+	}
+	return path.Join(path.Dir(filename), p)
 }

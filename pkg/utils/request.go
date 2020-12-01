@@ -52,7 +52,8 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 
 // Connect connects to a midgard client
 func Connect(callback func(ctx context.Context, c proto.MidgardClient)) {
-	// TODO: authentication.
+	// We don't need authentication here. Daemon is running
+	// on a local machine.
 	conn, err := grpc.Dial(config.D().Addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: \n\t%v", err)

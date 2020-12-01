@@ -8,9 +8,12 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"golang.design/x/midgard/pkg/clipboard"
@@ -19,7 +22,7 @@ import (
 	"golang.design/x/midgard/pkg/utils"
 )
 
-func (m *Midgard) wsConnect() {
+func (m *Midgard) wsConnect() error {
 	// connect to midgard server via websocket
 	creds := config.Get().Server.Auth.User + ":" + config.Get().Server.Auth.Pass
 	token := base64.StdEncoding.EncodeToString(utils.StringToBytes(creds))
@@ -33,18 +36,14 @@ func (m *Midgard) wsConnect() {
 	}
 	conn, _, err := websocket.DefaultDialer.Dial(api, h)
 	if err != nil {
-		log.Print("failed to connect clipboard channel", err)
-		return
+		return fmt.Errorf("failed to connect midgard server: %w", err)
 	}
 
+	m.Lock()
 	m.ws = conn
-}
+	m.Unlock()
 
-func (m *Midgard) wsClose() {
-	m.ws.Close()
-}
-
-func (m *Midgard) wsHandshake() {
+	// handshake
 	m.ws.WriteMessage(websocket.BinaryMessage, (&types.SubscribeMessage{
 		Action: types.ActionRegister,
 	}).Encode())
@@ -52,21 +51,65 @@ func (m *Midgard) wsHandshake() {
 	var sm types.SubscribeMessage
 	err = json.Unmarshal(msg, &sm)
 	if err != nil {
-		log.Printf("failed to on handhsake phase: %v", err)
-		return
+		return fmt.Errorf("failed to handhsake with midgard server: %w", err)
 	}
 	m.Lock()
 	m.id = sm.DaemonID
 	m.Unlock()
+
+	return nil
+}
+
+func (m *Midgard) wsClose() {
+	m.ws.Close()
+}
+
+// wsReconnect tries to reconnect to the midgard server and returns
+// until it connects to the server.
+func (m *Midgard) wsReconnect() {
+	for {
+		time.Sleep(time.Second * 10)
+		err := m.wsConnect()
+		if err == nil {
+			log.Println("connected to midgard server.")
+			return
+		}
+		log.Printf("%v\n", err)
+		log.Println("retry in 10 seconds..")
+	}
 }
 
 func (m *Midgard) wsListen() {
+	if m.ws == nil {
+		m.wsReconnect()
+	}
+
 	log.Println("daemon id:", m.id)
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		m.readchan()
+		wg.Done()
+	}()
+	go func() {
+		m.writechan()
+		wg.Done()
+	}()
+	wg.Wait()
+}
+
+func (m *Midgard) readchan() {
 	for {
 		_, msg, err := m.ws.ReadMessage()
 		if err != nil {
 			log.Printf("failed to read message from the clipboard channel: %v", err)
-			return
+
+			m.Lock()
+			m.ws = nil
+			m.Unlock()
+
+			m.wsReconnect() // block until connection is ready again
+			continue
 		}
 		var sm types.SubscribeMessage
 		err = json.Unmarshal(msg, &sm)
@@ -103,6 +146,17 @@ func (m *Midgard) wsListen() {
 		}
 	}
 }
+func (m *Midgard) writechan() {
+	for {
+		select {
+		case act := <-m.writeCh:
+			fmt.Println(act)
+			m.ws.WriteMessage(websocket.BinaryMessage, (&types.SubscribeMessage{
+				Action: types.ActionGetClipboard,
+			}).Encode())
+		}
+	}
+}
 
 func (m *Midgard) watchLocalClipboard(ctx context.Context) {
 	textCh := make(chan []byte, 1)
@@ -123,6 +177,7 @@ func (m *Midgard) watchLocalClipboard(ctx context.Context) {
 				continue
 			}
 
+			// TODO: write clipboard data using websocket action
 			d := &types.PutToUniversalClipboardInput{}
 			d.Type = types.ClipboardDataTypePlainText
 			d.Data = utils.BytesToString(text)
@@ -140,6 +195,7 @@ func (m *Midgard) watchLocalClipboard(ctx context.Context) {
 			d.Data = base64.StdEncoding.EncodeToString(img)
 			d.DaemonID = m.id
 
+			// TODO: write clipboard data using websocket action
 			_, err := utils.Request(http.MethodPost, types.ClipboardEndpoint, d)
 			if err != nil {
 				log.Printf("failed to sync clipboard, err: %v", err)

@@ -35,6 +35,7 @@ type Server struct {
 	Store struct {
 		Prefix string `yaml:"prefix"`
 		Path   string `yaml:"path"`
+		Backup int    `yaml:"backup"`
 	} `yaml:"store"`
 	Auth struct {
 		User string `yaml:"user"`
@@ -73,15 +74,20 @@ func load() {
 	})
 }
 
+// FixPath fixes a relative path
+func FixPath(p string) string {
+	_, filename, _, ok := runtime.Caller(1)
+	if !ok {
+		log.Fatalf("cannot get runtime caller")
+	}
+	return path.Join(path.Dir(filename), p)
+}
+
 func (c *Config) parse() {
 	f := os.Getenv("MIDGARD_CONF")
 	d, err := ioutil.ReadFile(f)
 	if err != nil {
-		_, filename, _, ok := runtime.Caller(1)
-		if !ok {
-			log.Fatalf("cannot get runtime caller")
-		}
-		p := path.Join(path.Dir(filename), "../../config.yml")
+		p := FixPath("../../config.yml")
 		d, err = ioutil.ReadFile(p)
 		if err != nil {
 			log.Fatalf("cannot read configuration, err: %v\n", err)

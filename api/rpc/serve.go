@@ -22,20 +22,30 @@ import (
 // Midgard is the midgard daemon that interact with midgard server.
 type Midgard struct {
 	sync.Mutex
-	id string
-	s  *grpc.Server
-	ws *websocket.Conn
+	id      string
+	s       *grpc.Server
+	ws      *websocket.Conn
+	writeCh chan action
+}
+
+type action struct {
+	Type    string
+	Content string
 }
 
 // NewMidgard creates a new midgard daemon
 func NewMidgard() *Midgard {
-	return &Midgard{}
+	return &Midgard{
+		writeCh: make(chan action, 10),
+	}
 }
 
 // Serve serves Midgard daemon:
 // 1. maintaining midgard daemon rpc;
 // 2. maintaining midgard daemon to server websocket.
 func (m *Midgard) Serve() {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
@@ -46,24 +56,24 @@ func (m *Midgard) Serve() {
 		log.Printf("%v", sig)
 		log.Printf("shutting down midgard daemon ...")
 		m.s.GracefulStop()
+		cancel()
 	}()
-	wg.Add(1)
 	go func() {
+		// TODO: handle graceful connection close
 		m.wsConnect()
-		m.wsHandshake()
 		m.wsListen()
 		m.wsClose()
 	}()
 	wg.Add(1)
 	go func() {
-		m.watchLocalClipboard(context.Background())
+		defer wg.Done()
+		m.watchLocalClipboard(ctx)
 	}()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		m.serveRPC()
 	}()
-	wg.Add(1)
 	wg.Wait()
 
 	log.Printf("daemon is down, good bye!")
@@ -83,7 +93,7 @@ func (m *Midgard) serveRPC() {
 		grpc.MaxSendMsgSize(maxMessageSize),
 		grpc.ConnectionTimeout(time.Minute*5),
 	)
-	proto.RegisterMidgardServer(m.s, &Server{})
+	proto.RegisterMidgardServer(m.s, m)
 	log.Printf("daemon running at rpc://%s", config.D().Addr)
 	if err := m.s.Serve(l); err != nil {
 		log.Fatalf("fail to serve midgard daemon, err: %v", err)
