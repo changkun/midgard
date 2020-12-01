@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/clipboard"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/utils"
 	"golang.design/x/midgard/pkg/version"
@@ -76,16 +76,24 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 		raw = utils.StringToBytes(b.Data)
 	}
 
-	clipboard.Universal.Put(b.Type, raw)
+	updated := clipboard.Universal.Put(b.Type, raw)
 	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{
 		Message: "clipboard data is saved.",
 	})
+	if !updated {
+		return
+	}
 
 	if b.DaemonID == "" {
 		b.DaemonID = c.ClientIP()
 	}
 
-	m.notifyOtherDaemons(b.DaemonID, types.ActionClipboardChanged)
+	m.boardcastMessage(b.DaemonID, &types.WebsocketMessage{
+		Action:  types.ActionClipboardChanged,
+		UserID:  b.DaemonID,
+		Message: "universal clipboard has changes",
+		Data:    raw, // clipboard data
+	})
 }
 
 // AllocateURL generates an universal access URL for the requested resource.

@@ -2,7 +2,7 @@
 // All rights reserved. Use of this source code is governed by
 // a GNU GPL-3.0 license that can be found in the LICENSE file.
 
-package rpc
+package daemon
 
 import (
 	"context"
@@ -15,17 +15,20 @@ import (
 
 	"github.com/gorilla/websocket"
 	"golang.design/x/midgard/pkg/config"
+	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/types/proto"
+	"golang.design/x/midgard/pkg/utils"
 	"google.golang.org/grpc"
 )
 
-// Midgard is the midgard daemon that interact with midgard server.
-type Midgard struct {
+// Daemon is the midgard daemon that interact with midgard server.
+type Daemon struct {
+	ID string
+
 	sync.Mutex
-	id      string
 	s       *grpc.Server
 	ws      *websocket.Conn
-	writeCh chan action
+	writeCh chan *types.WebsocketMessage // writeCh is used for sending message along ws.
 }
 
 type action struct {
@@ -33,17 +36,22 @@ type action struct {
 	Content string
 }
 
-// NewMidgard creates a new midgard daemon
-func NewMidgard() *Midgard {
-	return &Midgard{
-		writeCh: make(chan action, 10),
+// NewDaemon creates a new midgard daemon
+func NewDaemon() *Daemon {
+	id, err := os.Hostname()
+	if err != nil {
+		id = utils.NewUUID()
+	}
+	return &Daemon{
+		ID:      id,
+		writeCh: make(chan *types.WebsocketMessage, 10),
 	}
 }
 
-// Serve serves Midgard daemon:
+// Serve serves Daemon daemon:
 // 1. maintaining midgard daemon rpc;
 // 2. maintaining midgard daemon to server websocket.
-func (m *Midgard) Serve() {
+func (m *Daemon) Serve() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	wg := sync.WaitGroup{}
@@ -61,7 +69,7 @@ func (m *Midgard) Serve() {
 	go func() {
 		// TODO: handle graceful connection close
 		m.wsConnect()
-		m.wsListen()
+		m.handleIO(ctx)
 		m.wsClose()
 	}()
 	wg.Add(1)
@@ -81,7 +89,7 @@ func (m *Midgard) Serve() {
 
 const maxMessageSize = 10 << 20 // 10 MB
 
-func (m *Midgard) serveRPC() {
+func (m *Daemon) serveRPC() {
 	l, err := net.Listen("tcp", config.D().Addr)
 	if err != nil {
 		log.Fatalf("fail to initalize midgard daemon, err: %v", err)

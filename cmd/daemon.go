@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"golang.design/x/midgard/api/rpc"
+	"golang.design/x/midgard/api/daemon"
 	"golang.design/x/midgard/pkg/service"
 )
 
@@ -48,7 +48,7 @@ var daemonCmd = &cobra.Command{
 		case "stop":
 			err = s.Stop()
 		case "run":
-			m := rpc.NewMidgard()
+			m := daemon.NewDaemon()
 			m.Serve()
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])

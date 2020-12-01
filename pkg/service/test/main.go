@@ -14,7 +14,7 @@ func main() {
 	var name = "test"
 	var displayName = "test is test service"
 	var desc = "test service tests description"
-	var args = "daemon"
+	var args = []string{"daemon"}
 
 	var s, err = service.NewService(name, displayName, desc, args)
 	log = s

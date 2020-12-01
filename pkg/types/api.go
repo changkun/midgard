@@ -5,16 +5,14 @@
 package types
 
 import (
-	"encoding/json"
-
 	"golang.design/x/midgard/pkg/config"
 )
 
 // Endpoints
 var (
-	ClipboardEndpoint   = config.Get().Domain + "/midgard/api/v1/clipboard"
-	ClipboardWSEndpoint = ClipboardEndpoint + "/ws"
-	AllocateURLEndpoint = config.Get().Domain + "/midgard/api/v1/allocate"
+	EndpointClipboard   = config.Get().Domain + "/midgard/api/v1/clipboard"
+	EndpointAllocateURL = config.Get().Domain + "/midgard/api/v1/allocate"
+	EndpointSubscribe   = config.Get().Domain + "/midgard/api/v1/ws"
 )
 
 // PingInput is the input for /ping
@@ -58,34 +56,6 @@ const (
 	// SourceAttachment ...
 	SourceAttachment
 )
-
-// SubscribeAction represents daemon subscribe action type.
-type SubscribeAction string
-
-// All actions from daemons
-var (
-	ActionNone             SubscribeAction = "none"
-	ActionRegister         SubscribeAction = "register"
-	ActionReady            SubscribeAction = "ready"
-	ActionClipboardChanged SubscribeAction = "cbchanged"
-	ActionGetClipboard     SubscribeAction = "getucb"
-	ActionTerminate        SubscribeAction = "terminate"
-)
-
-// SubscribeMessage represents the communication between midgard server
-// and midgard daemon.
-type SubscribeMessage struct {
-	Action   SubscribeAction `json:"action"`
-	DaemonID string          `json:"daemon_id"`
-	Message  string          `json:"msg"`
-	Data     []byte          `json:"data"`
-}
-
-// Encode encodes a subscribe message
-func (sm *SubscribeMessage) Encode() []byte {
-	b, _ := json.Marshal(sm)
-	return b
-}
 
 // AllocateURLInput defines the input format of requested resource
 type AllocateURLInput struct {

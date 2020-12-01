@@ -24,13 +24,13 @@ import (
 type Midgard struct {
 	s *http.Server
 
-	mu      sync.Mutex
-	daemons *list.List
+	mu    sync.Mutex
+	users *list.List
 }
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{daemons: list.New()}
+	return &Midgard{users: list.New()}
 }
 
 // Serve serves Midgard RESTful APIs.
@@ -87,7 +87,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	{
 		v1.GET("/clipboard", m.GetFromUniversalClipboard)
 		v1.POST("/clipboard", m.PutToUniversalClipboard)
-		v1.GET("/clipboard/ws", m.SubscribeClipboard)
+		v1.GET("/ws", m.Subscribe)
 		v1.PUT("/allocate", m.AllocateURL)
 	}
 

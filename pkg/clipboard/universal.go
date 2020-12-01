@@ -57,11 +57,16 @@ func (uc *universalClipboard) Get(t types.ClipboardDataType) []byte {
 	return buf
 }
 
-func (uc *universalClipboard) Put(t types.ClipboardDataType, buf []byte) {
+func (uc *universalClipboard) Put(t types.ClipboardDataType, buf []byte) bool {
 	uc.m.Lock()
 	defer uc.m.Unlock()
+	if uc.typ == t && bytes.Compare(uc.buf, buf) == 0 {
+		return false
+	}
+
 	uc.typ = t
 	uc.buf = buf
+	return true
 }
 
 // Universal is the Midgard's universal clipboard.

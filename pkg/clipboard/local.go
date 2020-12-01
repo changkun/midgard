@@ -5,6 +5,7 @@
 package clipboard
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"sync"
@@ -21,7 +22,10 @@ var (
 )
 
 // lock locks clipboard operation
-var lock = sync.Mutex{}
+var (
+	lock     = sync.Mutex{}
+	localbuf = []byte{} // hold a local copy
+)
 
 // Read reads and returns byte-based clipboard data.
 func Read() []byte {
@@ -33,6 +37,7 @@ func Read() []byte {
 		// if we still have nothing, then just ignore it.
 		buf = cb.Read(types.ClipboardDataTypeImagePNG)
 	}
+	localbuf = buf
 	return buf
 }
 
@@ -40,6 +45,12 @@ func Read() []byte {
 func Write(buf []byte) {
 	lock.Lock()
 	defer lock.Unlock()
+
+	// if the local copy is the same with the write, do not bother.
+	if bytes.Compare(localbuf, buf) == 0 {
+		return
+	}
+	localbuf = buf
 
 	ok := cb.Write(buf, types.ClipboardDataTypePlainText)
 	if !ok {

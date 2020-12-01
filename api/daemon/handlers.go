@@ -2,7 +2,7 @@
 // All rights reserved. Use of this source code is governed by
 // a GNU GPL-3.0 license that can be found in the LICENSE file.
 
-package rpc
+package daemon
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 )
 
 // Ping response a pong
-func (m *Midgard) Ping(ctx context.Context, in *proto.PingInput) (*proto.PingOutput, error) {
+func (m *Daemon) Ping(ctx context.Context, in *proto.PingInput) (*proto.PingOutput, error) {
 	return &proto.PingOutput{
 		Version:   version.GitVersion,
 		GoVersion: version.GoVersion,
@@ -32,7 +32,7 @@ func (m *Midgard) Ping(ctx context.Context, in *proto.PingInput) (*proto.PingOut
 
 // AllocateURL request the midgard server to allocate a given URL for
 // a given resource, or the content from the midgard universal clipboard.
-func (m *Midgard) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*proto.AllocateURLOutput, error) {
+func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*proto.AllocateURLOutput, error) {
 	var (
 		source = types.SourceUniversalClipboard
 		data   string
@@ -59,7 +59,7 @@ func (m *Midgard) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (
 
 	res, err := utils.Request(
 		http.MethodPut,
-		types.AllocateURLEndpoint,
+		types.EndpointAllocateURL,
 		&types.AllocateURLInput{
 			Source: source,
 			URI:    uri,
@@ -79,19 +79,17 @@ func (m *Midgard) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (
 
 	url := config.Get().Domain + out.URL
 	clipboard.Write(utils.StringToBytes(url))
-	return &proto.AllocateURLOutput{
-		URL: url, Message: "Done.",
-	}, nil
+	return &proto.AllocateURLOutput{URL: url, Message: "Done."}, nil
 }
 
 // CreateNews creates a news
-func (m *Midgard) CreateNews(ctx context.Context, in *proto.CreateNewsInput) (out *proto.CreateNewsOutput, err error) {
+func (m *Daemon) CreateNews(ctx context.Context, in *proto.CreateNewsInput) (out *proto.CreateNewsOutput, err error) {
 
 	// TODO: create news using websocket action
 	fmt.Println(in.Date)
 	fmt.Println(in.Title)
 	fmt.Println(in.Body)
-	m.writeCh <- action{}
+	m.writeCh <- &types.WebsocketMessage{}
 
 	return &proto.CreateNewsOutput{
 		Message: "hello world",
