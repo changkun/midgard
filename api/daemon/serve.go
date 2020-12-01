@@ -31,11 +31,6 @@ type Daemon struct {
 	writeCh chan *types.WebsocketMessage // writeCh is used for sending message along ws.
 }
 
-type action struct {
-	Type    string
-	Content string
-}
-
 // NewDaemon creates a new midgard daemon
 func NewDaemon() *Daemon {
 	id, err := os.Hostname()
@@ -67,7 +62,6 @@ func (m *Daemon) Serve() {
 		cancel()
 	}()
 	go func() {
-		// TODO: handle graceful connection close
 		m.wsConnect()
 		m.handleIO(ctx)
 		m.wsClose()

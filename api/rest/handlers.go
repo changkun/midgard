@@ -88,7 +88,7 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 		b.DaemonID = c.ClientIP()
 	}
 
-	m.boardcastMessage(b.DaemonID, &types.WebsocketMessage{
+	m.boardcastMessage(&types.WebsocketMessage{
 		Action:  types.ActionClipboardChanged,
 		UserID:  b.DaemonID,
 		Message: "universal clipboard has changes",

@@ -110,12 +110,20 @@ func (m *Daemon) handleIO(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
+				if m.ws == nil {
+					log.Println("connection is not ready yet")
+					continue
+				}
 				_ = m.ws.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
 					Action: types.ActionTerminate,
 					UserID: m.ID,
 				}).Encode())
 				return
 			case msg := <-m.writeCh:
+				if m.ws == nil {
+					log.Println("connection is not ready yet")
+					continue
+				}
 				err := m.ws.WriteMessage(websocket.BinaryMessage, msg.Encode())
 				if err != nil {
 					log.Printf("failed to write message to server: %v", err)
@@ -150,13 +158,6 @@ func (m *Daemon) readFromServer() {
 
 		switch wsm.Action {
 		case types.ActionClipboardChanged:
-			// FIXME: there is a double synchornization loop:
-			//
-			// 1. local -> server -> broadcast -> other local clipboard
-			// 2. other clipboard changed -> server -> broadcast -> ...
-			//
-			// Ideally we should only do the first path, but it seems
-			// impossible to avoid the
 			log.Printf("universal clipboard has changed from %s, sync with local...", wsm.UserID)
 			clipboard.Write(wsm.Data) // change local clipboard
 		}

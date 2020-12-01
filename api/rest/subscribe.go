@@ -9,14 +9,20 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"golang.design/x/midgard/pkg/clipboard"
+	"golang.design/x/midgard/pkg/config"
 	"golang.design/x/midgard/pkg/types"
 	"golang.design/x/midgard/pkg/utils"
+	"gopkg.in/yaml.v3"
 )
 
 // user represents a daemon subscriber
@@ -61,8 +67,10 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		return
 	}
 
-	id := wsm.UserID
-	var e *list.Element
+	var (
+		u *user
+		e *list.Element
+	)
 	switch wsm.Action {
 	case types.ActionHandshakeRegister:
 		// check if user id already exist
@@ -77,11 +85,11 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			break
 		}
 		if idExist {
-			id += "-" + utils.NewUUID()
+			wsm.UserID += "-" + utils.NewUUID()
 		}
 
 		// register to the subscribers
-		u := &user{id: id, conn: conn}
+		u = &user{id: wsm.UserID, conn: conn}
 		e = m.users.PushBack(u)
 		log.Printf("current daemon subscribers: %d", m.users.Len())
 		m.mu.Unlock()
@@ -133,35 +141,15 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 
 		switch wsm.Action {
 		case types.ActionClipboardPut:
-			b := &types.PutToUniversalClipboardInput{}
-			err := json.Unmarshal(wsm.Data, b)
+			err := m.handleActionClipboardPut(conn, u, wsm.Data)
 			if err != nil {
-				conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
-					Action:  types.ActionTerminate,
-					Message: "bad action data",
-				}).Encode())
-				continue
+				log.Println("failed to put clipboard:", err)
 			}
-			var raw []byte
-			if b.Type == types.ClipboardDataTypeImagePNG {
-				// We assume the client send us a base64 encoded image data,
-				// Let's decode it into bytes.
-				raw, err = base64.StdEncoding.DecodeString(b.Data)
-				if err != nil {
-					raw = []byte{}
-				}
-			} else {
-				raw = utils.StringToBytes(b.Data)
-			}
-			log.Println("universal clipboard has updated, synced from:", id)
-			updated := clipboard.Universal.Put(b.Type, raw)
-			if updated {
-				m.boardcastMessage(id, &types.WebsocketMessage{
-					Action:  types.ActionClipboardChanged,
-					UserID:  id,
-					Message: "universal clipboard has changes",
-					Data:    raw, // clipboard data
-				})
+		case types.ActionCreateNews:
+			log.Println("received a news:", string(wsm.Data))
+			err := m.handleActionCreateNews(conn, u, wsm.Data)
+			if err != nil {
+				log.Println("failed to create news:", err)
 			}
 		default:
 			log.Println("unsupported message:", utils.BytesToString(msg))
@@ -169,12 +157,79 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 	}
 }
 
-func (m *Midgard) boardcastMessage(senderID string, msg *types.WebsocketMessage) {
-	log.Println("broadcast message from:", senderID)
+func (m *Midgard) handleActionCreateNews(conn *websocket.Conn, u *user, data []byte) (err error) {
+	defer func() {
+		if err != nil {
+			conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+				Action:  types.ActionTerminate,
+				Message: "bad action data",
+			}).Encode())
+			err = fmt.Errorf("bad action: %w", err)
+		}
+	}()
+
+	b := &types.ActionCreateNewsData{}
+	err = json.Unmarshal(data, b)
+	if err != nil {
+		return
+	}
+
+	out, err := yaml.Marshal(b)
+	if err != nil {
+		return
+	}
+
+	dir := config.S().Store.Path + "/news/"
+	err = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	title := b.Date + "-" + strings.Replace(b.Title, " ", "-", -1) + ".yml"
+	err = ioutil.WriteFile(dir+title, out, os.ModePerm)
+	return
+}
+
+func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data []byte) error {
+	b := &types.PutToUniversalClipboardInput{}
+	err := json.Unmarshal(data, b)
+	if err != nil {
+		_ = conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+			Action:  types.ActionTerminate,
+			Message: "bad action data",
+		}).Encode())
+		return types.ErrBadAction
+	}
+	var raw []byte
+	if b.Type == types.ClipboardDataTypeImagePNG {
+		// We assume the client send us a base64 encoded image data,
+		// Let's decode it into bytes.
+		raw, err = base64.StdEncoding.DecodeString(b.Data)
+		if err != nil {
+			raw = []byte{}
+		}
+	} else {
+		raw = utils.StringToBytes(b.Data)
+	}
+	log.Println("universal clipboard has updated, synced from:", u.id)
+	updated := clipboard.Universal.Put(b.Type, raw)
+	if updated {
+		m.boardcastMessage(&types.WebsocketMessage{
+			Action:  types.ActionClipboardChanged,
+			UserID:  u.id,
+			Message: "universal clipboard has changes",
+			Data:    raw, // clipboard data
+		})
+	}
+	return nil
+}
+
+func (m *Midgard) boardcastMessage(msg *types.WebsocketMessage) {
+	log.Println("broadcast message from:", msg.UserID)
 	m.mu.Lock()
 	for e := m.users.Front(); e != nil; e = e.Next() {
 		d, ok := e.Value.(*user)
-		if !ok || d.id == senderID {
+		if !ok || d.id == msg.UserID {
 			continue
 		}
 		log.Println("send message to:", d.id)

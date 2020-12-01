@@ -21,15 +21,17 @@ var newsCmd = &cobra.Command{
 	Use:   "news",
 	Short: "news creates a new posts that can be seen in /midgard/news",
 	Long:  `news creates a new posts that can be seen in /midgard/news`,
-	Args:  cobra.ArbitraryArgs,
+	Args:  cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
-		n, ok := waitInputs()
+		n := &news{title: args[0]}
+		ok := n.waitInputs()
 		if !ok {
 			return
 		}
+		fmt.Println("")
 		utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
 			out, err := c.CreateNews(ctx, &proto.CreateNewsInput{
-				Date:  time.Now().Format("2006-01-02 15:04"),
+				Date:  time.Now().Format("2006-01-02-15:04"),
 				Title: n.title,
 				Body:  strings.Join(n.body, ""),
 			})
@@ -49,7 +51,7 @@ type news struct {
 	body  []string
 }
 
-func waitInputs() (*news, bool) {
+func (n *news) waitInputs() bool {
 	fmt.Println("(Ctrl+D to complete; Ctrl+C to cancel)")
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
@@ -66,21 +68,20 @@ func waitInputs() (*news, bool) {
 					return
 				}
 			}
-			line <- l + "\n" // insert line break
+			line <- l
 		}
 	}()
 
-	n := &news{}
 	for {
 		select {
 		case sig := <-sigCh:
 			if sig != os.Kill {
-				return nil, false
+				return false
 			}
-			return n, true
+			return true
 		case l := <-line:
 			if len(l) == 0 {
-				return n, true
+				return true
 			}
 			n.body = append(n.body, l)
 		}

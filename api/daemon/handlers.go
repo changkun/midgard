@@ -85,13 +85,17 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 // CreateNews creates a news
 func (m *Daemon) CreateNews(ctx context.Context, in *proto.CreateNewsInput) (out *proto.CreateNewsOutput, err error) {
 
-	// TODO: create news using websocket action
-	fmt.Println(in.Date)
-	fmt.Println(in.Title)
-	fmt.Println(in.Body)
-	m.writeCh <- &types.WebsocketMessage{}
+	s := &types.ActionCreateNewsData{
+		in.Date, in.Title, in.Body,
+	}
+	b, _ := json.Marshal(s)
 
-	return &proto.CreateNewsOutput{
-		Message: "hello world",
-	}, nil
+	m.writeCh <- &types.WebsocketMessage{
+		Action:  types.ActionCreateNews,
+		UserID:  m.ID,
+		Message: "create news",
+		Data:    b,
+	}
+
+	return &proto.CreateNewsOutput{Message: "DONE."}, nil
 }

@@ -6,6 +6,12 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
+)
+
+// Errors
+var (
+	ErrBadAction = errors.New("bad action data")
 )
 
 // All actions from daemons
@@ -16,6 +22,7 @@ const (
 	ActionClipboardChanged                  = "cbchanged"
 	ActionClipboardGet                      = "cbget"
 	ActionClipboardPut                      = "cbput"
+	ActionCreateNews                        = "newsput"
 	ActionTerminate                         = "terminate"
 )
 
@@ -39,4 +46,11 @@ func (m *WebsocketMessage) Encode() []byte {
 // Decode decodes given data to m.
 func (m *WebsocketMessage) Decode(data []byte) error {
 	return json.Unmarshal(data, m)
+}
+
+// ActionCreateNewsData ...
+type ActionCreateNewsData struct {
+	Date  string `json:"date"`
+	Title string `json:"title"`
+	Body  string `json:"body"`
 }
