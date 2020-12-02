@@ -9,18 +9,18 @@
 - [x] config initialization, both for client and server (can we use init for daemon/server installation?)
 - [x] news page
 - [x] code2img
-- [ ] list all daemons, stream shell commands
+- [x] VCS backup
 - [ ] clipboard history
-- [ ] VCS backup
-- [ ] Better clipboard listener, implement X11 convension
-- [ ] register keyboard hotkey
-- [ ] UPDATE/DELETE existing resource
 - [ ] Search function?
 - [ ] list folder tree
 - [ ] img2text
+- [ ] list all daemons, stream shell commands
+- [ ] Better clipboard listener, implement X11 convension
+- [ ] register keyboard hotkey
+- [ ] UPDATE/DELETE existing resource
 
 ```
-location /midgard {
+location ~ ^/(midgard|data) {
     proxy_pass          http://0.0.0.0:8080;
     proxy_set_header    Host             $host;
     proxy_set_header    X-Real-IP        $remote_addr;

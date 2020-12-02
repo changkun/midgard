@@ -139,7 +139,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 
 	// if URI is empty, then generate a random path
 	if in.URI == "" {
-		path = root + "/wild/" + utils.NewUUID() + ext
+		path = root + "/random/" + utils.NewUUID() + ext
 	} else {
 		path = root + "/" + strings.TrimPrefix(in.URI, "/")
 	}

@@ -11,8 +11,10 @@ server:
   addr: localhost:8080
   mode: debug # or debug/release/test
   store:
-    prefix: /fs  # this will be your namespace prefix, i.e. golang.design/midgard/fs/*
+    prefix: /data # this will be your namespace prefix, i.e. golang.design/data/*
     path: ./data # this is where your data stored on your server
+    backup: 10   # every minutes
+    repo: https://github.com/golang-design/data
   auth:
     # the following two configures your midgard credentials
     user: golang-design

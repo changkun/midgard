@@ -36,6 +36,7 @@ type Server struct {
 		Prefix string `yaml:"prefix"`
 		Path   string `yaml:"path"`
 		Backup int    `yaml:"backup"`
+		Repo   string `yaml:"repo"`
 	} `yaml:"store"`
 	Auth struct {
 		User string `yaml:"user"`

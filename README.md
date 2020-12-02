@@ -52,6 +52,14 @@ you can always override this behavior by environment variable `MIDGARD_CONF`
 to specify your customized configuration. For the detailed configuration
 items, see [config.yml](./config.yml).
 
+
+#### Repository Backup
+
+**Midgard will backup the data folder to GitHub regularly.
+You need create an empty repository on GitHub and specify it in the configuration file.**
+
+The first time it will try to initialize the data repo, and later runs will only backup it regularly.
+
 ## Usage
 
 `midgard` command line interface (CLI) offers several command to interact
@@ -84,11 +92,11 @@ You can omit the `-f` flag and leave it empty, then the `new` subcommand
 will request the server to use your universal clipboard data.
 
 You can even omit the argument of `new`, then the `midgard` server will
-create a random path under `/wild`. For instance:
+create a random path under `/random`. For instance:
 
 ```sh
 $ midgard new
-DONE: https://golang.design/midgard/fs/wild/fboVP8u4xNMHfvsv2EeLzL.txt
+DONE: https://golang.design/midgard/random/fboVP8u4xNMHfvsv2EeLzL.txt
 ```
 
 It automatically writes to your clipboard and you can directly paste
