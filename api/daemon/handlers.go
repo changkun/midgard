@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -98,4 +99,39 @@ func (m *Daemon) CreateNews(ctx context.Context, in *proto.CreateNewsInput) (out
 	}
 
 	return &proto.CreateNewsOutput{Message: "DONE."}, nil
+}
+
+// CodeToImage tries to create an image for the given code.
+func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (out *proto.CodeToImageOutput, err error) {
+	log.Println("received a code2img request:", in.CodePath)
+	var code string
+
+	// the user presented a file, so we read it.
+	// if it does not exist, then we don't bother the server.
+	if len(in.CodePath) > 0 {
+		b, err := ioutil.ReadFile(in.CodePath)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read the given file: %w", err)
+		}
+		code = utils.BytesToString(b)
+	}
+
+	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image, &types.Code2ImgInput{Code: code})
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert: %w", err)
+	}
+
+	var o types.Code2ImgOutput
+	err = json.Unmarshal(res, &o)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse server response: %w", err)
+	}
+
+	// write to local clipboard.
+	clipboard.Write(utils.StringToBytes(config.Get().Domain + o.Image))
+
+	return &proto.CodeToImageOutput{
+		CodeURL:  o.Code,
+		ImageURL: o.Image,
+	}, nil
 }

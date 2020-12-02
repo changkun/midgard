@@ -47,6 +47,7 @@ See: https://golang.design/s/midgard for more details.
 		allocCmd,
 		statusCmd,
 		newsCmd,
+		code2imgCmd,
 	)
 	rootCmd.Execute()
 }

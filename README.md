@@ -109,7 +109,7 @@ clipboard so that you can immediately paste to anywhere you want.
 Furthermore, with the built-in universal clipboard, you can even share
 your clipboard cross platforms (e.g. between Mac and Linux).
 
-## iOS Shortcuts support
+#### iOS Shortcuts support
 
 - `midgard-getclipboard`: https://www.icloud.com/shortcuts/501fe001ebcc444aad1517fdccdbd740
 - `midgard-putclipboard`: https://www.icloud.com/shortcuts/587ae52bb5b447e699eb8876107b2e31
@@ -117,6 +117,27 @@ your clipboard cross platforms (e.g. between Mac and Linux).
 With these shortcuts, you can create an automation that runs
 the `midgard-getclipboard` when an application is opened (or multiples),
 so that the clipboard is fetch from the midgard server automatically.
+
+### Code2image
+
+Whenever you want to convert your clipboard to an image:
+
+```sh
+$ midgard code2img
+```
+
+Or you can specify a given file:
+
+```sh
+$ midgard code2img /path/to/your/file
+```
+
+#### iOS Shortcuts support
+
+- `midgard-code2img`: https://www.icloud.com/shortcuts/f5ed10ceb8fa40f393dfc4ebadb0dd89
+
+With these shortcut, you can post your code on an iOS device.
+The shortcut will read your clipboard then render it.
 
 ## Contributes
 

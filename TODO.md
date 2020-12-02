@@ -8,6 +8,7 @@
 - [x] iOS shortcut for clipboard data fetching
 - [x] config initialization, both for client and server (can we use init for daemon/server installation?)
 - [x] news page
+- [x] code2img
 - [ ] list all daemons, stream shell commands
 - [ ] clipboard history
 - [ ] VCS backup
@@ -16,7 +17,7 @@
 - [ ] UPDATE/DELETE existing resource
 - [ ] Search function?
 - [ ] list folder tree
-- [ ] code2img, img2text
+- [ ] img2text
 
 ```
 location /midgard {

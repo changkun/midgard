@@ -12,6 +12,7 @@ import (
 var (
 	EndpointClipboard   = config.Get().Domain + "/midgard/api/v1/clipboard"
 	EndpointAllocateURL = config.Get().Domain + "/midgard/api/v1/allocate"
+	EndpointCode2Image  = config.Get().Domain + "/midgard/api/v1/code2img"
 	EndpointSubscribe   = config.Get().Domain + "/midgard/api/v1/ws"
 )
 
@@ -67,5 +68,17 @@ type AllocateURLInput struct {
 // AllocateURLOutput ...
 type AllocateURLOutput struct {
 	URL     string `json:"url"`
+	Message string `json:"msg"`
+}
+
+// Code2ImgInput ...
+type Code2ImgInput struct {
+	Code string `json:"code"`
+}
+
+// Code2ImgOutput ...
+type Code2ImgOutput struct {
+	Code    string `json:"code"`
+	Image   string `json:"img"`
 	Message string `json:"msg"`
 }

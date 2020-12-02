@@ -12,6 +12,7 @@ service Midgard {
     rpc Ping(PingInput) returns (PingOutput) {}
     rpc AllocateURL(AllocateURLInput) returns (AllocateURLOutput) {}
     rpc CreateNews(CreateNewsInput) returns (CreateNewsOutput) {}
+    rpc CodeToImage(CodeToImageInput) returns (CodeToImageOutput) {}
 }
 
 message PingInput {}
@@ -38,4 +39,13 @@ message CreateNewsInput {
 }
 message CreateNewsOutput {
     string Message = 1;
+}
+
+message CodeToImageInput {
+    string CodePath = 1;
+}
+
+message CodeToImageOutput {
+    string CodeURL = 1;
+    string ImageURL = 2;
 }

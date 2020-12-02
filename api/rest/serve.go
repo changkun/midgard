@@ -11,12 +11,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
-	"runtime"
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"golang.design/x/midgard/pkg/config"
 )
 
@@ -68,37 +65,4 @@ func (m *Midgard) serveHTTP() {
 		log.Printf("close with error: %v", err)
 	}
 	return
-}
-
-func (m *Midgard) routers() (r *gin.Engine) {
-	gin.SetMode(config.S().Mode)
-
-	r = gin.Default()
-	r.LoadHTMLGlob(FixPath("./templates/*"))
-
-	mg := r.Group("/midgard")
-	mg.GET("/ping", m.PingPong)
-	mg.GET("/news", m.News)
-	mg.Static(config.S().Store.Prefix, config.S().Store.Path)
-
-	v1 := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
-		config.S().Auth.User: config.S().Auth.Pass,
-	}))
-	{
-		v1.GET("/clipboard", m.GetFromUniversalClipboard)
-		v1.POST("/clipboard", m.PutToUniversalClipboard)
-		v1.GET("/ws", m.Subscribe)
-		v1.PUT("/allocate", m.AllocateURL)
-	}
-
-	return
-}
-
-// FixPath fixes a relative path
-func FixPath(p string) string {
-	_, filename, _, ok := runtime.Caller(1)
-	if !ok {
-		log.Fatalf("cannot get runtime caller")
-	}
-	return path.Join(path.Dir(filename), p)
 }

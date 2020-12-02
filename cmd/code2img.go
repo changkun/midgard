@@ -1,0 +1,48 @@
+package cmd
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"path/filepath"
+
+	"github.com/spf13/cobra"
+	"golang.design/x/midgard/pkg/config"
+	"golang.design/x/midgard/pkg/types/proto"
+	"golang.design/x/midgard/pkg/utils"
+)
+
+var code2imgCmd = &cobra.Command{
+	Use:   "code2img [codefile]",
+	Short: "creates a public url for the code in your clipboard and a url of a rendered image",
+	Long: `code2img creates a public url for the code in your clipboard and a url of a rendered image.
+
+If you don't attach any file, then the midgard will try to use the clipboard data directly.`,
+	Args: cobra.MaximumNArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
+			codepath := ""
+			if len(args) > 0 {
+				var err error
+				codepath, err = filepath.Abs(args[0])
+				if err != nil {
+					log.Println("cannot find your file:", err)
+					return
+				}
+			}
+
+			out, err := c.CodeToImage(ctx, &proto.CodeToImageInput{
+				CodePath: codepath,
+			})
+			if err != nil {
+				log.Println("cannot convert your code to image:", err)
+				return
+			}
+
+			log.Println("your code and image urls are ready:")
+			fmt.Println(config.Get().Domain + out.CodeURL)
+			fmt.Println(config.Get().Domain + out.ImageURL)
+			log.Println("and the image url is already in your clipboard for pasting.")
+		})
+	},
+}
