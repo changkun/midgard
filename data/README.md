@@ -1,4 +1,4 @@
-# How to organize data
+# Organization Convention
 
 This document describes the philosophy of how the midgard service organizes
 files. A user of midgard must adapts to this philosophy.
@@ -10,6 +10,8 @@ code
 ideas
 img
 inbox
+logs
 news
+random
 todo
 ```

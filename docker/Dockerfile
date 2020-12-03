@@ -5,4 +5,4 @@
 FROM golang:1.15.5
 WORKDIR /app
 COPY . .
-CMD ["/app/midgard", "server"]
+CMD ["/app/midgard", "server", "run"]

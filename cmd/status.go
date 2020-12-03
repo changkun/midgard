@@ -35,7 +35,7 @@ var statusCmd = &cobra.Command{
 			var out types.PingOutput
 			err = json.Unmarshal(res, &out)
 			if err != nil {
-				status += fmt.Sprintf("server status: %s, %v\n", term.Red("parse error"), err)
+				status += fmt.Sprintf("server status: %s, details:\n%v\n", term.Red("failed to parse ping response from server"), err)
 			} else {
 				status += fmt.Sprintf("server status: %s\n", term.Green("OK"))
 			}
@@ -45,7 +45,7 @@ var statusCmd = &cobra.Command{
 		utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
 			_, err := c.Ping(ctx, &proto.PingInput{})
 			if err != nil {
-				status += fmt.Sprintf("daemon status: %s, %v\n", term.Red("error"), err)
+				status += fmt.Sprintf("daemon status: %s, details:\n%v\n", term.Red("failed to ping daemon"), err)
 			} else {
 				status += fmt.Sprintf("daemon status: %s\n", term.Green("OK"))
 			}

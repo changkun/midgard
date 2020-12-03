@@ -87,7 +87,7 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 func (m *Daemon) CreateNews(ctx context.Context, in *proto.CreateNewsInput) (out *proto.CreateNewsOutput, err error) {
 
 	s := &types.ActionCreateNewsData{
-		in.Date, in.Title, in.Body,
+		Date: in.Date, Title: in.Title, Body: in.Body,
 	}
 	b, _ := json.Marshal(s)
 

@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 )
 
+// this implemnetation is derived from https://github.com/otiai10/copy.
+
 const (
 	// tmpPermissionForDirectory makes the destination directory writable,
 	// so that stuff can be copied recursively even if any original directory is NOT writable.

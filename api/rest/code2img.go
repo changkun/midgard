@@ -71,7 +71,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	c.JSON(http.StatusOK, &types.Code2ImgOutput{
 		Code:    config.S().Store.Prefix + codefile,
 		Image:   config.S().Store.Prefix + imgfile,
-		Message: "Render success",
+		Message: "render success",
 	})
 	return
 }

@@ -16,7 +16,7 @@ what you like and what you think is missing.
 [Issue](https://github.com/changkun/midgard/issues/new) and
 [PRs](https://github.com/changkun/midgard/pulls) are also welcome.
 
-## Ackknowledgement
+## Acknowledgment
 
 The author of this project would like to thank
 [Wen Yang](https://maiyang.me) and [Quancheng Rao](https://qcrao.com)
