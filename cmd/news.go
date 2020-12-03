@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"changkun.de/x/midgard/pkg/types/proto"
+	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
-	"golang.design/x/midgard/pkg/types/proto"
-	"golang.design/x/midgard/pkg/utils"
 )
 
 // newsCmd creates a new posts

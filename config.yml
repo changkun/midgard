@@ -1,26 +1,26 @@
-# Copyright 2020 The golang.design Initiative authors.
-# All rights reserved. Use of this source code is governed by
-# a GNU GPL-3.0 license that can be found in the LICENSE file.
+# Copyright 2020 Changkun Ou. All rights reserved.
+# Use of this source code is governed by a GPL-3.0
+# license that can be found in the LICENSE file.
 
 ---
-title: "The golang.design Initiative"
+title: "Changkun Ou"
 domain: localhost:8080
 # server includes all midgard server side settings
-# these settings are only used in server mode (run under `midgard serve`)
+# these settings are only used in server mode (run under `mg serve`)
 server:
   addr: localhost:8080
   mode: debug # or debug/release/test
   store:
-    prefix: /data # this will be your namespace prefix, i.e. golang.design/data/*
+    prefix: /data # this will be your namespace prefix, i.e. changkun.de/data/*
     path: ./data # this is where your data stored on your server
     backup: 10   # every minutes
-    repo: https://github.com/golang-design/data
+    repo: https://github.com/changkun/data
   auth:
     # the following two configures your midgard credentials
-    user: golang-design
+    user: changkun
     pass: aBWJnteJbt!j3G!qehLnJmbcgLqkkXuEusz9m4@JeqUqwZD*Dc
 
 # daemon includes all midgard daemon settings
-# these settings are only used in daemon mode (run under `midgard daemon`)
+# these settings are only used in daemon mode (run under `mg daemon`)
 daemon:
   addr: localhost:8081

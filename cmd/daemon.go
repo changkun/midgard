@@ -1,6 +1,6 @@
-// Copyright 2020 The golang.design Initiative authors.
-// All rights reserved. Use of this source code is governed by
-// a GNU GPL-3.0 license that can be found in the LICENSE file.
+// Copyright 2020 Changkun Ou. All rights reserved.
+// Use of this source code is governed by a GPL-3.0
+// license that can be found in the LICENSE file.
 
 package cmd
 
@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"log"
 
+	"changkun.de/x/midgard/api/daemon"
+	"changkun.de/x/midgard/pkg/service"
 	"github.com/spf13/cobra"
-	"golang.design/x/midgard/api/daemon"
-	"golang.design/x/midgard/pkg/service"
 )
 
 // daemonCmd runs the midgard's daemon process.

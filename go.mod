@@ -1,4 +1,4 @@
-module golang.design/x/midgard
+module changkun.de/x/midgard
 
 go 1.15
 

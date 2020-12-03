@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"golang.design/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/pkg/utils"
 )
 
 func TestBytesString(t *testing.T) {

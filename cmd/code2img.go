@@ -6,10 +6,10 @@ import (
 	"log"
 	"path/filepath"
 
+	"changkun.de/x/midgard/pkg/config"
+	"changkun.de/x/midgard/pkg/types/proto"
+	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
-	"golang.design/x/midgard/pkg/config"
-	"golang.design/x/midgard/pkg/types/proto"
-	"golang.design/x/midgard/pkg/utils"
 )
 
 var code2imgCmd = &cobra.Command{

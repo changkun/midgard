@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"os"
 
+	"changkun.de/x/midgard/pkg/clipboard"
+	"changkun.de/x/midgard/pkg/code2img"
+	"changkun.de/x/midgard/pkg/config"
+	"changkun.de/x/midgard/pkg/types"
+	"changkun.de/x/midgard/pkg/utils"
 	"github.com/gin-gonic/gin"
-	"golang.design/x/midgard/pkg/clipboard"
-	"golang.design/x/midgard/pkg/code2img"
-	"golang.design/x/midgard/pkg/config"
-	"golang.design/x/midgard/pkg/types"
-	"golang.design/x/midgard/pkg/utils"
 )
 
 // Code2img code to image handler

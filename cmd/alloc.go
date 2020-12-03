@@ -1,6 +1,6 @@
-// Copyright 2020 The golang.design Initiative authors.
-// All rights reserved. Use of this source code is governed by
-// a GNU GPL-3.0 license that can be found in the LICENSE file.
+// Copyright 2020 Changkun Ou. All rights reserved.
+// Use of this source code is governed by a GPL-3.0
+// license that can be found in the LICENSE file.
 
 package cmd
 
@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"log"
 
+	"changkun.de/x/midgard/pkg/clipboard"
+	"changkun.de/x/midgard/pkg/types/proto"
+	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
-	"golang.design/x/midgard/pkg/clipboard"
-	"golang.design/x/midgard/pkg/types/proto"
-	"golang.design/x/midgard/pkg/utils"
 )
 
 var (

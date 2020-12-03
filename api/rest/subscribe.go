@@ -1,6 +1,6 @@
-// Copyright 2020 The golang.design Initiative authors.
-// All rights reserved. Use of this source code is governed by
-// a GNU GPL-3.0 license that can be found in the LICENSE file.
+// Copyright 2020 Changkun Ou. All rights reserved.
+// Use of this source code is governed by a GPL-3.0
+// license that can be found in the LICENSE file.
 
 package rest
 
@@ -16,12 +16,12 @@ import (
 	"strings"
 	"sync"
 
+	"changkun.de/x/midgard/pkg/clipboard"
+	"changkun.de/x/midgard/pkg/config"
+	"changkun.de/x/midgard/pkg/types"
+	"changkun.de/x/midgard/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"golang.design/x/midgard/pkg/clipboard"
-	"golang.design/x/midgard/pkg/config"
-	"golang.design/x/midgard/pkg/types"
-	"golang.design/x/midgard/pkg/utils"
 	"gopkg.in/yaml.v3"
 )
 

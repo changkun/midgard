@@ -1,14 +1,14 @@
-# Copyright 2020 The golang.design Initiative authors.
-# All rights reserved. Use of this source code is governed by
-# a GNU GPL-3.0 license that can be found in the LICENSE file.
+# Copyright 2020 Changkun Ou. All rights reserved.
+# Use of this source code is governed by a GPL-3.0
+# license that can be found in the LICENSE file.
 
 VERSION = $(shell git describe --always --tags)
 BUILDTIME = $(shell date +%FT%T%z)
 GOPATH=$(shell go env GOPATH)
 IMAGE = midgard
-BINARY = midgard
+BINARY = mg
 TARGET = -o $(BINARY)
-MIDGARD_HOME = golang.design/x/midgard
+MIDGARD_HOME = changkun.de/x/midgard
 BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/pkg/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/pkg/version.BuildTime=$(BUILDTIME)"
 BUILD_FLAGS = $(TARGET) $(BUILD_SETTINGS) -mod=vendor
 

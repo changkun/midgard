@@ -1,6 +1,6 @@
-// Copyright 2020 The golang.design Initiative authors.
-// All rights reserved. Use of this source code is governed by
-// a GNU GPL-3.0 license that can be found in the LICENSE file.
+// Copyright 2020 Changkun Ou. All rights reserved.
+// Use of this source code is governed by a GPL-3.0
+// license that can be found in the LICENSE file.
 
 package clipboard_test
 
@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"golang.design/x/midgard/pkg/clipboard"
-	"golang.design/x/midgard/pkg/types"
-	"golang.design/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/pkg/clipboard"
+	"changkun.de/x/midgard/pkg/types"
+	"changkun.de/x/midgard/pkg/utils"
 )
 
 func TestLocalClipboardImage(t *testing.T) {
@@ -31,7 +31,7 @@ func TestLocalClipboardImage(t *testing.T) {
 }
 
 func TestLocalClipboardText(t *testing.T) {
-	data := utils.StringToBytes("golang.design/x/midgard")
+	data := utils.StringToBytes("changkun.de/x/midgard")
 	clipboard.Write(data)
 
 	r := clipboard.Read()
@@ -51,7 +51,7 @@ func TestLocalClipboardWatch(t *testing.T) {
 	dataCh := make(chan []byte, 1)
 	clipboard.Watch(ctx, types.ClipboardDataTypePlainText, dataCh)
 
-	w := utils.StringToBytes("golang.design/x/midgard")
+	w := utils.StringToBytes("changkun.de/x/midgard")
 	go func(ctx context.Context) {
 		t := time.NewTicker(time.Millisecond * 500)
 		for {

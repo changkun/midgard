@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"golang.design/x/midgard/pkg/service"
+	"changkun.de/x/midgard/pkg/service"
 )
 
 var log service.Logger

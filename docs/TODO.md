@@ -38,3 +38,7 @@ location ~ ^/(midgard|data) {
     proxy_connect_timeout 1800;
 }
 ```
+
+## License
+
+Copyright 2020 [Changkun Ou](https://changkun.de). All rights reserved.

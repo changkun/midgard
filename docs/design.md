@@ -25,4 +25,4 @@ CLI <-------> daemon <-----┘                         ^
 
 ## License
 
-GNU GPL-3.0 Copyright &copy; 2020 The [golang.design](https://golang.design) Initiative Authors.
+Copyright 2020 [Changkun Ou](https://changkun.de). All rights reserved.
