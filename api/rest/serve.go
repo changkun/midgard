@@ -96,61 +96,118 @@ func execute(cmd string, args ...string) (out []byte, err error) {
 	return
 }
 
+const backupMsgTimeFmt = "2006-01-02 15:04"
+
 // backup backups the data folder to a configured github repository
 func backup(ctx context.Context) {
+	if !config.S().Store.Backup.Enable {
+		log.Println("backup feature is disabled.")
+		return
+	}
+
 	// initialize data as a git repo if needed
+	ext := "-old"
 	out, err := execute("git", "rev-parse", "--git-dir")
 	if err != nil {
 		log.Fatalf("cannot use git command from your system: %v", err)
 	}
 	if strings.Compare(utils.BytesToString(out), ".git\n") != 0 {
-		// not a git repo, initialize it
-		log.Println("out1:", string(out))
-		log.Println("out2:", ".git", len(utils.BytesToString(out)), len(".git\n"))
-		log.Println("use data folder for the first time, initialize it as a git repo...")
-
+		// not a git repo, rename it as old
+		err := os.Rename(config.S().Store.Path, config.S().Store.Path+ext)
+		if err != nil {
+			log.Fatalf("cannot rename your folder: %v", err)
+		}
+		err = os.Mkdir(config.S().Store.Path, os.ModeDir|os.ModePerm)
+		if err != nil {
+			log.Fatalf("cannot create a new data folder: %v", err)
+		}
+		// clone the remote repo
 		cmds := [][]string{
-			{"git", "init"},
-			{"git", "add", "."},
-			{"git", "commit", "-m", "initial commit"},
-			{"git", "remote", "add", "origin", config.S().Store.Repo},
-			{"git", "push", "-u", "origin", "master"},
+			{"git", "clone", config.S().Store.Backup.Repo, "."},
 		}
 		for _, cc := range cmds {
 			out, err = execute(cc[0], cc[1:]...)
 			if err != nil {
-				log.Fatalf("cannot initialize your data folder: %v, %s", err, utils.BytesToString(out))
+				log.Fatalf("cannot clone your data folder: %v", err)
 			}
 		}
-		log.Println("initialize is finished, start regular backup...")
-	} else {
-		log.Println("backing up for the data repo..")
-	}
 
-	t := time.NewTicker(time.Duration(config.S().Store.Backup) * time.Minute)
+		// move everything to the cloned folder
+		err = utils.Copy(config.S().Store.Path+ext, config.S().Store.Path)
+		if err != nil {
+			log.Fatalf("failed to merge your old local data folder into your remote data folder: %v", err)
+		}
+
+		// seems ok, start commit the local changes
+
+		msg := fmt.Sprintf("midgard: backup %s", time.Now().Format(backupMsgTimeFmt))
+		cmds = [][]string{
+			{"git", "add", "."},
+			{"git", "commit", "-m", msg},
+			{"git", "push"},
+		}
+		for _, cc := range cmds {
+			out, err = execute(cc[0], cc[1:]...)
+			if err != nil {
+				log.Printf("cannot initialize your data folder: %v, details:", err)
+				log.Fatalf("%s: %s\n", strings.Join(cc, " "), utils.BytesToString(out))
+			}
+		}
+
+		err = os.RemoveAll(config.S().Store.Path + ext)
+		if err != nil {
+			log.Fatalf("failed to remove your old data folder: %v", err)
+		}
+	}
+	log.Println("backup is enabled.")
+
+	t := time.NewTicker(time.Duration(config.S().Store.Backup.Interval) * time.Minute)
 	for {
+	start:
 		select {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			now := time.Now().Format("2006-01-02-15:04")
-			// FIXME: very basic backup feature; should resolve conflict with remote?
+			// basic conflict resolve, are there any other failures?
 			cmds := [][]string{
-				{"git", "add", "."},
-				{"git", "commit", "-m", fmt.Sprintf("backup at %s", now)},
-				{"git", "push", "-u", "origin", "master"},
+				{"git", "stash"},
+				{"git", "fetch"},
+				{"git", "rebase"},
+				{"git", "stash", "pop"},
 			}
 			for _, cc := range cmds {
 				out, err = execute(cc[0], cc[1:]...)
 				if err != nil {
-					if !strings.Contains(utils.BytesToString(out), "nothing to commit") {
-						log.Printf("cannot backup your data: %v, %s", err, utils.BytesToString(out))
-					} else {
-						log.Println("nothing to backup.")
+					if strings.Contains(utils.BytesToString(out), "No stash entries") {
+						continue
 					}
-					break
+					log.Printf("failed to resolve conflict: %v, details:", err)
+					log.Printf("%s: %s\n", strings.Join(cc, " "), utils.BytesToString(out))
+					// FIXME: email notification: ask manual action (very rare?)
+					goto start
 				}
 			}
+
+			// add, commit, and push
+			msg := fmt.Sprintf("midgard: backup at %s", time.Now().Format(backupMsgTimeFmt))
+			cmds = [][]string{
+				{"git", "add", "."},
+				{"git", "commit", "-m", msg},
+				{"git", "push"},
+			}
+			for _, cc := range cmds {
+				out, err = execute(cc[0], cc[1:]...)
+				if err != nil {
+					if strings.Contains(utils.BytesToString(out), "nothing to commit") {
+						continue
+					}
+					log.Printf("cannot backup your data: %v, details:\n", err)
+					log.Printf("%s: %s\n", strings.Join(cc, " "), utils.BytesToString(out))
+					// FIXME: email notification: ask manual action (very rare?)
+					goto start
+				}
+			}
+			log.Println(msg)
 		}
 	}
 }

@@ -3,6 +3,15 @@
 In order to setup `midgard`, you must configure the two `midgard` components:
 `midgard` server and `midgard` daemon.
 
+## Dependencies
+
+Midgard tries to minimize the number of dependencies, but we cannot build
+everything from absolute nothing, the current dependent softwares are:
+
+- [git]() for version control
+- [xclip]() for clipboard on linux
+- [Chrome]() for `code2img`, see https://github.com/chromedp/docker-headless-shell
+
 ## Build
 
 A single make builds a single command `mg` for you to use midgard:
@@ -57,10 +66,10 @@ to specify your customized configuration. For the detailed configuration
 items, see [config.yml](./config.yml).
 
 
-### Repository Backup
+### Backup
 
-**Midgard will backup the data folder to GitHub regularly.
-You need create an empty repository on GitHub and specify it in the configuration file.**
+Midgard will backup the data folder to a remote Git VCS regularly.
+You need provide a link to an repository and specify it in the configuration file.
 
 The first time it will try to initialize the data repo, and later runs will only backup it regularly.
 

@@ -13,8 +13,10 @@ server:
   store:
     prefix: /data # this will be your namespace prefix, i.e. changkun.de/data/*
     path: ./data # this is where your data stored on your server
-    backup: 10   # every minutes
-    repo: https://github.com/changkun/data
+    backup:
+      enable: true # enable backup
+      interval: 1 # every minutes
+      repo: https://github.com/changkun/data
   auth:
     # the following two configures your midgard credentials
     user: changkun
