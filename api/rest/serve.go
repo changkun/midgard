@@ -149,6 +149,9 @@ func backup(ctx context.Context) {
 		for _, cc := range cmds {
 			out, err = execute(cc[0], cc[1:]...)
 			if err != nil {
+				if strings.Contains(utils.BytesToString(out), "nothing to commit") {
+					continue
+				}
 				log.Printf("cannot initialize your data folder: %v, details:", err)
 				log.Fatalf("%s: %s\n", strings.Join(cc, " "), utils.BytesToString(out))
 			}
