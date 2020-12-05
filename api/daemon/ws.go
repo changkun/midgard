@@ -7,7 +7,6 @@ package daemon
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -160,57 +159,6 @@ func (m *Daemon) readFromServer() {
 		case types.ActionClipboardChanged:
 			log.Printf("universal clipboard has changed from %s, sync with local...", wsm.UserID)
 			clipboard.Write(wsm.Data) // change local clipboard
-		}
-	}
-}
-
-func (m *Daemon) watchLocalClipboard(ctx context.Context) {
-	textCh := make(chan []byte, 1)
-	clipboard.Watch(ctx, types.ClipboardDataTypePlainText, textCh)
-	imagCh := make(chan []byte, 1)
-	clipboard.Watch(ctx, types.ClipboardDataTypeImagePNG, imagCh)
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case text, ok := <-textCh:
-			if !ok {
-				return
-			}
-
-			// don't send an '\n' character
-			if utils.BytesToString(text) == "\n" {
-				continue
-			}
-
-			d := &types.PutToUniversalClipboardInput{}
-			d.Type = types.ClipboardDataTypePlainText
-			d.Data = utils.BytesToString(text)
-			d.DaemonID = m.ID
-			b, _ := json.Marshal(d)
-			log.Println("local clipboard has changed, sync to server...")
-			m.writeCh <- &types.WebsocketMessage{
-				Action:  types.ActionClipboardPut,
-				UserID:  m.ID,
-				Message: "local clipboard has changed",
-				Data:    b,
-			}
-		case img, ok := <-imagCh:
-			if !ok {
-				return
-			}
-			d := &types.PutToUniversalClipboardInput{}
-			d.Type = types.ClipboardDataTypeImagePNG
-			d.Data = base64.StdEncoding.EncodeToString(img)
-			d.DaemonID = m.ID
-			b, _ := json.Marshal(d)
-			log.Println("local clipboard has changed, sync to server...")
-			m.writeCh <- &types.WebsocketMessage{
-				Action:  types.ActionClipboardPut,
-				UserID:  m.ID,
-				Message: "local clipboard has changed",
-				Data:    b,
-			}
 		}
 	}
 }

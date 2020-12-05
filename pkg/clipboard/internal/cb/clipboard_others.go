@@ -11,3 +11,4 @@ import "context"
 func Read(t resType) (buf []byte, ok bool)          { panic("unimplemented") }
 func Write(buf []byte, t resType) (ret bool)        { panic("unimplemented") }
 func Watch(ctx context.Context, dataCh chan []byte) { panic("unimplemented") }
+func HandleHotkey(ctx context.Context, fn func())   { panic("unimplemented") }

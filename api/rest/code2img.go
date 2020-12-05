@@ -1,3 +1,7 @@
+// Copyright 2020 Changkun Ou. All rights reserved.
+// Use of this source code is governed by a GPL-3.0
+// license that can be found in the LICENSE file.
+
 package rest
 
 import (
@@ -5,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"changkun.de/x/midgard/pkg/clipboard"
 	"changkun.de/x/midgard/pkg/code2img"
@@ -13,6 +18,40 @@ import (
 	"changkun.de/x/midgard/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
+
+func init() {
+	// tries to find the Chrome browser somewhere in the current system.
+	// It performs a rather agressive search, which is the same in all
+	// systems. That may make it a bit slow, but it will only be run at
+	// boot time.
+	for _, path := range [...]string{
+		// Unix-like
+		"headless_shell",
+		"headless-shell",
+		"chromium",
+		"chromium-browser",
+		"google-chrome",
+		"google-chrome-stable",
+		"google-chrome-beta",
+		"google-chrome-unstable",
+		"/usr/bin/google-chrome",
+
+		// Windows
+		"chrome",
+		"chrome.exe", // in case PATHEXT is misconfigured
+		`C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`,
+		`C:\Program Files\Google\Chrome\Application\chrome.exe`,
+
+		// Mac
+		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+	} {
+		_, err := exec.LookPath(path)
+		if err == nil {
+			return
+		}
+	}
+	panic("please intall google-chrome on your system (required by code2img).")
+}
 
 // Code2img code to image handler
 func (m *Midgard) Code2img(c *gin.Context) {

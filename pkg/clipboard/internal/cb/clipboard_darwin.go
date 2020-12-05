@@ -123,3 +123,11 @@ func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) 
 		}
 	}
 }
+
+// HandleHotkey registers an application global hotkey to the system,
+// and returns a channel that will signal if the hotkey is triggered.
+//
+// No customization for the hotkey, the hotkey is always: Ctrl+Option+s
+func HandleHotkey(ctx context.Context, fn func()) {
+	panic("unimplemented")
+}

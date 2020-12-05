@@ -180,7 +180,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, types.AllocateURLOutput{
-		URL:     "/midgard" + config.S().Store.Prefix + strings.TrimPrefix(path, root),
+		URL:     config.S().Store.Prefix + strings.TrimPrefix(path, root),
 		Message: "success.",
 	})
 }

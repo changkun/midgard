@@ -64,3 +64,13 @@ func Write(buf []byte) {
 func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
 	go cb.Watch(ctx, dt, dataCh)
 }
+
+// HandleHotkey registers an application global hotkey to the system,
+// and returns a channel that will signal if the hotkey is triggered.
+//
+// No customization for the hotkey, the hotkey is always:
+// Linux: Ctrl+Mod4+s
+// macOS: Ctrl+Option+s
+func HandleHotkey(ctx context.Context, fn func()) {
+	go cb.HandleHotkey(ctx, fn)
+}

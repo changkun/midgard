@@ -64,6 +64,9 @@ func (uc *universalClipboard) Put(t types.ClipboardDataType, buf []byte) bool {
 		return false
 	}
 
+	// TODO: let's log the history of the universal clipboard change.
+	// we also need consider the merging local change if the offline mode was on.
+
 	uc.typ = t
 	uc.buf = buf
 	return true

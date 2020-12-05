@@ -10,13 +10,13 @@
 - [x] news page
 - [x] code2img
 - [x] VCS backup
+- [x] register keyboard hotkey, linux done
 - [ ] clipboard history
 - [ ] Search function?
 - [ ] list folder tree
 - [ ] img2text
 - [ ] list all daemons, stream shell commands
 - [ ] Better clipboard listener, implement X11 convension
-- [ ] register keyboard hotkey
 - [ ] UPDATE/DELETE existing resource
 
 ```

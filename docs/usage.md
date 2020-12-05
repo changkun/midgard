@@ -15,30 +15,36 @@ daemon status: OK
 
 ## Allocate A Global URL
 
-You can use `midgard new` to allocate a global url to persist your data,
+You can use `midgard alloc` to allocate a global url to persist your data,
 for example:
 
 ```sh
-$ mg new /awesome/filename -f /path/to/your/file
+$ mg alloc /awesome/filename -f /path/to/your/file
 DONE: https://changkun.de/midgard/fs/awesome/filename
 ```
 
-The first argument of `new` subcommand indicates the desired URI,
+The first argument of `alloc` subcommand indicates the desired URI,
 and `-f` flag indicates the file you want to put to your server.
 
-You can omit the `-f` flag and leave it empty, then the `new` subcommand
+You can omit the `-f` flag and leave it empty, then the `alloc` subcommand
 will request the server to use your universal clipboard data.
 
-You can even omit the argument of `new`, then the `midgard` server will
+You can even omit the argument of `alloc`, then the `midgard` server will
 create a random path under `/random`. For instance:
 
 ```sh
-$ mg new
+$ mg alloc
 DONE: https://changkun.de/midgard/random/fboVP8u4xNMHfvsv2EeLzL.txt
 ```
 
 It automatically writes to your clipboard and you can directly paste
 it to anywhere else that you want.
+
+Moreover, to alloc a global URL, Midgard provides the following global
+keyboard shortcut to trigger such an action:
+
+- Linux: **Ctrl+Mod4+s**
+- macOS: **Ctrl+Option+s**
 
 ## Universal Clipboard
 
@@ -84,6 +90,20 @@ $ mg code2img /path/to/your/file
 
 With these shortcut, you can post your code on an iOS device.
 The shortcut will read your clipboard then render it.
+
+## News
+
+A timeline based news page can be visisted from: `/midgard/news`. 
+
+To create new news, one can use the following command:
+
+```
+$ mg news "documenting your life with plain text" 
+(Ctrl+D to complete; Ctrl+C to cancel)
+> ...
+> ...
+DONE.
+```
 
 ## License
 
