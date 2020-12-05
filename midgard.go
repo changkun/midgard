@@ -5,9 +5,12 @@
 package main
 
 import (
+	"changkun.de/x/midgard/pkg/mainthread"
 	"changkun.de/x/midgard/cmd"
 )
 
 func main() {
-	cmd.Execute()
+	mainthread.Init(func() {
+		cmd.Execute()
+	})
 }

@@ -53,6 +53,9 @@ func (m *Daemon) Serve() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		defer func() {
+			log.Println("graceful shutdown assistant is terminated.")
+		}()
 		q := make(chan os.Signal, 1)
 		signal.Notify(q, os.Interrupt, os.Kill)
 		sig := <-q
@@ -62,6 +65,9 @@ func (m *Daemon) Serve() {
 		cancel()
 	}()
 	go func() {
+		defer func() {
+			log.Println("websocket is terminated.")
+		}()
 		m.wsConnect()
 		m.handleIO(ctx)
 		m.wsClose()
@@ -69,11 +75,17 @@ func (m *Daemon) Serve() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		defer func() {
+			log.Println("clipboard watcher is terminated.")
+		}()
 		m.watchLocalClipboard(ctx)
 	}()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		defer func() {
+			log.Println("rpc server is terminated.")
+		}()
 		m.serveRPC()
 	}()
 	wg.Wait()

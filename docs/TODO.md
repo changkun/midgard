@@ -10,7 +10,7 @@
 - [x] news page
 - [x] code2img
 - [x] VCS backup
-- [x] register keyboard hotkey, linux done
+- [x] register keyboard hotkey
 - [ ] clipboard history
 - [ ] Search function?
 - [ ] list folder tree

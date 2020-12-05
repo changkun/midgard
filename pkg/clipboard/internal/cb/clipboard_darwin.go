@@ -11,27 +11,38 @@ package cb
 
 /*
 #cgo CFLAGS: -x objective-c
-#cgo LDFLAGS: -framework Foundation -framework Cocoa
+#cgo LDFLAGS: -framework Foundation -framework Cocoa -framework Carbon
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
+#import <Carbon/Carbon.h> // for keyboard hotkey
 
 unsigned int clipboard_read_string(void **out);
 unsigned int clipboard_read_image(void **out);
 int clipboard_write_string(const void *bytes, NSInteger n);
 int clipboard_write_image(const void *bytes, NSInteger n);
 NSInteger clipboard_change_count();
+
+extern void go_hotkey_callback(void* handler);
+static OSStatus _hotkey_handler(EventHandlerCallRef nextHandler, EventRef theEvent, void *userData);
+int register_hotkey(void* go_hotkey_handler);
+void run_shared_application();
 */
 import "C"
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 	"unsafe"
 
+	"changkun.de/x/midgard/pkg/mainthread"
 	"changkun.de/x/midgard/pkg/types"
 )
 
-var lock sync.Mutex
+var (
+	lock sync.Mutex
+	once sync.Once
+)
 
 // Read reads the clipboard data of a given resource type.
 // It returns a buf that containing the clipboard data, and ok indicates
@@ -97,7 +108,7 @@ func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 // read the data, see:
 // https://developer.apple.com/library/archive/samplecode/ClipboardViewer/Introduction/Intro.html#//apple_ref/doc/uid/DTS40008825-Intro-DontLinkElementID_2
 //
-// TODO: Alternatively, we could watch keyboard hotkeys, for instance,
+// FIXME: Alternatively, we could watch keyboard hotkeys, for instance,
 // a double cmd+c triggers the watch? Needs invesgitation.
 func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
 	// we try to watch the clipboard every second, this should be enough
@@ -124,10 +135,46 @@ func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) 
 	}
 }
 
+// This hkCallback tries to avoid a runtime panic error when directly
+// pass it to Cgo:
+//   panic: runtime error: cgo argument has Go pointer to Go pointer
+var (
+	hkCallback func()
+	hkMu       sync.Mutex
+)
+
 // HandleHotkey registers an application global hotkey to the system,
 // and returns a channel that will signal if the hotkey is triggered.
 //
 // No customization for the hotkey, the hotkey is always: Ctrl+Option+s
 func HandleHotkey(ctx context.Context, fn func()) {
-	panic("unimplemented")
+	hkMu.Lock()
+	hkCallback = fn
+	hkMu.Unlock()
+
+	// make sure the registration is on the mainthread, don't ask why.
+	mainthread.Call(func() {
+		arg := unsafe.Pointer(&gocallback{func() {
+			hkMu.Lock()
+			f := hkCallback // must use a global function variable.
+			hkMu.Unlock()
+
+			f()
+		}})
+		ret := C.register_hotkey(arg)
+		if ret == C.int(-1) {
+			log.Println("register global system hotkey failed.")
+		}
+
+		C.run_shared_application()
+	})
+}
+
+type gocallback struct{ f func() }
+
+func (c *gocallback) call() { c.f() }
+
+//export go_hotkey_callback
+func go_hotkey_callback(c unsafe.Pointer) {
+	(*gocallback)(c).call()
 }

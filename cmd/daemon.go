@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/pkg/service"
@@ -50,6 +51,7 @@ var daemonCmd = &cobra.Command{
 		case "run":
 			m := daemon.NewDaemon()
 			m.Serve()
+			os.Exit(0) // this closes clipboard NSApplication on darwin
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])
 		}
