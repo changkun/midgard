@@ -37,7 +37,7 @@ type item struct {
 // > (Use Ctrl+D to complte)
 // >
 // > this is the content we want to share to the public.
-// > support convert /midgard/fs/*.png pictures
+// > support convert /data/img/*.png pictures
 // >
 func (m *Midgard) News(c *gin.Context) {
 	tmpl := "feeds.tmpl"

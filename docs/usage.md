@@ -20,7 +20,7 @@ for example:
 
 ```sh
 $ mg alloc /awesome/filename -f /path/to/your/file
-DONE: https://changkun.de/midgard/fs/awesome/filename
+DONE: https://changkun.de/data/awesome/filename
 ```
 
 The first argument of `alloc` subcommand indicates the desired URI,
@@ -34,7 +34,7 @@ create a random path under `/random`. For instance:
 
 ```sh
 $ mg alloc
-DONE: https://changkun.de/midgard/random/fboVP8u4xNMHfvsv2EeLzL.txt
+DONE: https://changkun.de/data/random/fboVP8u4xNMHfvsv2EeLzL.txt
 ```
 
 It automatically writes to your clipboard and you can directly paste
