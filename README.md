@@ -20,7 +20,7 @@ what you like and what you think is missing.
 
 The author of this project would like to thank
 [Wen Yang](https://maiyang.me) and [Quancheng Rao](https://qcrao.com)
-for their testing in the early stage of the midgard.
+for their inspiring discussion and testing in the early stage of the midgard.
 
 ## License
 

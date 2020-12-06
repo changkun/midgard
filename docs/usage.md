@@ -3,7 +3,7 @@
 Midgard CLI offers several command to interact
 with the midgard server and daemon.
 
-## Status check
+## Status Check
 
 Status check gives you option to check if everything is setup correctly:
 
@@ -11,6 +11,17 @@ Status check gives you option to check if everything is setup correctly:
 $ mg status
 server status: OK
 daemon status: OK
+```
+
+## List Active Daemons
+
+List active daemons allows you to check other connected daemon users:
+
+```sh
+$ mg daemon ls
+2020/12/06 19:50:05 daemon.go:68: midgard: active daemons:
+id      name
+1       changkun-perflock
 ```
 
 ## Allocate A Global URL
