@@ -7,6 +7,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -134,4 +135,31 @@ func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (o
 		CodeURL:  o.Code,
 		ImageURL: o.Image,
 	}, nil
+}
+
+// ListDaemons lists all active daemons.
+func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (out *proto.ListDaemonsOutput, err error) {
+	readerCh := make(chan *types.WebsocketMessage)
+	m.readChs.Store(m.ID, readerCh)
+	m.writeCh <- &types.WebsocketMessage{
+		Action:  types.ActionListDaemonsRequest,
+		UserID:  m.ID,
+		Message: "list active daemons",
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("list daemons timeout!")
+			return nil, errors.New("list daemons timeout")
+		case resp := <-readerCh:
+			switch resp.Action {
+			case types.ActionListDaemonsResponse:
+				m.readChs.Delete(m.ID)
+				return &proto.ListDaemonsOutput{Daemons: utils.BytesToString(resp.Data)}, nil
+			default:
+				log.Println(resp.Message)
+			}
+		}
+	}
 }

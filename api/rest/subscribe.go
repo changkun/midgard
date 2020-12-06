@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"changkun.de/x/midgard/pkg/clipboard"
 	"changkun.de/x/midgard/pkg/config"
@@ -25,11 +26,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var uid uint64 // atomic, incremental
+
 // user represents a daemon subscriber
 type user struct {
 	sync.Mutex
-	id   string
-	conn *websocket.Conn
+	index uint64
+	id    string
+	conn  *websocket.Conn
 }
 
 func (d *user) send(msg *types.WebsocketMessage) error {
@@ -89,7 +93,8 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		}
 
 		// register to the subscribers
-		u = &user{id: wsm.UserID, conn: conn}
+		idx := atomic.AddUint64(&uid, 1)
+		u = &user{index: idx, id: wsm.UserID, conn: conn}
 		e = m.users.PushBack(u)
 		log.Printf("current daemon subscribers: %d", m.users.Len())
 		m.mu.Unlock()
@@ -151,20 +156,52 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			if err != nil {
 				log.Println("failed to create news:", err)
 			}
+		case types.ActionListDaemonsRequest:
+			log.Println("list active daemons request is received.")
+			err := m.handleListDaemons(conn, u, wsm.Data)
+			if err != nil {
+				log.Println("failed to list daemons:", err)
+			}
 		default:
 			log.Println("unsupported message:", utils.BytesToString(msg))
 		}
 	}
 }
 
+func terminate(conn *websocket.Conn, err error) error {
+	conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+		Action:  types.ActionTerminate,
+		Message: "bad action data",
+	}).Encode())
+	return fmt.Errorf("bad action: %w", err)
+}
+
+func (m *Midgard) handleListDaemons(conn *websocket.Conn, u *user, data []byte) (err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	defer func() {
+		if err != nil {
+			err = terminate(conn, err)
+		}
+	}()
+
+	resp := "id\tname\n"
+
+	for e := m.users.Front(); e != nil; e = e.Next() {
+		u := e.Value.(*user)
+		resp += fmt.Sprintf("%d\t%s\n", u.index, u.id)
+	}
+
+	return conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+		Action: types.ActionListDaemonsResponse,
+		Data:   utils.StringToBytes(resp),
+	}).Encode())
+}
+
 func (m *Midgard) handleActionCreateNews(conn *websocket.Conn, u *user, data []byte) (err error) {
 	defer func() {
 		if err != nil {
-			conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
-				Action:  types.ActionTerminate,
-				Message: "bad action data",
-			}).Encode())
-			err = fmt.Errorf("bad action: %w", err)
+			err = terminate(conn, err)
 		}
 	}()
 

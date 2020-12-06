@@ -16,6 +16,7 @@ import (
 	"changkun.de/x/midgard/pkg/types/proto"
 	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/status"
 )
 
 var statusCmd = &cobra.Command{
@@ -24,20 +25,23 @@ var statusCmd = &cobra.Command{
 	Long:  `check midgard setup status`,
 	Args:  cobra.ExactArgs(0),
 	Run: func(_ *cobra.Command, args []string) {
-		var status string
+		var s string
 
 		// check server status
 		res, err := utils.Request(http.MethodGet,
 			config.Get().Domain+"/midgard/ping", nil)
 		if err != nil {
-			status += fmt.Sprintf("server status: %s, %v\n", term.Red("request error"), err)
+			s += fmt.Sprintf("server status: %s, %v\n",
+				term.Red("request error"), err)
 		} else {
 			var out types.PingOutput
 			err = json.Unmarshal(res, &out)
 			if err != nil {
-				status += fmt.Sprintf("server status: %s, details:\n%v\n", term.Red("failed to parse ping response from server"), err)
+				s += fmt.Sprintf("server status: %s, details:\n%v\n",
+					term.Red("failed to parse ping response from server"),
+					err)
 			} else {
-				status += fmt.Sprintf("server status: %s\n", term.Green("OK"))
+				s += fmt.Sprintf("server status: %s\n", term.Green("OK"))
 			}
 		}
 
@@ -45,12 +49,14 @@ var statusCmd = &cobra.Command{
 		utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
 			_, err := c.Ping(ctx, &proto.PingInput{})
 			if err != nil {
-				status += fmt.Sprintf("daemon status: %s, details:\n%v\n", term.Red("failed to ping daemon"), err)
+				s += fmt.Sprintf("daemon status: %s, details:\n%v\n",
+					term.Red("failed to ping daemon"),
+					status.Convert(err).Message())
 			} else {
-				status += fmt.Sprintf("daemon status: %s\n", term.Green("OK"))
+				s += fmt.Sprintf("daemon status: %s\n", term.Green("OK"))
 			}
 		})
 
-		fmt.Println(status)
+		fmt.Println(s)
 	},
 }

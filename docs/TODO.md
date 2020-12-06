@@ -12,12 +12,13 @@
 - [x] VCS backup
 - [x] register keyboard hotkey
 - [ ] clipboard history
+- [x] list all daemons
+- [ ] stream shell commands
+- [ ] list data folder tree
 - [ ] Search function?
-- [ ] list folder tree
 - [ ] img2text
-- [ ] list all daemons, stream shell commands
 - [ ] Better clipboard listener, implement X11 convension
-- [ ] UPDATE/DELETE existing resource
+- [ ] UPDATE/DELETE existing resource?
 
 ```
 location ~ ^/(midgard|data) {

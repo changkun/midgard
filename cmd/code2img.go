@@ -14,6 +14,7 @@ import (
 	"changkun.de/x/midgard/pkg/types/proto"
 	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/status"
 )
 
 var code2imgCmd = &cobra.Command{
@@ -39,7 +40,13 @@ If you don't attach any file, then the midgard will try to use the clipboard dat
 				CodePath: codepath,
 			})
 			if err != nil {
-				log.Println("cannot convert your code to image:", err)
+				log.Println("cannot convert your code to image:",
+					status.Convert(err).Message())
+				return
+			}
+
+			if len(out.CodeURL) == 0 && len(out.ImageURL) == 0 {
+				log.Println("nothing was convereted to image.")
 				return
 			}
 

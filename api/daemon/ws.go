@@ -155,6 +155,14 @@ func (m *Daemon) readFromServer() {
 			continue
 		}
 
+		// duplicate messages to all readers, readers should not edit the message
+		m.readChs.Range(func(k, v interface{}) bool {
+			// readerID := k.(string)
+			readerCh := v.(chan *types.WebsocketMessage)
+			readerCh <- wsm
+			return true
+		})
+
 		switch wsm.Action {
 		case types.ActionClipboardChanged:
 			log.Printf("universal clipboard has changed from %s, sync with local...", wsm.UserID)

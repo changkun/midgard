@@ -18,6 +18,7 @@ import (
 	"changkun.de/x/midgard/pkg/types/proto"
 	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/status"
 )
 
 // newsCmd creates a new posts
@@ -40,7 +41,8 @@ var newsCmd = &cobra.Command{
 				Body:  strings.Join(n.body, ""),
 			})
 			if err != nil {
-				log.Fatalf("cannot interact with midgard daemon, err:\n%v", err)
+				log.Fatalf("cannot interact with midgard daemon, err:\n%v",
+					status.Convert(err).Message())
 			}
 			fmt.Println(out.Message)
 		})

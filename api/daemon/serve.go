@@ -28,6 +28,7 @@ type Daemon struct {
 	sync.Mutex
 	s       *grpc.Server
 	ws      *websocket.Conn
+	readChs sync.Map                     // {string: chan *types.WebsocketMessage}
 	writeCh chan *types.WebsocketMessage // writeCh is used for sending message along ws.
 }
 

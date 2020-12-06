@@ -13,6 +13,7 @@ service Midgard {
     rpc AllocateURL(AllocateURLInput) returns (AllocateURLOutput) {}
     rpc CreateNews(CreateNewsInput) returns (CreateNewsOutput) {}
     rpc CodeToImage(CodeToImageInput) returns (CodeToImageOutput) {}
+    rpc ListDaemons(ListDaemonsInput) returns (ListDaemonsOutput) {}
 }
 
 message PingInput {}
@@ -48,4 +49,9 @@ message CodeToImageInput {
 message CodeToImageOutput {
     string CodeURL = 1;
     string ImageURL = 2;
+}
+
+message ListDaemonsInput {}
+message ListDaemonsOutput {
+    string Daemons = 1;
 }

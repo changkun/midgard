@@ -13,6 +13,7 @@ import (
 	"changkun.de/x/midgard/pkg/types/proto"
 	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -47,7 +48,8 @@ func allocate(dstpath, srcpath string) {
 			SourcePath:  srcpath,
 		})
 		if err != nil {
-			log.Fatalf("cannot interact with midgard daemon, err:\n%v", err)
+			log.Fatalf("cannot interact with midgard daemon, err:\n%v",
+				status.Convert(err).Message())
 		}
 		if out.URL != "" {
 			clipboard.Write(utils.StringToBytes(out.URL))

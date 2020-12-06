@@ -5,20 +5,24 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
 	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/pkg/service"
+	"changkun.de/x/midgard/pkg/types/proto"
+	"changkun.de/x/midgard/pkg/utils"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/status"
 )
 
 // daemonCmd runs the midgard's daemon process.
 var daemonCmd = &cobra.Command{
-	Use:   "daemon [install|uninstall|start|stop|run]",
-	Short: "Run the Midgard daemon",
-	Long:  `Run the Midgard daemon`,
+	Use:   "daemon [install|uninstall|start|stop|run|ls]",
+	Short: "Interact with the midgard daemon(s)",
+	Long:  `Interact with the midgard daemon(s)`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		s, err := service.NewService(
@@ -37,7 +41,9 @@ var daemonCmd = &cobra.Command{
 				log.Printf("failed to %s, err: %v", args[0], err)
 				return
 			}
-			log.Printf("%s action is done.", args[0])
+			if args[0] != "ls" {
+				log.Printf("%s action is done.", args[0])
+			}
 		}()
 		switch args[0] {
 		case "install":
@@ -52,6 +58,16 @@ var daemonCmd = &cobra.Command{
 			m := daemon.NewDaemon()
 			m.Serve()
 			os.Exit(0) // this closes clipboard NSApplication on darwin
+		case "ls":
+			utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
+				out, err := c.ListDaemons(ctx, &proto.ListDaemonsInput{})
+				if err != nil {
+					log.Println("cannot list daemons:", status.Convert(err).Message())
+					return
+				}
+				log.Println("active daemons:")
+				fmt.Println(out.Daemons)
+			})
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])
 		}
