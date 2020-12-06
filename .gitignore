@@ -14,3 +14,4 @@ mg
 
 # Dependency directories (remove the comment below to include it)
 data/
+.idea/
