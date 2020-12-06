@@ -11,14 +11,11 @@
 - [x] code2img
 - [x] VCS backup
 - [x] register keyboard hotkey
-- [ ] clipboard history
+- [x] clipboard history
 - [x] list all daemons
 - [ ] stream shell commands
-- [ ] list data folder tree
 - [ ] Search function?
 - [ ] img2text
-- [ ] Better clipboard listener, implement X11 convension
-- [ ] UPDATE/DELETE existing resource?
 
 ```
 location ~ ^/(midgard|data) {

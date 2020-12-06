@@ -7,11 +7,18 @@ package clipboard
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	"image/png"
+	"log"
+	"os"
 	"sync"
+	"time"
 
+	"changkun.de/x/midgard/pkg/config"
 	"changkun.de/x/midgard/pkg/types"
+	"changkun.de/x/midgard/pkg/utils"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -64,12 +71,57 @@ func (uc *universalClipboard) Put(t types.ClipboardDataType, buf []byte) bool {
 		return false
 	}
 
-	// TODO: let's log the history of the universal clipboard change.
-	// we also need consider the merging local change if the offline mode was on.
+	uc.persist(t, buf)
 
 	uc.typ = t
 	uc.buf = buf
 	return true
+}
+
+func (uc *universalClipboard) persist(t types.ClipboardDataType, buf []byte) {
+	if t != types.ClipboardDataTypePlainText {
+		buf = utils.StringToBytes(string(t))
+	}
+
+	date := time.Now().UTC()
+	r := struct {
+		Time time.Time
+		Type types.ClipboardDataType
+		Data string
+	}{
+		Time: date,
+		Type: t,
+		Data: utils.BytesToString(buf),
+	}
+	data, err := yaml.Marshal(r)
+	if err != nil {
+		log.Println("cannot persist the given clipboard data:", err)
+		return
+	}
+
+	logdir := config.S().Store.Path + "/logs/clipboard"
+	fpath := fmt.Sprintf("%s/%d/%d", logdir, date.Year(), date.Month())
+	err = os.MkdirAll(fpath, os.ModeDir|os.ModePerm)
+	if err != nil {
+		log.Println("cannot create log folder:", err)
+		return
+	}
+
+	f, err := os.OpenFile(fmt.Sprintf("%s/%d.log", fpath, date.Day()),
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		log.Println("cannot open or create clipboard log file:", err)
+		return
+	}
+	defer f.Close()
+
+	all := utils.StringToBytes("---\n")
+	all = append(all, data...)
+	if _, err := f.Write(all); err != nil {
+		log.Println("cannot write clipboard data to log:", err)
+		return
+	}
+
 }
 
 // Universal is the Midgard's universal clipboard.
