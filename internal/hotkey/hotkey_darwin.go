@@ -57,7 +57,7 @@ func handle(ctx context.Context, fn func()) {
 		if ret == C.int(-1) {
 			log.Println("register global system hotkey failed.")
 		}
-
+		log.Println("hotkey is registered.")
 		C.run_shared_application()
 	})
 }

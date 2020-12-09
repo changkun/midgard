@@ -10,6 +10,7 @@ import (
 	"log"
 
 	"changkun.de/x/midgard/internal/clipboard"
+	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/spf13/cobra"
@@ -52,7 +53,7 @@ func allocate(dstpath, srcpath string) {
 				status.Convert(err).Message())
 		}
 		if out.URL != "" {
-			clipboard.Write(utils.StringToBytes(out.URL))
+			clipboard.Local.Write(types.MIMEPlainText, utils.StringToBytes(out.URL))
 			fmt.Println(out.URL)
 		} else {
 			fmt.Printf("%v\n", out.Message)

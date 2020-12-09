@@ -43,7 +43,6 @@ int register_hotkey(void* go_hotkey_handler) {
 	if (s != noErr) {
 		return -1;
 	}
-	NSLog(@"hotkey registered");
 	return 0;
 }
 

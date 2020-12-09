@@ -6,19 +6,19 @@ package types
 
 // ClipboardData is a clipboard data
 type ClipboardData struct {
-	Type ClipboardDataType `json:"type"`
-	Data string            `json:"data"` // base64 encode if type is an image data
+	Type MIME   `json:"type"`
+	Data string `json:"data"` // base64 encode if type is an image data
 }
 
-// ClipboardDataType indicates clipboard data type
+// MIME indicates clipboard data type
 //
 // Note: We use string for the data type because this is better
 // for post body in iOS shortcut.
-type ClipboardDataType string
+type MIME string
 
 const (
-	// ClipboardDataTypePlainText indicates plain text data type
-	ClipboardDataTypePlainText ClipboardDataType = "text"
-	// ClipboardDataTypeImagePNG indicates image/png data type
-	ClipboardDataTypeImagePNG = "image/png"
+	// MIMEPlainText indicates plain text data type
+	MIMEPlainText MIME = "text"
+	// MIMEImagePNG indicates image/png data type
+	MIMEImagePNG = "image/png"
 )

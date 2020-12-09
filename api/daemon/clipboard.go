@@ -22,9 +22,9 @@ import (
 
 func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 	textCh := make(chan []byte, 1)
-	clipboard.Watch(ctx, types.ClipboardDataTypePlainText, textCh)
+	clipboard.Local.Watch(ctx, types.MIMEPlainText, textCh)
 	imagCh := make(chan []byte, 1)
-	clipboard.Watch(ctx, types.ClipboardDataTypeImagePNG, imagCh)
+	clipboard.Local.Watch(ctx, types.MIMEImagePNG, imagCh)
 
 	last := time.Now()
 	hotkey.Handle(ctx, func() {
@@ -37,7 +37,8 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 		var msg string
 		defer func() {
 			log.Printf(msg)
-			clipboard.Write(utils.StringToBytes(msg))
+			clipboard.Local.Write(
+				types.MIMEPlainText, utils.StringToBytes(msg))
 		}()
 
 		log.Println("hotkey triggered")
@@ -79,7 +80,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 			}
 
 			d := &types.PutToUniversalClipboardInput{}
-			d.Type = types.ClipboardDataTypePlainText
+			d.Type = types.MIMEPlainText
 			d.Data = utils.BytesToString(text)
 			d.DaemonID = m.ID
 			b, _ := json.Marshal(d)
@@ -95,7 +96,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 				return
 			}
 			d := &types.PutToUniversalClipboardInput{}
-			d.Type = types.ClipboardDataTypeImagePNG
+			d.Type = types.MIMEImagePNG
 			d.Data = base64.StdEncoding.EncodeToString(img)
 			d.DaemonID = m.ID
 			b, _ := json.Marshal(d)

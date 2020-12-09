@@ -166,7 +166,7 @@ func (m *Daemon) readFromServer() {
 		switch wsm.Action {
 		case types.ActionClipboardChanged:
 			log.Printf("universal clipboard has changed from %s, sync with local...", wsm.UserID)
-			clipboard.Write(wsm.Data) // change local clipboard
+			clipboard.Local.Write(types.MIMEPlainText, wsm.Data) // change local clipboard
 		}
 	}
 }

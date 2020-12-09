@@ -52,9 +52,7 @@ type blockinfo struct {
 	blockTime atomic.Value // time.Duration
 }
 
-const (
-	maxFailureAttempts = 5
-)
+const maxFailureAttempts = 5
 
 // Credentials is the basic auth authentication credentials
 type Credentials map[string]string
