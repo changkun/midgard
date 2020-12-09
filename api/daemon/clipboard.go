@@ -15,6 +15,7 @@ import (
 
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/hotkey"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 )
@@ -26,7 +27,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 	clipboard.Watch(ctx, types.ClipboardDataTypeImagePNG, imagCh)
 
 	last := time.Now()
-	clipboard.HandleHotkey(ctx, func() {
+	hotkey.Handle(ctx, func() {
 		if time.Now().Sub(last) < time.Second*5 {
 			log.Println("pressing hotkey too fast, ignoring")
 			return
