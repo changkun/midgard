@@ -22,20 +22,22 @@ func TestLocalClipboardImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read gold file, err: %v", err)
 	}
-	clipboard.Write(data)
+	clipboard.Local.Write(types.MIMEImagePNG, data)
 
-	r := clipboard.Read()
-	if !reflect.DeepEqual(r, data) {
+	tp, r := clipboard.Local.Read()
+	if !reflect.DeepEqual(r, data) || tp != types.MIMEImagePNG {
 		t.Fatalf("inconsistent read of a write, got: %s", utils.BytesToString(r))
 	}
+	t.Log(tp)
 }
 
 func TestLocalClipboardText(t *testing.T) {
 	data := utils.StringToBytes("changkun.de/x/midgard")
-	clipboard.Write(data)
+	clipboard.Local.Write(types.MIMEPlainText, data)
 
-	r := clipboard.Read()
-	if !reflect.DeepEqual(r, data) {
+	tp, r := clipboard.Local.Read()
+	if !reflect.DeepEqual(r, data) ||
+		!reflect.DeepEqual(tp, types.MIMEPlainText) {
 		t.Fatalf("inconsistent read of a write, got: %s", utils.BytesToString(r))
 	}
 }
@@ -45,11 +47,11 @@ func TestLocalClipboardWatch(t *testing.T) {
 	defer cancel()
 
 	// clear clipboard
-	clipboard.Write(utils.StringToBytes(""))
-	lastRead := clipboard.Read()
+	clipboard.Local.Write(types.MIMEPlainText, utils.StringToBytes(""))
+	_, lastRead := clipboard.Local.Read()
 
 	dataCh := make(chan []byte, 1)
-	clipboard.Watch(ctx, types.ClipboardDataTypePlainText, dataCh)
+	clipboard.Local.Watch(ctx, types.MIMEPlainText, dataCh)
 
 	w := utils.StringToBytes("changkun.de/x/midgard")
 	go func(ctx context.Context) {
@@ -59,7 +61,7 @@ func TestLocalClipboardWatch(t *testing.T) {
 			case <-ctx.Done():
 				return
 			case <-t.C:
-				clipboard.Write(w)
+				clipboard.Local.Write(types.MIMEPlainText, w)
 			}
 		}
 	}(ctx)

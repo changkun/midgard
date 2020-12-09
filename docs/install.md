@@ -1,16 +1,45 @@
 # Midgard Installation
 
+**Warning: Midgard is not yet suitable for non-technical users.**
+
 In order to setup `midgard`, you must configure the two `midgard` components:
 `midgard` server and `midgard` daemon.
+
+## TL;DR
+
+```sh
+$ git clone https://github.com/changkun/midgard
+$ make
+$ ln -s "$(pwd)/mg" /usr/local/bin/mg
+$ mg version
+Vrsion:      v0.0.2-35-ga1d6205
+Go version:  go1.15.6
+Build time:  2020-12-09T17:33:05+0100
+$ mg help
+midgard is a mind palace developed by Changkun Ou.
+See https://changkun.de/s/midgard for more details.
+
+Usage:
+  mg [command]
+
+Available Commands:
+  help        Help about any command
+  ...
+
+Flags:
+  -h, --help   help for mg
+
+Use "mg [command] --help" for more information about a command.
+```
 
 ## Dependencies
 
 Midgard tries to minimize the number of dependencies, but we cannot build
 everything from absolute nothing, the current dependent softwares are:
 
-- [git]() for version control
-- [xclip]() for clipboard on linux
-- [Chrome]() for `code2img`, see https://github.com/chromedp/docker-headless-shell
+- `git` for version control
+- `xclip` for clipboard on linux
+- `chrome` for `code2img`, see more details in https://github.com/chromedp/docker-headless-shell
 
 ## Build
 
@@ -20,7 +49,7 @@ A single make builds a single command `mg` for you to use midgard:
 $ make
 ```
 
-## `midgard` Server
+## Midgard server
 
 `midgard` server should be **deployed on a server**, to enable midgard
 server, one can:
@@ -38,7 +67,7 @@ Or, if you just want run midgard server directly:
 $ mg server run            # run midgard server directly
 ```
 
-## `midgard` Daemon
+## Midgard daemon
 
 `midgard` daemon process **runs on your local machine**, it responsible for
 listening the clipboard, hotkey, and server push events.
@@ -55,7 +84,7 @@ $ mg daemon uninstall # uninstall midgard from system service
 Or, if you just want run midgard daemon directly:
 
 ```sh
-$ mg daemon run            # run midgard daemon directly
+$ mg daemon run       # run midgard daemon directly
 ```
 
 ## Configuration

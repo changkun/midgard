@@ -2,13 +2,13 @@
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
-package cb_test
+package platform_test
 
 import (
 	"sync"
 	"testing"
 
-	"changkun.de/x/midgard/internal/clipboard/internal/cb"
+	"changkun.de/x/midgard/internal/clipboard/platform"
 	"changkun.de/x/midgard/internal/types"
 )
 
@@ -19,11 +19,11 @@ func TestLocalClipboardConcurrentRead(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		cb.Read(types.ClipboardDataTypePlainText)
+		platform.Read(types.MIMEPlainText)
 	}()
 	go func() {
 		defer wg.Done()
-		cb.Read(types.ClipboardDataTypeImagePNG)
+		platform.Read(types.MIMEImagePNG)
 	}()
 	wg.Wait()
 }

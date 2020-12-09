@@ -4,7 +4,7 @@
 
 // +build !(freebsd,linux,netbsd,openbsd,solaris,dragonfly,darwin)
 
-package cb
+package platform
 
 import "context"
 

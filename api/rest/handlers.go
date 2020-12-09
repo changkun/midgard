@@ -36,7 +36,7 @@ func (m *Midgard) GetFromUniversalClipboard(c *gin.Context) {
 	t, buf := clipboard.Universal.Read()
 
 	var raw string
-	if t == types.ClipboardDataTypeImagePNG {
+	if t == types.MIMEImagePNG {
 		// We stored our clipboard in bytes, if client is retriving this
 		// data, then let's encode it into base64.
 		raw = base64.StdEncoding.EncodeToString(buf)
@@ -65,7 +65,7 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 	}
 
 	var raw []byte
-	if b.Type == types.ClipboardDataTypeImagePNG {
+	if b.Type == types.MIMEImagePNG {
 		// We assume the client send us a base64 encoded image data,
 		// Let's decode it into bytes.
 		raw, err = base64.StdEncoding.DecodeString(b.Data)
@@ -76,7 +76,7 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 		raw = utils.StringToBytes(b.Data)
 	}
 
-	updated := clipboard.Universal.Put(b.Type, raw)
+	updated := clipboard.Universal.Write(b.Type, raw)
 	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{
 		Message: "clipboard data is saved.",
 	})
@@ -120,7 +120,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 	case types.SourceUniversalClipboard:
 		t, raw := clipboard.Universal.Read()
 		data = raw
-		if t == types.ClipboardDataTypeImagePNG {
+		if t == types.MIMEImagePNG {
 			ext = ".png"
 		}
 	case types.SourceAttachment:

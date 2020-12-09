@@ -9,7 +9,7 @@ IMAGE = midgard
 BINARY = mg
 TARGET = -o $(BINARY)
 MIDGARD_HOME = changkun.de/x/midgard
-BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/pkg/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/pkg/version.BuildTime=$(BUILDTIME)"
+BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/internal/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/internal/version.BuildTime=$(BUILDTIME)"
 BUILD_FLAGS = $(TARGET) $(BUILD_SETTINGS) -mod=vendor
 
 all:
@@ -19,6 +19,9 @@ install:
          google.golang.org/grpc/cmd/protoc-gen-go-grpc
 gen:
 	go generate ./...
+dep:
+	go mod tidy
+	go mod vendor
 build:
 	go generate ./...
 	GOOS=linux go build $(BUILD_FLAGS)

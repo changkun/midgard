@@ -238,7 +238,7 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 		return types.ErrBadAction
 	}
 	var raw []byte
-	if b.Type == types.ClipboardDataTypeImagePNG {
+	if b.Type == types.MIMEImagePNG {
 		// We assume the client send us a base64 encoded image data,
 		// Let's decode it into bytes.
 		raw, err = base64.StdEncoding.DecodeString(b.Data)
@@ -249,7 +249,7 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 		raw = utils.StringToBytes(b.Data)
 	}
 	log.Println("universal clipboard has updated, synced from:", u.id)
-	updated := clipboard.Universal.Put(b.Type, raw)
+	updated := clipboard.Universal.Write(b.Type, raw)
 	if updated {
 		m.boardcastMessage(&types.WebsocketMessage{
 			Action:  types.ActionClipboardChanged,

@@ -7,60 +7,66 @@ package clipboard
 import (
 	"bytes"
 	"context"
-	"errors"
 	"sync"
 
-	"changkun.de/x/midgard/internal/clipboard/internal/cb"
+	"changkun.de/x/midgard/internal/clipboard/platform"
 	"changkun.de/x/midgard/internal/types"
 )
 
-var (
-	// ErrEmpty indicates empty clipboard error
-	ErrEmpty = errors.New("empty")
-	// ErrAccessDenied indicates that access clipboard is denied by the system
-	ErrAccessDenied = errors.New("access denied")
-)
+// LocalClipboard is an extension to the Clipboard interface
+// for local purpose
+type LocalClipboard interface {
+	Clipboard
+	// Watch watches a given type of data from local clipboard and
+	// send the data back through a provided channel.
+	Watch(ctx context.Context, dt types.MIME, dataCh chan []byte)
+}
 
-// lock locks clipboard operation
-var (
-	lock     = sync.Mutex{}
-	localbuf = []byte{} // hold a local copy
-)
+// Local is a local clipboard that can interact with the OS clipboard.
+var Local LocalClipboard = &local{
+	buf: []byte{},
+}
+
+type local struct {
+	sync.Mutex
+	buf []byte
+	typ types.MIME
+}
 
 // Read reads and returns byte-based clipboard data.
-func Read() []byte {
-	lock.Lock()
-	defer lock.Unlock()
+func (lc *local) Read() (t types.MIME, buf []byte) {
+	lc.Lock()
+	defer lc.Unlock()
+	defer func() {
+		lc.buf = buf
+	}()
 
-	buf := cb.Read(types.ClipboardDataTypePlainText)
-	if buf == nil {
-		// if we still have nothing, then just ignore it.
-		buf = cb.Read(types.ClipboardDataTypeImagePNG)
+	buf = platform.Read(types.MIMEPlainText)
+	if buf != nil {
+		t = types.MIMEPlainText
+		return
 	}
-	localbuf = buf
-	return buf
+	buf = platform.Read(types.MIMEImagePNG)
+	t = types.MIMEImagePNG
+	return
 }
 
 // Write writes the given buffer to the clipboard.
-func Write(buf []byte) {
-	lock.Lock()
-	defer lock.Unlock()
+func (lc *local) Write(t types.MIME, buf []byte) bool {
+	lc.Lock()
+	defer lc.Unlock()
 
 	// if the local copy is the same with the write, do not bother.
-	if bytes.Compare(localbuf, buf) == 0 {
-		return
+	if bytes.Compare(lc.buf, buf) == 0 {
+		return true // but we recognize it as a success write
 	}
-	localbuf = buf
-
-	ok := cb.Write(buf, types.ClipboardDataTypePlainText)
-	if !ok {
-		// if we still have nothing, then just ignore it.
-		_ = cb.Write(buf, types.ClipboardDataTypeImagePNG)
-	}
+	lc.buf = buf
+	lc.typ = t
+	return platform.Write(buf, t)
 }
 
 // Watch watches clipboard changes and closes the dataCh channel if
 // the the watch context is canceled.
-func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
-	go cb.Watch(ctx, dt, dataCh)
+func (lc *local) Watch(ctx context.Context, dt types.MIME, dataCh chan []byte) {
+	go platform.Watch(ctx, dt, dataCh)
 }

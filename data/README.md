@@ -10,7 +10,6 @@ code
 ideas
 img
 inbox
-logs
 news
 random
 todo

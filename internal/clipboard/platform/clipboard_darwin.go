@@ -4,7 +4,7 @@
 
 // +build darwin
 
-package cb
+package platform
 
 // Interact with NSPasteboard using Objective-C
 // https://developer.apple.com/documentation/appkit/nspasteboard?language=objc
@@ -39,7 +39,7 @@ var (
 // Read reads the clipboard data of a given resource type.
 // It returns a buf that containing the clipboard data, and ok indicates
 // whether the read is success or fail.
-func Read(t types.ClipboardDataType) (buf []byte) {
+func Read(t types.MIME) (buf []byte) {
 	// Concurrent read/write clipboard on macOS can cause crashes
 	// One must serialize the operation to the clipboard.
 	lock.Lock()
@@ -50,9 +50,9 @@ func Read(t types.ClipboardDataType) (buf []byte) {
 		n    C.uint
 	)
 	switch t {
-	case types.ClipboardDataTypePlainText:
+	case types.MIMEPlainText:
 		n = C.clipboard_read_string(&data)
-	case types.ClipboardDataTypeImagePNG:
+	case types.MIMEImagePNG:
 		n = C.clipboard_read_image(&data)
 	}
 	if data == nil || n == 0 {
@@ -64,7 +64,7 @@ func Read(t types.ClipboardDataType) (buf []byte) {
 
 // Write writes the given buf as typ to system clipboard.
 // It returns true if the write is success.
-func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
+func Write(buf []byte, t types.MIME) (ret bool) {
 	// Concurrent read/write clipboard on macOS can cause crashes
 	// One must serialize the operation to the clipboard.
 	lock.Lock()
@@ -76,10 +76,10 @@ func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 
 	var ok C.int
 	switch t {
-	case types.ClipboardDataTypePlainText:
+	case types.MIMEPlainText:
 		ok = C.clipboard_write_string(unsafe.Pointer(&buf[0]),
 			C.NSInteger(len(buf)))
-	case types.ClipboardDataTypeImagePNG:
+	case types.MIMEImagePNG:
 		ok = C.clipboard_write_image(unsafe.Pointer(&buf[0]),
 			C.NSInteger(len(buf)))
 	}
@@ -102,7 +102,7 @@ func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 //
 // FIXME: Alternatively, we could watch keyboard hotkeys, for instance,
 // a double cmd+c triggers the watch? Needs invesgitation.
-func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
+func Watch(ctx context.Context, dt types.MIME, dataCh chan []byte) {
 	// we try to watch the clipboard every second, this should be enough
 	// for the watch purpose. If the user is too fast, meaning be able
 	// to paste the content within a second, then it is very unfortunate.

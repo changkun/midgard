@@ -66,7 +66,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	// if the request does not send any code, then let's use the data
 	// from our universal clipboard
 	if len(in.Code) == 0 {
-		in.Code = utils.BytesToString(clipboard.Universal.Get(types.ClipboardDataTypePlainText))
+		in.Code = utils.BytesToString(clipboard.Universal.ReadAs(types.MIMEPlainText))
 	}
 
 	// double check, if the code is still empty, then we don't want do anything

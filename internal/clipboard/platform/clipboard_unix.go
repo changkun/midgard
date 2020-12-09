@@ -4,7 +4,7 @@
 
 // +build freebsd linux netbsd openbsd solaris dragonfly
 
-package cb
+package platform
 
 import (
 	"bytes"
@@ -31,10 +31,10 @@ func init() {
 // Read reads the clipboard data of a given resource type.
 // It returns a buf that containing the clipboard data, and ok indicates
 // whether the read is success or fail.
-func Read(t types.ClipboardDataType) (buf []byte) {
+func Read(t types.MIME) (buf []byte) {
 	cmds := make([]string, len(pasteCmdArgs))
 	copy(cmds, pasteCmdArgs)
-	if t == types.ClipboardDataTypeImagePNG {
+	if t == types.MIMEImagePNG {
 		cmds = append(cmds, "-t", "image/png")
 	}
 	pasteCmd := exec.Command(cmds[0], cmds[1:]...)
@@ -47,7 +47,7 @@ func Read(t types.ClipboardDataType) (buf []byte) {
 
 // Write writes the given buf as typ to system clipboard.
 // It returns true if the write is success.
-func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
+func Write(buf []byte, t types.MIME) (ret bool) {
 	copyCmd := exec.Command(copyCmdArgs[0], copyCmdArgs[1:]...)
 	in, err := copyCmd.StdinPipe()
 	if err != nil {
@@ -71,7 +71,7 @@ func Write(buf []byte, t types.ClipboardDataType) (ret bool) {
 
 // Watch watches the changes of system clipboard, and sends the data of
 // clipboard to the given dataCh.
-func Watch(ctx context.Context, dt types.ClipboardDataType, dataCh chan []byte) {
+func Watch(ctx context.Context, dt types.MIME, dataCh chan []byte) {
 	// FIXME: this is not the ideal approach. On linux, we can interact
 	// with X11 ICCCM to listen to the selection notification event,
 	// then trigger the watch as needed to avoid frequent Read().

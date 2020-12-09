@@ -6,10 +6,7 @@ package clipboard
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
-	"image"
-	"image/png"
 	"log"
 	"os"
 	"sync"
@@ -21,40 +18,52 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	// ErrTypeMismatch indicates an error that the existing data inside
-	// the universal clipboard is inconsistent with the requested type.
-	ErrTypeMismatch = errors.New("type mismatch")
-)
-
-type universalClipboard struct {
-	typ types.ClipboardDataType
-	buf []byte
-	m   sync.Mutex
+// Clipboard is an interface that defines the operations of a clipboard
+type Clipboard interface {
+	// Read reads the clipboard and returns the MIME type and
+	// the raw bytes data in the clipboard
+	Read() (types.MIME, []byte)
+	// Write write the given data as the given MIME type and
+	// returns true if success or false if failed.
+	Write(types.MIME, []byte) bool
 }
 
-func (uc *universalClipboard) Read() (types.ClipboardDataType, []byte) {
-	uc.m.Lock()
-	defer uc.m.Unlock()
+// UniversalClipboard is an of Clipboard interface for universal purpose
+type UniversalClipboard interface {
+	Clipboard
+	// ReadAs reads the clipboard as a given MIME type and return
+	// the raw bytes if the type matches or nil if it does not.
+	// This method is generally faster than the Clipboard.Read because
+	// it avoids data copy if the MIME type does not match.
+	ReadAs(t types.MIME) []byte
+}
+
+// Universal is the Midgard's universal clipboard, it keeps the data in
+// memory and logs its change history to the data store of midgard.
+//
+// It holds a global shared storage that can be edited/fetched at anytime.
+var Universal UniversalClipboard = &universal{
+	typ: types.MIMEPlainText,
+	buf: []byte{},
+}
+
+type universal struct {
+	sync.Mutex
+	typ types.MIME
+	buf []byte
+}
+
+func (uc *universal) Read() (types.MIME, []byte) {
+	uc.Lock()
+	defer uc.Unlock()
 	buf := make([]byte, len(uc.buf))
 	copy(buf, uc.buf)
 	return uc.typ, buf
 }
 
-func (uc *universalClipboard) ReadAsImgage() (image.Image, error) {
-	uc.m.Lock()
-	defer uc.m.Unlock()
-
-	if uc.typ != types.ClipboardDataTypeImagePNG {
-		return nil, ErrTypeMismatch
-	}
-
-	return png.Decode(bytes.NewBuffer(uc.buf))
-}
-
-func (uc *universalClipboard) Get(t types.ClipboardDataType) []byte {
-	uc.m.Lock()
-	defer uc.m.Unlock()
+func (uc *universal) ReadAs(t types.MIME) []byte {
+	uc.Lock()
+	defer uc.Unlock()
 	if t != uc.typ {
 		return nil
 	}
@@ -64,29 +73,29 @@ func (uc *universalClipboard) Get(t types.ClipboardDataType) []byte {
 	return buf
 }
 
-func (uc *universalClipboard) Put(t types.ClipboardDataType, buf []byte) bool {
-	uc.m.Lock()
-	defer uc.m.Unlock()
+func (uc *universal) Write(t types.MIME, buf []byte) bool {
+	uc.Lock()
+	defer uc.Unlock()
 	if uc.typ == t && bytes.Compare(uc.buf, buf) == 0 {
 		return false
 	}
 
-	uc.persist(t, buf)
+	uc.log(t, buf)
 
 	uc.typ = t
 	uc.buf = buf
 	return true
 }
 
-func (uc *universalClipboard) persist(t types.ClipboardDataType, buf []byte) {
-	if t != types.ClipboardDataTypePlainText {
+func (uc *universal) log(t types.MIME, buf []byte) {
+	if t != types.MIMEPlainText {
 		buf = utils.StringToBytes(string(t))
 	}
 
 	date := time.Now().UTC()
 	r := struct {
 		Time time.Time
-		Type types.ClipboardDataType
+		Type types.MIME
 		Data string
 	}{
 		Time: date,
@@ -122,13 +131,4 @@ func (uc *universalClipboard) persist(t types.ClipboardDataType, buf []byte) {
 		return
 	}
 
-}
-
-// Universal is the Midgard's universal clipboard.
-//
-// It holds a global shared storage that can be edited/fetched at anytime.
-var Universal = universalClipboard{
-	typ: types.ClipboardDataTypePlainText,
-	buf: []byte{},
-	m:   sync.Mutex{},
 }
