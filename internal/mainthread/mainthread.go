@@ -14,7 +14,7 @@ func init() {
 }
 
 // Init initializes the functionality for running arbitrary subsequent
-// functions on a main system thread.
+// functions on the main system thread.
 //
 // Init must be called in the main package.
 func Init(run func()) {
