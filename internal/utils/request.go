@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"changkun.de/x/midgard/pkg/config"
-	"changkun.de/x/midgard/pkg/types/proto"
+	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/types/proto"
 	"google.golang.org/grpc"
 )
 

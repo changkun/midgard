@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"testing"
 
-	"changkun.de/x/midgard/pkg/clipboard"
-	"changkun.de/x/midgard/pkg/types"
-	"changkun.de/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/internal/clipboard"
+	"changkun.de/x/midgard/internal/types"
+	"changkun.de/x/midgard/internal/utils"
 )
 
 func TestUniversalClipboard(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"testing"
 
-	"changkun.de/x/midgard/pkg/clipboard/internal/cb"
-	"changkun.de/x/midgard/pkg/types"
+	"changkun.de/x/midgard/internal/clipboard/internal/cb"
+	"changkun.de/x/midgard/internal/types"
 )
 
 func TestLocalClipboardConcurrentRead(t *testing.T) {

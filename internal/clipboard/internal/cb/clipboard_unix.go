@@ -57,7 +57,7 @@ import (
 	"os/exec"
 	"time"
 
-	"changkun.de/x/midgard/pkg/types"
+	"changkun.de/x/midgard/internal/types"
 )
 
 var (

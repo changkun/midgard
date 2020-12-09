@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"changkun.de/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 

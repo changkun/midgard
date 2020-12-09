@@ -7,7 +7,7 @@ package cmd
 import (
 	"fmt"
 
-	"changkun.de/x/midgard/pkg/version"
+	"changkun.de/x/midgard/internal/version"
 	"github.com/spf13/cobra"
 )
 

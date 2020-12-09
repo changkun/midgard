@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"changkun.de/x/midgard/pkg/clipboard"
-	"changkun.de/x/midgard/pkg/config"
-	"changkun.de/x/midgard/pkg/types"
-	"changkun.de/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/internal/clipboard"
+	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/types"
+	"changkun.de/x/midgard/internal/utils"
 	"github.com/gorilla/websocket"
 )
 

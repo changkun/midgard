@@ -7,7 +7,7 @@ package utils_test
 import (
 	"testing"
 
-	"changkun.de/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/internal/utils"
 )
 
 func TestBytesString(t *testing.T) {

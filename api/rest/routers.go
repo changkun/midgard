@@ -13,7 +13,7 @@ import (
 	"runtime"
 	"strings"
 
-	"changkun.de/x/midgard/pkg/config"
+	"changkun.de/x/midgard/internal/config"
 	"github.com/gin-gonic/gin"
 )
 
