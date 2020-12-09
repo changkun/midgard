@@ -35,8 +35,8 @@ import (
 	"time"
 	"unsafe"
 
-	"changkun.de/x/midgard/pkg/mainthread"
-	"changkun.de/x/midgard/pkg/types"
+	"changkun.de/x/midgard/internal/mainthread"
+	"changkun.de/x/midgard/internal/types"
 )
 
 var (

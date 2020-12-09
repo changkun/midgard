@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"changkun.de/x/midgard/pkg/config"
-	"changkun.de/x/midgard/pkg/term"
-	"changkun.de/x/midgard/pkg/types"
-	"changkun.de/x/midgard/pkg/types/proto"
-	"changkun.de/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/term"
+	"changkun.de/x/midgard/internal/types"
+	"changkun.de/x/midgard/internal/types/proto"
+	"changkun.de/x/midgard/internal/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/status"
 )

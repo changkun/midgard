@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"changkun.de/x/midgard/pkg/service"
+	"changkun.de/x/midgard/internal/service"
 )
 
 var log service.Logger

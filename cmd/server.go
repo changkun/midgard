@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"changkun.de/x/midgard/api/rest"
-	"changkun.de/x/midgard/pkg/service"
+	"changkun.de/x/midgard/internal/service"
 	"github.com/spf13/cobra"
 )
 

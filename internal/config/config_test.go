@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"changkun.de/x/midgard/pkg/config"
+	"changkun.de/x/midgard/internal/config"
 )
 
 func TestParseConfig(t *testing.T) {

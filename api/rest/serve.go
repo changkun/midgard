@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"changkun.de/x/midgard/pkg/config"
-	"changkun.de/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/utils"
 )
 
 // Midgard is the midgard server that serves all API endpoints.

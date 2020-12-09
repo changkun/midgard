@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"changkun.de/x/midgard/pkg/config"
-	"changkun.de/x/midgard/pkg/types"
-	"changkun.de/x/midgard/pkg/types/proto"
-	"changkun.de/x/midgard/pkg/utils"
+	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/types"
+	"changkun.de/x/midgard/internal/types/proto"
+	"changkun.de/x/midgard/internal/utils"
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 )
