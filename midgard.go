@@ -10,7 +10,8 @@ import (
 )
 
 func main() {
-	mainthread.Init(func() {
-		cmd.Execute()
-	})
+	// midgard cli involes graphical APIs that require running on
+	// the main thread. Instead of executing the command center,
+	// initialize it from the mainthread package.
+	mainthread.Init(cmd.Execute)
 }

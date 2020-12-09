@@ -5,42 +5,25 @@
 package cmd
 
 import (
-	"flag"
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/spf13/cobra"
 )
-
-var (
-// interactive = flag.String("i", "", "interactively input content")
-)
-
-func usage() {
-	fmt.Fprintf(os.Stderr, `usage: midgard [-s] [-d]
-options:
-`)
-	flag.PrintDefaults()
-	fmt.Fprintf(os.Stderr, `example:
-`)
-	os.Exit(2)
-}
 
 // Execute executes the midgard commands.
 func Execute() {
 	log.SetPrefix("midgard: ")
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmsgprefix)
 
-	var rootCmd = &cobra.Command{
-		Use:   "midgard",
-		Short: "midgard is a lightweight solution for managing personal resource namespace.",
-		Long: `midgard is a lightweight solution for managing personal resource namespace.
+	var r = &cobra.Command{
+		Use:   "mg",
+		Short: "midgard is a mind palace.",
+		Long: `midgard is a mind palace developed by Changkun Ou.
 See: https://changkun.de/s/midgard for more details.
 `,
 	}
 
-	rootCmd.AddCommand(
+	r.AddCommand(
 		versionCmd,
 		serverCmd,
 		daemonCmd,
@@ -49,5 +32,5 @@ See: https://changkun.de/s/midgard for more details.
 		newsCmd,
 		code2imgCmd,
 	)
-	rootCmd.Execute()
+	r.Execute()
 }
