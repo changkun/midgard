@@ -12,7 +12,7 @@ services:
       - ../data:/app/data
     image: midgard:latest
     environment:
-      MIDGARD_CONF: ../server.yml
+      MIDGARD_CONF: /app/config.yml
     cap_add:
       - SYS_PTRACE # for debugging
     ports:

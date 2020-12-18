@@ -8,7 +8,7 @@ title: "Changkun Ou"
 domain: changkun.de # domain that runs midgard server
 
 # midgard server settings
-# these settings are only used in server mode (run under `mg server run`)
+# these settings are only used in server mode (run under `mg server`)
 server:
   addr: localhost:9124
   mode: debug # or debug/release/test

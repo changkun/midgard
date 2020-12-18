@@ -26,21 +26,13 @@ make up
 Native:
 
 ```sh
-$ mg server install
-$ mg server start
-$ mg server stop
-$ mg server uninstall
-```
-
-or
-
-```sh
-$ mg server run
+$ mg server
 ```
 
 ## Midgard daemon
 
-`midgard` daemon process **runs on your local machine**:
+`midgard` daemon process **runs on your local machine**
+(automatic start when machine boots):
 
 ```sh
 $ mg daemon install
