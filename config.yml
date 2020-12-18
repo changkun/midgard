@@ -17,8 +17,8 @@ server:
     path: ./data  # file system location
     backup:
       enable: true # enable backup
-      interval: 60 # every minutes
-      repo: https://github.com/changkun/data
+      interval: 60  # every hour
+      repo: https://github.com/changkun/data.git
   auth:
     # the following two configures your midgard credentials
     user: changkun

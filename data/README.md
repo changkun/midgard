@@ -7,10 +7,7 @@ files. A user of midgard must adapts to this philosophy.
 
 ```
 code
-ideas
 img
-inbox
 news
 random
-todo
 ```

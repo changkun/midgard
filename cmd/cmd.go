@@ -17,8 +17,8 @@ func Execute() {
 
 	var r = &cobra.Command{
 		Use:   "mg",
-		Short: "midgard is a mind palace.",
-		Long: `midgard is a mind palace developed by Changkun Ou.
+		Short: "midgard is a universal clipboard service.",
+		Long: `midgard is a universal clipboard service developed by Changkun Ou.
 See https://changkun.de/s/midgard for more details.
 `,
 	}

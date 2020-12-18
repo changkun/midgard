@@ -7,7 +7,6 @@
 - [x] websocket clipboard push registration/notification
 - [x] iOS shortcut for clipboard data fetching
 - [x] config initialization, both for client and server (can we use init for daemon/server installation?)
-- [x] news page
 - [x] code2img
 - [x] VCS backup
 - [x] register keyboard hotkey

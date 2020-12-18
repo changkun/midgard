@@ -1,13 +1,11 @@
 # midgard
 
-midgard is my mind palace.
+midgard is a universal clipboard service.
 
 ## Docs
 
-- [Why?](./docs/why.md)
 - [Installation](./docs/install.md)
 - [Usage](./docs/usage.md)
-- [Design](./docs/design.md)
 
 ## Contributes
 
