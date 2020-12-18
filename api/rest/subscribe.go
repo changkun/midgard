@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -217,13 +217,13 @@ func (m *Midgard) handleActionCreateNews(conn *websocket.Conn, u *user, data []b
 	}
 
 	dir := config.S().Store.Path + "/news/"
-	err = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
+	err = os.MkdirAll(dir, fs.ModeDir|fs.ModePerm)
 	if err != nil {
 		return err
 	}
 
 	title := b.Date + "-" + strings.Replace(b.Title, " ", "-", -1) + ".yml"
-	err = ioutil.WriteFile(dir+title, out, os.ModePerm)
+	err = os.WriteFile(dir+title, out, fs.ModePerm)
 	return
 }
 

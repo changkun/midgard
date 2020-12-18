@@ -8,6 +8,7 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -117,7 +118,7 @@ func backup(ctx context.Context) {
 		if err != nil {
 			log.Fatalf("cannot rename your folder: %v", err)
 		}
-		err = os.Mkdir(config.S().Store.Path, os.ModeDir|os.ModePerm)
+		err = os.Mkdir(config.S().Store.Path, fs.ModeDir|fs.ModePerm)
 		if err != nil {
 			log.Fatalf("cannot create a new data folder: %v", err)
 		}

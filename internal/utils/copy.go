@@ -6,19 +6,12 @@ package utils
 
 import (
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
 
 // this implemnetation is derived from https://github.com/otiai10/copy.
-
-const (
-	// tmpPermissionForDirectory makes the destination directory writable,
-	// so that stuff can be copied recursively even if any original directory is NOT writable.
-	// See https://github.com/otiai10/copy/pull/9 for more information.
-	tmpPermissionForDirectory = os.FileMode(0755)
-)
 
 // Copy copies src to dest, doesn't matter if src is a directory or a file.
 func Copy(src, dest string) error {
@@ -31,9 +24,9 @@ func Copy(src, dest string) error {
 
 // switchboard switches proper copy functions regarding file type, etc...
 // If there would be anything else here, add a case to this switchboard.
-func switchboard(src, dest string, info os.FileInfo) error {
+func switchboard(src, dest string, info fs.FileInfo) error {
 	switch {
-	case info.Mode()&os.ModeSymlink != 0:
+	case info.Mode()&fs.ModeSymlink != 0:
 		return onsymlink(src, dest, info)
 	case info.IsDir():
 		return dcopy(src, dest, info)
@@ -45,9 +38,9 @@ func switchboard(src, dest string, info os.FileInfo) error {
 // fcopy is for just a file,
 // with considering existence of parent directory
 // and file permission.
-func fcopy(src, dest string, info os.FileInfo) (err error) {
+func fcopy(src, dest string, info fs.FileInfo) (err error) {
 
-	if err = os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
+	if err = os.MkdirAll(filepath.Dir(dest), fs.ModePerm); err != nil {
 		return
 	}
 
@@ -77,26 +70,34 @@ func fcopy(src, dest string, info os.FileInfo) (err error) {
 // dcopy is for a directory,
 // with scanning contents inside the directory
 // and pass everything to "copy" recursively.
-func dcopy(srcdir, destdir string, info os.FileInfo) (err error) {
+func dcopy(srcdir, destdir string, info fs.FileInfo) (err error) {
 
 	originalMode := info.Mode()
 
-	// Make dest dir with 0755 so that everything writable.
-	if err = os.MkdirAll(destdir, tmpPermissionForDirectory); err != nil {
+	// Make dest dir with 0755 so that everything writable, so that
+	// stuff can be copied recursively even if any original directory
+	// is NOT writable.
+	// See https://github.com/otiai10/copy/pull/9 for more information.
+	if err = os.MkdirAll(destdir, fs.FileMode(0755)); err != nil {
 		return
 	}
 	// Recover dir mode with original one.
 	defer chmod(destdir, originalMode, &err)
 
-	contents, err := ioutil.ReadDir(srcdir)
+	contents, err := os.ReadDir(srcdir)
 	if err != nil {
 		return
 	}
 
 	for _, content := range contents {
 		cs, cd := filepath.Join(srcdir, content.Name()), filepath.Join(destdir, content.Name())
+		var finfo fs.FileInfo
+		finfo, err = content.Info()
+		if err != nil {
+			return
+		}
 
-		if err = switchboard(cs, cd, content); err != nil {
+		if err = switchboard(cs, cd, finfo); err != nil {
 			// If any error, exit immediately
 			return
 		}
@@ -105,7 +106,7 @@ func dcopy(srcdir, destdir string, info os.FileInfo) (err error) {
 	return
 }
 
-func onsymlink(src, dest string, info os.FileInfo) error {
+func onsymlink(src, dest string, info fs.FileInfo) error {
 	orig, err := os.Readlink(src)
 	if err != nil {
 		return err
@@ -120,7 +121,7 @@ func onsymlink(src, dest string, info os.FileInfo) error {
 // chmod ANYHOW changes file mode,
 // with asiging error raised during Chmod,
 // BUT respecting the error already reported.
-func chmod(dir string, mode os.FileMode, reported *error) {
+func chmod(dir string, mode fs.FileMode, reported *error) {
 	if err := os.Chmod(dir, mode); *reported == nil {
 		*reported = err
 	}

@@ -1,6 +1,6 @@
 module changkun.de/x/midgard
 
-go 1.15
+go 1.16
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20201009231348-1c6a710e77de

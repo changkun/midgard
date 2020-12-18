@@ -13,7 +13,6 @@
 - [x] register keyboard hotkey
 - [x] clipboard history
 - [x] list all daemons
-- [ ] integrate tli
 - [ ] integrate telegram
 - [ ] stream shell commands
 - [ ] Search function?

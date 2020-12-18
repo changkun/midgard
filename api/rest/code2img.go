@@ -6,7 +6,7 @@ package rest
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -81,7 +81,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	id := utils.NewUUID()
 	codefile := "/code/" + id // no extension! we don't care which language is using.
 
-	err := ioutil.WriteFile(config.S().Store.Path+codefile, utils.StringToBytes(in.Code), os.ModePerm)
+	err := os.WriteFile(config.S().Store.Path+codefile, utils.StringToBytes(in.Code), fs.ModePerm)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{
 			Message: fmt.Sprintf("failed to save your code: %v", err),
@@ -99,7 +99,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	}
 
 	imgfile := "/img/" + id + ".png"
-	err = ioutil.WriteFile(config.S().Store.Path+imgfile, imgb, os.ModePerm)
+	err = os.WriteFile(config.S().Store.Path+imgfile, imgb, fs.ModePerm)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{
 			Message: fmt.Sprintf("failed to save your image: %v", err),

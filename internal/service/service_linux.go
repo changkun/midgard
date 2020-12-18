@@ -7,7 +7,6 @@ package service
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log/syslog"
 	"os"
 	"os/exec"
@@ -28,7 +27,7 @@ const (
 // the default flavor is initSystemV. we lookup the command line of
 // process 1 to detect systemd or upstart
 func getFlavor() (initFlavor, error) {
-	initCmd, err := ioutil.ReadFile("/proc/1/cmdline")
+	initCmd, err := os.ReadFile("/proc/1/cmdline")
 	if err != nil {
 		return initSystemV, err
 	}

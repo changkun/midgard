@@ -2,12 +2,12 @@
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
-// +build freebsd linux netbsd openbsd solaris dragonfly
+// +build linux
 
 package hotkey
 
 /*
-#cgo LDFLAGS: -lX11 -lXmu
+#cgo LDFLAGS: -lX11
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

@@ -7,7 +7,7 @@ package rest
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -159,7 +159,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 
 	dir, _ := filepath.Split(path)
 	if !existed(dir) {
-		err = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
+		err = os.MkdirAll(dir, fs.ModeDir|fs.ModePerm)
 		if err != nil {
 			err = fmt.Errorf("failed to create uri, err: %w", err)
 			c.JSON(http.StatusInternalServerError, types.AllocateURLOutput{
@@ -170,7 +170,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 	}
 
 	// everything seems fine, save the data
-	err = ioutil.WriteFile(path, data, os.ModePerm)
+	err = os.WriteFile(path, data, fs.ModePerm)
 	if err != nil {
 		err = fmt.Errorf("failed to persist the data, err: %w", err)
 		c.JSON(http.StatusInternalServerError, types.AllocateURLOutput{

@@ -3,26 +3,28 @@
 # license that can be found in the LICENSE file.
 
 ---
+# midgard common settings
 title: "Changkun Ou"
-domain: localhost:8080
-# server includes all midgard server side settings
-# these settings are only used in server mode (run under `mg serve`)
+domain: changkun.de # domain that runs midgard server
+
+# midgard server settings
+# these settings are only used in server mode (run under `mg server run`)
 server:
-  addr: localhost:8080
+  addr: localhost:9124
   mode: debug # or debug/release/test
   store:
-    prefix: /data # this will be your namespace prefix, i.e. changkun.de/data/*
-    path: ./data # this is where your data stored on your server
+    prefix: /data # access via changkun.de/data/*
+    path: ./data  # file system location
     backup:
       enable: true # enable backup
-      interval: 1 # every minutes
+      interval: 60 # every minutes
       repo: https://github.com/changkun/data
   auth:
     # the following two configures your midgard credentials
     user: changkun
     pass: aBWJnteJbt!j3G!qehLnJmbcgLqkkXuEusz9m4@JeqUqwZD*Dc
 
-# daemon includes all midgard daemon settings
-# these settings are only used in daemon mode (run under `mg daemon`)
+# midgard daemon settings
+# these settings are only used in daemon mode (run under `mg daemon run`)
 daemon:
-  addr: localhost:8081
+  addr: localhost:9125

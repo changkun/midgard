@@ -5,7 +5,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -80,7 +79,7 @@ func load() {
 
 func (c *Config) parse() {
 	f := os.Getenv("MIDGARD_CONF")
-	d, err := ioutil.ReadFile(f)
+	d, err := os.ReadFile(f)
 	if err != nil {
 		fix := func(p string) string { // fixes a relative path
 			_, filename, _, ok := runtime.Caller(1)
@@ -91,7 +90,7 @@ func (c *Config) parse() {
 		}
 
 		p := fix("../../config.yml")
-		d, err = ioutil.ReadFile(p)
+		d, err = os.ReadFile(p)
 		if err != nil {
 			log.Fatalf("cannot read configuration, err: %v\n", err)
 		}

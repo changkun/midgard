@@ -7,7 +7,7 @@ package clipboard_test
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestLocalClipboardImage(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/gold.png")
+	data, err := os.ReadFile("testdata/gold.png")
 	if err != nil {
 		t.Fatalf("failed to read gold file, err: %v", err)
 	}

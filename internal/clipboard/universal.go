@@ -7,6 +7,7 @@ package clipboard
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"sync"
@@ -110,14 +111,14 @@ func (uc *universal) log(t types.MIME, buf []byte) {
 
 	logdir := config.S().Store.Path + "/logs/clipboard"
 	fpath := fmt.Sprintf("%s/%d/%d", logdir, date.Year(), date.Month())
-	err = os.MkdirAll(fpath, os.ModeDir|os.ModePerm)
+	err = os.MkdirAll(fpath, fs.ModeDir|fs.ModePerm)
 	if err != nil {
 		log.Println("cannot create log folder:", err)
 		return
 	}
 
 	f, err := os.OpenFile(fmt.Sprintf("%s/%d.log", fpath, date.Day()),
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, fs.ModePerm)
 	if err != nil {
 		log.Println("cannot open or create clipboard log file:", err)
 		return

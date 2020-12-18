@@ -10,10 +10,10 @@ BINARY = mg
 TARGET = -o $(BINARY)
 MIDGARD_HOME = changkun.de/x/midgard
 BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/internal/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/internal/version.BuildTime=$(BUILDTIME)"
-BUILD_FLAGS = $(TARGET) $(BUILD_SETTINGS) -mod=vendor
+BUILD_FLAGS = $(BUILD_SETTINGS) -mod=vendor
 
 all:
-	go build $(BUILD_FLAGS)
+	go build $(TARGET) $(BUILD_FLAGS)
 install:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
          google.golang.org/grpc/cmd/protoc-gen-go-grpc
@@ -23,8 +23,7 @@ dep:
 	go mod tidy
 	go mod vendor
 build:
-	go generate ./...
-	GOOS=linux go build $(BUILD_FLAGS)
+	go build $(TARGET) $(BUILD_FLAGS)
 	docker build -t $(IMAGE):$(VERSION) -t $(IMAGE):latest -f docker/Dockerfile .
 up: down
 	docker-compose -f docker/compose.yml up -d

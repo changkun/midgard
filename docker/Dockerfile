@@ -2,7 +2,9 @@
 # Use of this source code is governed by a GPL-3.0
 # license that can be found in the LICENSE file.
 
-FROM golang:1.15.5
+FROM chromedp/headless-shell:latest
+RUN apt update && apt install dumb-init
+ENTRYPOINT ["dumb-init", "--"]
 WORKDIR /app
 COPY . .
-CMD ["/app/midgard", "server", "run"]
+CMD ["/app/mg", "server", "run"]

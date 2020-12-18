@@ -39,7 +39,8 @@ everything from absolute nothing, the current dependent softwares are:
 
 - `git` for version control
 - `xclip` for clipboard on linux
-- `chrome` for `code2img`, see more details in https://github.com/chromedp/docker-headless-shell
+- `chromium-browser` for `code2img`, see more details in https://github.com/chromedp/docker-headless-shell
+- `libx11-dev` on Linux
 
 ## Build
 

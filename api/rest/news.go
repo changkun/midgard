@@ -6,7 +6,7 @@ package rest
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -45,9 +45,9 @@ func (m *Midgard) News(c *gin.Context) {
 	f := feeds{PageTitle: "News", Items: []item{}}
 	news := config.S().Store.Path + "/news"
 	// TODO: order by date
-	err := filepath.Walk(news, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(news, func(path string, d fs.DirEntry, err error) error {
 		// skip folders
-		if info.IsDir() || err != nil {
+		if d.IsDir() || err != nil {
 			return nil
 		}
 
@@ -57,7 +57,7 @@ func (m *Midgard) News(c *gin.Context) {
 		}
 
 		// read content
-		b, err := ioutil.ReadFile(path)
+		b, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}

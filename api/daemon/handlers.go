@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -45,7 +45,7 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 
 	if in.SourcePath != "" {
 		source = types.SourceAttachment
-		b, err := ioutil.ReadFile(in.SourcePath)
+		b, err := os.ReadFile(in.SourcePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %v, err: %w", in.SourcePath, err)
 		}
@@ -110,7 +110,7 @@ func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (o
 	// the user presented a file, so we read it.
 	// if it does not exist, then we don't bother the server.
 	if len(in.CodePath) > 0 {
-		b, err := ioutil.ReadFile(in.CodePath)
+		b, err := os.ReadFile(in.CodePath)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read the given file: %w", err)
 		}

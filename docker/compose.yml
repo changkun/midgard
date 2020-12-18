@@ -16,15 +16,4 @@ services:
     cap_add:
       - SYS_PTRACE # for debugging
     ports:
-      - "9124:8080"
-      - "9125:8081"
-    networks:
-      midgardnet:
-        ipv4_address: 172.16.2.10
-networks:
-  midgardnet:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.16.2.0/24
+      - "9124:9124"
