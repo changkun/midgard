@@ -22,12 +22,9 @@ func (m *Midgard) routers() (r *gin.Engine) {
 
 	r = gin.Default()
 	r.NoRoute(staticHandler(config.S().Store.Prefix, config.S().Store.Path))
-	r.LoadHTMLGlob(FixPath("./templates/*"))
 
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
-	mg.GET("/news", m.News)
-
 	v1auth := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
 		config.S().Auth.User: config.S().Auth.Pass,
 	}))
@@ -37,7 +34,6 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.GET("/ws", m.Subscribe)
 		v1auth.PUT("/allocate", m.AllocateURL)
 		v1auth.POST("/code2img", m.Code2img)
-
 	}
 
 	profile(mg.Group("/api/v1"))

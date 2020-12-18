@@ -10,20 +10,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"log"
-	"os"
-	"strings"
 	"sync"
 	"sync/atomic"
 
 	"changkun.de/x/midgard/internal/clipboard"
-	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"gopkg.in/yaml.v3"
 )
 
 var uid uint64 // atomic, incremental
@@ -150,12 +145,6 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			if err != nil {
 				log.Println("failed to put clipboard:", err)
 			}
-		case types.ActionCreateNews:
-			log.Println("received a news:", string(wsm.Data))
-			err := m.handleActionCreateNews(conn, u, wsm.Data)
-			if err != nil {
-				log.Println("failed to create news:", err)
-			}
 		case types.ActionListDaemonsRequest:
 			log.Println("list active daemons request is received.")
 			err := m.handleListDaemons(conn, u, wsm.Data)
@@ -196,35 +185,6 @@ func (m *Midgard) handleListDaemons(conn *websocket.Conn, u *user, data []byte) 
 		Action: types.ActionListDaemonsResponse,
 		Data:   utils.StringToBytes(resp),
 	}).Encode())
-}
-
-func (m *Midgard) handleActionCreateNews(conn *websocket.Conn, u *user, data []byte) (err error) {
-	defer func() {
-		if err != nil {
-			err = terminate(conn, err)
-		}
-	}()
-
-	b := &types.ActionCreateNewsData{}
-	err = json.Unmarshal(data, b)
-	if err != nil {
-		return
-	}
-
-	out, err := yaml.Marshal(b)
-	if err != nil {
-		return
-	}
-
-	dir := config.S().Store.Path + "/news/"
-	err = os.MkdirAll(dir, fs.ModeDir|fs.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	title := b.Date + "-" + strings.Replace(b.Title, " ", "-", -1) + ".yml"
-	err = os.WriteFile(dir+title, out, fs.ModePerm)
-	return
 }
 
 func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data []byte) error {

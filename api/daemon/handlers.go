@@ -84,24 +84,6 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 	return &proto.AllocateURLOutput{URL: url, Message: "Done."}, nil
 }
 
-// CreateNews creates a news
-func (m *Daemon) CreateNews(ctx context.Context, in *proto.CreateNewsInput) (out *proto.CreateNewsOutput, err error) {
-
-	s := &types.ActionCreateNewsData{
-		Date: in.Date, Title: in.Title, Body: in.Body,
-	}
-	b, _ := json.Marshal(s)
-
-	m.writeCh <- &types.WebsocketMessage{
-		Action:  types.ActionCreateNews,
-		UserID:  m.ID,
-		Message: "create news",
-		Data:    b,
-	}
-
-	return &proto.CreateNewsOutput{Message: "DONE."}, nil
-}
-
 // CodeToImage tries to create an image for the given code.
 func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (out *proto.CodeToImageOutput, err error) {
 	log.Println("received a code2img request:", in.CodePath)

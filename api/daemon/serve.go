@@ -24,12 +24,13 @@ import (
 // Daemon is the midgard daemon that interact with midgard server.
 type Daemon struct {
 	ID string
-
 	sync.Mutex
 	s       *grpc.Server
 	ws      *websocket.Conn
 	readChs sync.Map                     // {string: chan *types.WebsocketMessage}
 	writeCh chan *types.WebsocketMessage // writeCh is used for sending message along ws.
+
+	proto.UnimplementedMidgardServer
 }
 
 // NewDaemon creates a new midgard daemon

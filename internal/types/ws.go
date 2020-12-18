@@ -22,7 +22,6 @@ const (
 	ActionClipboardChanged                    = "cbchanged"
 	ActionClipboardGet                        = "cbget"
 	ActionClipboardPut                        = "cbput"
-	ActionCreateNews                          = "newsput"
 	ActionListDaemonsRequest                  = "lsdaemonreq"
 	ActionListDaemonsResponse                 = "lsdaemonsres"
 	ActionTerminate                           = "terminate"
@@ -48,11 +47,4 @@ func (m *WebsocketMessage) Encode() []byte {
 // Decode decodes given data to m.
 func (m *WebsocketMessage) Decode(data []byte) error {
 	return json.Unmarshal(data, m)
-}
-
-// ActionCreateNewsData ...
-type ActionCreateNewsData struct {
-	Date  string `json:"date"`
-	Title string `json:"title"`
-	Body  string `json:"body"`
 }
