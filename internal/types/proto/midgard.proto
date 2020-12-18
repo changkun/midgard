@@ -11,7 +11,6 @@ package proto;
 service Midgard {
     rpc Ping(PingInput) returns (PingOutput) {}
     rpc AllocateURL(AllocateURLInput) returns (AllocateURLOutput) {}
-    rpc CreateNews(CreateNewsInput) returns (CreateNewsOutput) {}
     rpc CodeToImage(CodeToImageInput) returns (CodeToImageOutput) {}
     rpc ListDaemons(ListDaemonsInput) returns (ListDaemonsOutput) {}
 }
@@ -31,15 +30,6 @@ message AllocateURLInput {
 message AllocateURLOutput {
     string URL = 1;
     string Message = 2;
-}
-
-message CreateNewsInput {
-    string Date = 1;
-    string Title = 2;
-    string Body = 3;
-}
-message CreateNewsOutput {
-    string Message = 1;
 }
 
 message CodeToImageInput {
