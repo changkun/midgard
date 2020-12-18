@@ -11,6 +11,7 @@ TARGET = -o $(BINARY)
 MIDGARD_HOME = changkun.de/x/midgard
 BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/internal/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/internal/version.BuildTime=$(BUILDTIME)"
 BUILD_FLAGS = $(BUILD_SETTINGS) -mod=vendor
+SSH_KEY = ~/.ssh/id_rsa
 
 all:
 	go build $(TARGET) $(BUILD_FLAGS)
@@ -23,8 +24,11 @@ dep:
 	go mod tidy
 	go mod vendor
 build:
+	cp $(SSH_KEY) id_rsa
 	go build $(TARGET) $(BUILD_FLAGS)
-	docker build -t $(IMAGE):$(VERSION) -t $(IMAGE):latest -f docker/Dockerfile .
+	docker build -t $(IMAGE):$(VERSION) -t $(IMAGE):latest \
+		-f docker/Dockerfile .
+	rm id_rsa
 up: down
 	docker-compose -f docker/compose.yml up -d
 down:

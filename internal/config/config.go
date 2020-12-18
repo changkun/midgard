@@ -19,6 +19,9 @@ var (
 	once sync.Once
 )
 
+// RepoPath points to the actual storage
+var RepoPath = S().Store.Path + "/repo"
+
 // Config is a combination of all possible midgard configuration.
 type Config struct {
 	Title  string  `yaml:"title"`

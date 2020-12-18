@@ -3,7 +3,6 @@
 # license that can be found in the LICENSE file.
 
 version: "3"
-
 services:
   midgard:
     container_name: midgard
@@ -12,7 +11,8 @@ services:
       - ../data:/app/data
     image: midgard:latest
     environment:
-      MIDGARD_CONF: /app/config.yml
+      GIT_DISCOVERY_ACROSS_FILESYSTEM: 1
+      MIDGARD_CONF: /app/config.yml #  export MIDGARD_CONF=/app/config.yml
     cap_add:
       - SYS_PTRACE # for debugging
     ports:

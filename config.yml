@@ -10,15 +10,15 @@ domain: changkun.de # domain that runs midgard server
 # midgard server settings
 # these settings are only used in server mode (run under `mg server`)
 server:
-  addr: localhost:9124
+  addr: 0.0.0.0:9124
   mode: debug # or debug/release/test
   store:
     prefix: /midgard # access via changkun.de/midgard/*
-    path: ./data  # file system location
+    path: ./data     # data folder
     backup:
       enable: true # enable backup
-      interval: 60  # every hour
-      repo: https://github.com/changkun/data.git
+      interval: 60 # every hour
+      repo: https://github.com/changkun/midgard-data.git
   auth:
     # the following two configures your midgard credentials
     user: changkun

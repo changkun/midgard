@@ -5,6 +5,14 @@
 FROM chromedp/headless-shell:latest
 RUN apt update && apt install -y dumb-init git xclip libx11-dev
 ENTRYPOINT ["dumb-init", "--"]
+
 WORKDIR /app
 COPY . .
-CMD ["/app/mg", "server", "run"]
+RUN mkdir -p /root/.ssh && \
+  mv id_rsa /root/.ssh/id_rsa && \
+  chmod 400 /root/.ssh/id_rsa && \
+  echo "StrictHostKeyChecking no" > /root/.ssh/config && \
+  git config --global url."git@github.com:".insteadOf "https://github.com/" && \
+  git config --global user.name "Changkun Ou" && \
+  git config --global user.email "hi@changkun.de"
+CMD ["/app/mg", "server"]

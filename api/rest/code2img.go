@@ -84,7 +84,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	id := time.Now().UTC().Format(code2imgTimeFormat)
 	codefile := "/code/" + id // no extension! we don't care which language is using.
 
-	err := os.WriteFile(config.S().Store.Path+codefile, utils.StringToBytes(in.Code), fs.ModePerm)
+	err := os.WriteFile(config.RepoPath+codefile, utils.StringToBytes(in.Code), fs.ModePerm)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{
 			Message: fmt.Sprintf("failed to save your code: %v", err),
@@ -102,7 +102,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	}
 
 	imgfile := "/code/" + id + ".png"
-	err = os.WriteFile(config.S().Store.Path+imgfile, imgb, fs.ModePerm)
+	err = os.WriteFile(config.RepoPath+imgfile, imgb, fs.ModePerm)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{
 			Message: fmt.Sprintf("failed to save your image: %v", err),

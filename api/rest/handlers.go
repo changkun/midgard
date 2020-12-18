@@ -7,6 +7,7 @@ package rest
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -55,7 +56,7 @@ func (m *Midgard) Code(c *gin.Context) {
 		}
 	}
 	ci := codeInfo{}
-	codedir := filepath.Clean(config.S().Store.Path + "/code")
+	codedir := filepath.Clean(config.RepoPath + "/code")
 	filepath.WalkDir(codedir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || err != nil {
 			return nil
@@ -77,7 +78,7 @@ func (m *Midgard) Code(c *gin.Context) {
 
 		t, err := time.Parse(code2imgTimeFormat, file)
 		if err != nil {
-			return err
+			return nil // Ignore errors from this file
 		}
 
 		ci.Codes = append(ci.Codes, struct {
@@ -217,7 +218,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 		return
 	}
 
-	root := config.S().Store.Path
+	root := config.RepoPath
 	var path string
 
 	// if URI is empty, then generate a random path
@@ -230,7 +231,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 	// check if the path is availiable, if not then throw an error
 	existed := func(path string) bool {
 		_, err := os.Stat(path)
-		return !os.IsNotExist(err)
+		return !errors.Is(err, os.ErrNotExist)
 	}
 
 	if existed(path) {

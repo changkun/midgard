@@ -21,7 +21,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	gin.SetMode(config.S().Mode)
 
 	r = gin.Default()
-	r.NoRoute(staticHandler(config.S().Store.Prefix, config.S().Store.Path))
+	r.NoRoute(staticHandler(config.S().Store.Prefix, config.RepoPath))
 
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
