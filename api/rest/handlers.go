@@ -5,13 +5,18 @@
 package rest
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/config"
@@ -28,6 +33,84 @@ func (m *Midgard) PingPong(c *gin.Context) {
 		GoVersion: version.GoVersion,
 		BuildTime: version.BuildTime,
 	})
+}
+
+const codeTmpl = `{{ range .Codes }}
+<pre>--- {{ .TimeFmt }} ---: <a href="{{ .ImageURL }}">Image<a/>, <a href="{{ .TextURL }}">Text<a/></pre>
+<pre>
+{{ .Code }}
+</pre>
+{{ end }}
+`
+
+// Code lists all code2img codes
+func (m *Midgard) Code(c *gin.Context) {
+	type codeInfo struct {
+		Codes []struct {
+			Time     time.Time
+			TimeFmt  string
+			Code     string
+			ImageURL string
+			TextURL  string
+		}
+	}
+	ci := codeInfo{}
+	codedir := filepath.Clean(config.S().Store.Path + "/code")
+	filepath.WalkDir(codedir, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || err != nil {
+			return nil
+		}
+
+		dir, file := filepath.Split(path)
+		if strings.Compare(dir, codedir+"/") != 0 {
+			return nil
+		}
+		ext := filepath.Ext(file)
+		if ext != "" {
+			return nil
+		}
+
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		t, err := time.Parse(code2imgTimeFormat, file)
+		if err != nil {
+			return err
+		}
+
+		ci.Codes = append(ci.Codes, struct {
+			Time     time.Time
+			TimeFmt  string
+			Code     string
+			ImageURL string
+			TextURL  string
+		}{
+			Time:     t,
+			TimeFmt:  t.Format(time.RFC1123),
+			Code:     utils.BytesToString(b),
+			ImageURL: fmt.Sprintf("code/%s.png", file),
+			TextURL:  fmt.Sprintf("code/%s", file),
+		})
+		return nil
+	})
+
+	sort.Slice(ci.Codes, func(i, j int) bool {
+		return ci.Codes[i].Time.Sub(ci.Codes[j].Time) > 0
+	})
+
+	tt := template.Must(template.New("codes").Parse(codeTmpl))
+	var buf bytes.Buffer
+	err := tt.Execute(&buf, ci)
+	if err != nil {
+		c.Writer.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
+		return
+	}
+	c.Header("Cache-Control", "public, max-age=300")
+	c.Header("Content-Type", "text/html")
+	c.Writer.Write(buf.Bytes())
 }
 
 // GetFromUniversalClipboard returns the in-memory clipboard data inside

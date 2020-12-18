@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/code2img"
@@ -53,6 +54,8 @@ func init() {
 	panic("please intall google-chrome on your system (required by code2img).")
 }
 
+const code2imgTimeFormat = "060102-150405"
+
 // Code2img code to image handler
 func (m *Midgard) Code2img(c *gin.Context) {
 	var in types.Code2ImgInput
@@ -78,7 +81,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	}
 
 	// save the code
-	id := utils.NewUUID()
+	id := time.Now().UTC().Format(code2imgTimeFormat)
 	codefile := "/code/" + id // no extension! we don't care which language is using.
 
 	err := os.WriteFile(config.S().Store.Path+codefile, utils.StringToBytes(in.Code), fs.ModePerm)
@@ -98,7 +101,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 		return
 	}
 
-	imgfile := "/img/" + id + ".png"
+	imgfile := "/code/" + id + ".png"
 	err = os.WriteFile(config.S().Store.Path+imgfile, imgb, fs.ModePerm)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{

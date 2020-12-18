@@ -25,6 +25,8 @@ func (m *Midgard) routers() (r *gin.Engine) {
 
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
+	mg.GET("/code", m.Code)
+
 	v1auth := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
 		config.S().Auth.User: config.S().Auth.Pass,
 	}))

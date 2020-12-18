@@ -13,7 +13,7 @@ server:
   addr: localhost:9124
   mode: debug # or debug/release/test
   store:
-    prefix: /data # access via changkun.de/data/*
+    prefix: /midgard # access via changkun.de/midgard/*
     path: ./data  # file system location
     backup:
       enable: true # enable backup
