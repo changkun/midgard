@@ -34,6 +34,8 @@ message AllocateURLOutput {
 
 message CodeToImageInput {
     string CodePath = 1;
+    int64 Start = 2;
+    int64 End = 3;
 }
 
 message CodeToImageOutput {

@@ -5,6 +5,7 @@
 package daemon
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -92,11 +93,33 @@ func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (o
 	// the user presented a file, so we read it.
 	// if it does not exist, then we don't bother the server.
 	if len(in.CodePath) > 0 {
-		b, err := os.ReadFile(in.CodePath)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read the given file: %w", err)
+
+		if in.Start == in.End && in.Start == 0 {
+			b, err := os.ReadFile(in.CodePath)
+			if err != nil {
+				return nil, fmt.Errorf("cannot read the given file: %w", err)
+			}
+			code = utils.BytesToString(b)
+		} else {
+			f, err := os.Open(in.CodePath)
+			if err != nil {
+				return nil, fmt.Errorf("cannot read the given file: %w", err)
+			}
+			s := bufio.NewScanner(f)
+			line := int64(1)
+			for s.Scan() {
+				if line < in.Start {
+					line++
+					continue
+				} else if line > in.End {
+					break
+				}
+				code += s.Text() + "\n"
+				line++
+			}
+			code = code[:len(code)-1] // remove the last \n
+			f.Close()
 		}
-		code = utils.BytesToString(b)
 	}
 
 	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image, &types.Code2ImgInput{Code: code})

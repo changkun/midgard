@@ -8,6 +8,5 @@ files. A user of midgard must adapts to this philosophy.
 ```
 code
 img
-news
 random
 ```
