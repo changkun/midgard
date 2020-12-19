@@ -48,14 +48,17 @@ type PutToUniversalClipboardOutput struct {
 	Message string `json:"msg"`
 }
 
-// SourceType ...
-type SourceType int
+// SourceType is the source type for URL allocation.
+//
+// Note: We use string for the data type because this is better
+// for post body in iOS shortcut.
+type SourceType string
 
 const (
-	// SourceUniversalClipboard ...
-	SourceUniversalClipboard SourceType = iota
-	// SourceAttachment ...
-	SourceAttachment
+	// SourceUniversalClipboard indicates source from clipboard
+	SourceUniversalClipboard SourceType = "clipboard"
+	// SourceAttachment indicates source from attachment
+	SourceAttachment = "attachment"
 )
 
 // AllocateURLInput defines the input format of requested resource

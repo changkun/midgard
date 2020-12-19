@@ -42,8 +42,6 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 		uri    string
 	)
 
-	// TODO: allocate urls using websocket action
-
 	if in.SourcePath != "" {
 		source = types.SourceAttachment
 		b, err := os.ReadFile(in.SourcePath)
