@@ -1,26 +1,44 @@
 # Midgard Installation
-
 ## Dependencies
 
 macOS:
 
 ```
-xcode-select --install
+$ xcode-select --install
 ```
 
 Linux:
 
 ```
-sudo apt install -y git xclip libx11-dev
+$ sudo apt install -y git xclip libx11-dev
 ```
 
-## Midgard server
+## Build
+
+```
+$ git clone https://github.com/changkun/midgard
+$ make
+$ ln -s "$(pwd)/mg" /usr/local/bin/mg
+$ mg help
+midgard is a universal clipboard service developed by Changkun Ou.
+See https://changkun.de/s/midgard for more details.
+
+Usage:
+  mg [command]
+```
+
+## Configuration
+
+- `MIDGARD_CONF=/path/to/your/config.yml`, or
+- [config.yml](../config.yml)
+
+## Midgard Server
 
 Docker:
 
 ```
-make build
-make up
+$ make build
+$ make up
 ```
 
 Native:
@@ -29,7 +47,7 @@ Native:
 $ mg server
 ```
 
-## Midgard daemon
+## Midgard Daemon
 
 `midgard` daemon process **runs on your local machine**
 (automatic start when machine boots):
@@ -48,11 +66,6 @@ or
 ```sh
 $ mg daemon run
 ```
-
-## Configuration
-
-- `MIDGARD_CONF=/path/to/your/config.yml`, or
-- [config.yml](../config.yml)
 
 ## Architecture
 

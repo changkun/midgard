@@ -50,7 +50,7 @@ Hint: The allocated link will be write back to the clipboard and ready for paste
 
 ### iOS Shortcut Support
 
-TODO:
+See [midgard-alloc](https://www.icloud.com/shortcuts/0964c0a651544604bd995cf1e723c573)
 
 ## Shared Clipboard
 
@@ -70,9 +70,9 @@ clipboard cross platforms (e.g. between Mac and Linux).
 ### iOS Shortcuts Support
 
 See
-[midgard-getclipboard](https://www.icloud.com/shortcuts/501fe001ebcc444aad1517fdccdbd740)
+[midgard-getclipboard](https://www.icloud.com/shortcuts/66c475e013e94dbf9f3714365d6c3f95)
 and
-[midgard-putclipboard](https://www.icloud.com/shortcuts/587ae52bb5b447e699eb8876107b2e31).
+[midgard-putclipboard](https://www.icloud.com/shortcuts/c1b98b1ae59045e59c1f302a634e5633).
 
 ## Code2image
 
@@ -104,7 +104,7 @@ Summary page at https://changkun.de/midgard/code.
 
 ### iOS Shortcuts Support
 
-See [midgard-code2img](https://www.icloud.com/shortcuts/f5ed10ceb8fa40f393dfc4ebadb0dd89).
+See [midgard-code2img](https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31aba300b25a).
 
 ## Reverse Proxy
 
