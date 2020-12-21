@@ -7,6 +7,7 @@ package daemon
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,8 +49,7 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %v, err: %w", in.SourcePath, err)
 		}
-		data = utils.BytesToString(b)
-
+		data = base64.StdEncoding.EncodeToString(b)
 	}
 	if in.DesiredPath != "" {
 		// we want to make sure the extension of the file is correct

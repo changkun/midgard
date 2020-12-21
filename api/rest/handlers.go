@@ -208,7 +208,13 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 			ext = ".png"
 		}
 	case types.SourceAttachment:
-		data = utils.StringToBytes(in.Data)
+		data, err = base64.StdEncoding.DecodeString(in.Data)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, types.AllocateURLOutput{
+				Message: fmt.Sprintf("decode error: %v", err),
+			})
+			return
+		}
 	}
 
 	if len(data) == 0 || utils.BytesToString(data) == "\n" {
