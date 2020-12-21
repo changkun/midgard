@@ -67,6 +67,32 @@ or
 $ mg daemon run
 ```
 
+## Reverse Proxy
+
+If midgard is deployed behind an nginx server, then the following
+configuration could help:
+
+```
+location /midgard {
+    proxy_pass          http://0.0.0.0:9124;
+    proxy_set_header    Host             $host;
+    proxy_set_header    X-Real-IP        $remote_addr;
+    proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+    proxy_set_header    X-Client-Verify  SUCCESS;
+    proxy_set_header    X-Client-DN      $ssl_client_s_dn;
+    proxy_set_header    X-SSL-Subject    $ssl_client_s_dn;
+    proxy_set_header    X-SSL-Issuer     $ssl_client_i_dn;
+
+    # websocket support
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    proxy_read_timeout 1800;
+    proxy_connect_timeout 1800;
+    client_max_body_size 2M;
+}
+```
+
 ## Architecture
 
 The midgard service contains three parts:
