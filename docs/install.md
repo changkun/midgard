@@ -18,7 +18,7 @@ $ sudo apt install -y git xclip libx11-dev
 ```
 $ git clone https://github.com/changkun/midgard
 $ make
-$ ln -s "$(pwd)/mg" /usr/local/bin/mg
+$ ln "$(pwd)/mg" /usr/local/bin/mg
 $ mg help
 midgard is a universal clipboard service developed by Changkun Ou.
 See https://changkun.de/s/midgard for more details.

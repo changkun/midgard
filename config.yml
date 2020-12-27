@@ -10,7 +10,7 @@ domain: changkun.de # domain that runs midgard server
 # midgard server settings
 # these settings are only used in server mode (run under `mg server`)
 server:
-  addr: 0.0.0.0:9124
+  addr: 0.0.0.0:80
   mode: debug # or debug/release/test
   store:
     prefix: /midgard # access via changkun.de/midgard/*

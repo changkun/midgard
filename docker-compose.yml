@@ -8,12 +8,15 @@ services:
     container_name: midgard
     restart: always
     volumes:
-      - ../data:/app/data
+      - ./data:/app/data
     image: midgard:latest
     environment:
-      GIT_DISCOVERY_ACROSS_FILESYSTEM: 1
-      MIDGARD_CONF: /app/config.yml #  export MIDGARD_CONF=/app/config.yml
+      MIDGARD_SERVER_ADDR: midgard:80
+      MIDGARD_CONF: /app/config.yml
     cap_add:
       - SYS_PTRACE # for debugging
-    ports:
-      - "9124:9124"
+    networks:
+      - traefik_proxy
+networks:
+  traefik_proxy:
+    external: true

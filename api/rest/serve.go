@@ -72,8 +72,13 @@ func (m *Midgard) Serve() {
 }
 
 func (m *Midgard) serveHTTP() {
-	m.s = &http.Server{Handler: m.routers(), Addr: config.S().Addr}
-	log.Printf("server starting at http://%s", config.S().Addr)
+	addr := os.Getenv("MIDGARD_SERVER_ADDR")
+	if len(addr) == 0 {
+		addr = config.S().Addr
+	}
+
+	m.s = &http.Server{Handler: m.routers(), Addr: addr}
+	log.Printf("server starting at http://%s", addr)
 	err := m.s.ListenAndServe()
 	if err != http.ErrServerClosed {
 		log.Printf("close with error: %v", err)

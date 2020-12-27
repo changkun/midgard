@@ -24,15 +24,13 @@ dep:
 	go mod tidy
 	go mod vendor
 build:
-	cp $(SSH_KEY) id_rsa
-	go build $(TARGET) $(BUILD_FLAGS)
-	docker build -t $(IMAGE):$(VERSION) -t $(IMAGE):latest \
-		-f docker/Dockerfile .
+	cp -f $(SSH_KEY) id_rsa
+	docker build -t $(IMAGE):$(VERSION) -t $(IMAGE):latest .
 	rm id_rsa
-up: down
-	docker-compose -f docker/compose.yml up -d
+up:
+	docker-compose up -d
 down:
-	docker-compose -f docker/compose.yml down
+	docker-compose down
 clean: down
 	rm -rf $(BINARY)
 	docker rmi -f $(shell docker images -f "dangling=true" -q) 2> /dev/null; true
