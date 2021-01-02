@@ -1,4 +1,28 @@
 # Midgard Installation
+
+## Architecture
+
+Before start installing/using midgard, it is necessary to
+understand how midgard works. The midgard service contains three parts:
+
+- CLI
+- Daemon
+- Server
+
+A user uses midgard CLI communicate with the midgard daemon on local device,
+and the daemon process talks to the midgard server for synchornization/allocation
+between devices.
+
+```
+                            HTTPS
+Mobile <-----------------------------------------------┐
+                                                       |
+CLI    <-------> daemon <-----┐  Secure Websocket      v     HTTPS
+          RPC                 ├--------------------> server <------> public
+CLI    <-------> daemon <-----┘
+```
+
+
 ## Dependencies
 
 macOS:
@@ -13,7 +37,7 @@ Linux:
 $ sudo apt install -y git xclip libx11-dev
 ```
 
-## Build
+## Binary Build
 
 ```
 $ git clone https://github.com/changkun/midgard
@@ -27,19 +51,36 @@ Usage:
   mg [command]
 ```
 
+## Docker Build
+
+Docker build requires you to setup environment variable `SSH_KEY_PATH`
+that points to a RSA private key file, for example:
+
+```
+$ echo $SSH_KEY_PATH
+~/.ssh/id_rsa
+```
+
+```
+$ make build
+```
+
 ## Configuration
 
-- `MIDGARD_CONF=/path/to/your/config.yml`, or
-- [config.yml](../config.yml)
+To configure midgard settings:
+
+- in a configuration file, see [config.yml](../config.yml) for more details.
+- Or use environment variable `MIDGARD_CONF=/path/to/your/config.yml` to change the location of [config.yml](../config.yml).
 
 ## Midgard Server
 
 Docker:
 
 ```
-$ make build
 $ make up
 ```
+
+> Hint: You need understand how [docker-compose](../docker-compose.yml) works.
 
 Native:
 
@@ -74,7 +115,7 @@ configuration could help:
 
 ```
 location /midgard {
-    proxy_pass          http://0.0.0.0:9124;
+    proxy_pass          http://0.0.0.0:80;
     proxy_set_header    Host             $host;
     proxy_set_header    X-Real-IP        $remote_addr;
     proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
@@ -86,33 +127,52 @@ location /midgard {
     # websocket support
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
-
-    proxy_read_timeout 1800;
-    proxy_connect_timeout 1800;
     client_max_body_size 2M;
 }
 ```
 
-## Architecture
+If you use traefik, then the following configuration could help:
 
-The midgard service contains three parts:
+### Static configuration
 
-- CLI
-- Daemon
-- Server
+```yaml
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: :443
 
-A user uses midgard CLI talks to the midgard daemon on local device,
-and the daemon process talks to the midgard server for synchornization
-between devices.
-
+certificatesResolvers:
+  changkunResolver:
+    acme:
+      email: your@email.com
+      storage: /path/to/your/acme.json
+      httpChallenge:
+        entryPoint: web
 ```
-                            HTTP
-Mobile <---------------------------------------------┐
-                                                     |
-CLI <-------> daemon <-----┐       Websocket         v     HTTP
-       RPC                 ├--------------------> server <------> public
-CLI <-------> daemon <-----┘
+
+### Dynamic configuration
+
+```yaml
+http:
+  routers:
+    to-midgard:
+      rule: "Host(`example.com`)&&PathPrefix(`/midgard`)"
+      tls:
+        certResolver: yourCertResolver
+      service: midgard
+  services:
+    midgard:
+      loadBalancer:
+        servers:
+        - url: http://midgard
 ```
+
 
 ## License
 
