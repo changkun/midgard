@@ -7,6 +7,7 @@ package rest
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -172,11 +173,14 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 		b.DaemonID = c.ClientIP()
 	}
 
+	// Include MIME type information so that the clipboard is
+	// consistent after sync propagation.
+	raw, _ = json.Marshal(b.ClipboardData)
 	m.boardcastMessage(&types.WebsocketMessage{
 		Action:  types.ActionClipboardChanged,
 		UserID:  b.DaemonID,
 		Message: "universal clipboard has changes",
-		Data:    raw, // clipboard data
+		Data:    raw,
 	})
 }
 

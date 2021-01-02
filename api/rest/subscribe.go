@@ -208,9 +208,13 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 	} else {
 		raw = utils.StringToBytes(b.Data)
 	}
-	log.Println("universal clipboard has updated, synced from:", u.id)
+
 	updated := clipboard.Universal.Write(b.Type, raw)
+	log.Println("universal clipboard has updated, synced from:", u.id)
 	if updated {
+		// Include MIME type information so that the clipboard is
+		// consistent after sync propagation.
+		raw, _ = json.Marshal(b.ClipboardData)
 		m.boardcastMessage(&types.WebsocketMessage{
 			Action:  types.ActionClipboardChanged,
 			UserID:  u.id,

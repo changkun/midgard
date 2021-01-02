@@ -7,6 +7,7 @@ package daemon
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -162,11 +163,28 @@ func (m *Daemon) readFromServer() {
 			readerCh <- wsm
 			return true
 		})
-
 		switch wsm.Action {
 		case types.ActionClipboardChanged:
+			var d types.ClipboardData
+			err = json.Unmarshal(wsm.Data, &d)
+			if err != nil {
+				log.Printf("failed to parse clipboard data: %v", err)
+				continue
+			}
+			var raw []byte
+			if d.Type == types.MIMEImagePNG {
+				// We assume the server send us a base64 encoded image data,
+				// Let's decode it into bytes.
+				raw, err = base64.StdEncoding.DecodeString(d.Data)
+				if err != nil {
+					raw = []byte{}
+				}
+			} else {
+				raw = utils.StringToBytes(d.Data)
+			}
+
 			log.Printf("universal clipboard has changed from %s, sync with local...", wsm.UserID)
-			clipboard.Local.Write(types.MIMEPlainText, wsm.Data) // change local clipboard
+			clipboard.Local.Write(d.Type, raw) // change local clipboard
 		}
 	}
 }
