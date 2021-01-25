@@ -27,3 +27,18 @@ func TestLocalClipboardConcurrentRead(t *testing.T) {
 	}()
 	wg.Wait()
 }
+
+func TestLocalClipboardWrite(t *testing.T) {
+	platform.Write([]byte("hi"), types.MIMEPlainText)
+	buf := platform.Read(types.MIMEImagePNG)
+	if buf != nil {
+		t.Errorf("write as text but can be captured as image: %s", string(buf))
+	}
+
+	buf = nil
+	platform.Write([]byte("there"), types.MIMEImagePNG)
+	buf = platform.Read(types.MIMEPlainText)
+	if buf != nil {
+		t.Errorf("write as image but can be captured as text: %s", string(buf))
+	}
+}
