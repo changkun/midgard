@@ -6,195 +6,82 @@
 
 package platform
 
-/*
-#cgo LDFLAGS: -lX11 -lXmu
-#include <stdlib.h>
-#include <stdio.h>
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-#include <X11/Xmu/Atoms.h>
-
-static Display* d;
-static Window w;
-
-static Atom clipboardSel;
-static Atom stringAtom;
-static Atom imageAtom;
-static Atom cbAtom;
-
-int clipboard_init() {
-	XInitThreads();
-
-	d = XOpenDisplay(0);
-	w = XCreateSimpleWindow(d, DefaultRootWindow(d), 0, 0, 1, 1, 0, 0, 0);
-
-	clipboardSel = XInternAtom(d, "CLIPBOARD", True);
-	stringAtom   = XInternAtom(d, "UTF8_STRING", True);
-	imageAtom    = XInternAtom(d, "image/png", True);
-	cbAtom       = XInternAtom(d, "GOLANG_DESIGN_DATA", 0);
-	return 0;
-}
-
-int clipboard_write(char* target_typ, unsigned char *_in, size_t _n) {
-	Atom target = XInternAtom(d, target_typ, True);
-	if (target == None) {
-		return -1;
-	}
-
-	XEvent event;
-	Window owner;
-	XSetSelectionOwner(d, clipboardSel, w, 0);
-	if (XGetSelectionOwner(d, clipboardSel) != w) {
-		// printf("no cannot own\n");
-		// fflush(stdout);
-		return -1;
-	}
-
-	while (1) {
-		printf("enter selection event loop, wait for request...\n");
-		fflush(stdout);
-
-		XNextEvent(d, &event);
-		switch (event.type) {
-		case SelectionRequest:
-			if (event.xselectionrequest.selection != clipboardSel) {
-				break;
-			}
-			XSelectionRequestEvent * xsr = &event.xselectionrequest;
-			XSelectionEvent ev = {0};
-			int R = 0;
-			ev.type = SelectionNotify;
-			ev.display = xsr->display;
-			ev.requestor = xsr->requestor;
-			ev.selection = xsr->selection;
-			ev.time = xsr->time;
-			ev.target = xsr->target;
-			ev.property = xsr->property;
-			// printf("event atom: %s\n", XGetAtomName(d, ev.target));
-			// fflush(stdout);
-
-			if (ev.target == target) {
-				R = XChangeProperty(ev.display, ev.requestor,
-					ev.property, XA_ATOM, 32, PropModeReplace, (unsigned char*)&stringAtom, 1);
-			} else {
-				return 0;
-			}
-			if ((R & 2) == 0) {
-				XSendEvent(d, ev.requestor, 0, 0, (XEvent *)&ev);
-			}
-			break;
-
-		case SelectionClear: // stop surve the write content if it is cleared.
-			printf("selection is cleared\n");
-			fflush(stdout);
-			return 0;
-		}
-	}
-}
-
-unsigned long clipboard_read(char* target_typ, unsigned char **out) {
-	Atom target = XInternAtom(d, target_typ, True);
-	if (target == None) {
-		return 0;
-	}
-
-	XConvertSelection(d, clipboardSel, target, cbAtom, w, CurrentTime);
-	XSync(d, 0);
-	XEvent event;
-	XNextEvent(d, &event);
-
-	unsigned char *in;
-	long n;
-	Atom actual;
-	int format;
-	unsigned long size = 0;
-	size_t itemsize = 0;
-
-	if (event.type == SelectionNotify &&
-		event.xselection.selection == clipboardSel &&
-		event.xselection.property)
-	{
-		if (XGetWindowProperty(event.xselection.display,
-			event.xselection.requestor, event.xselection.property,
-			0L, (~0L), 0, AnyPropertyType,
-			&actual, &format, &size, &n, &in) == Success) {
-			// printf("actual: %s, target: %s\n", XGetAtomName(d, actual), XGetAtomName(d, target));
-			// fflush(stdout);
-			if (actual == target) {
-				if (format == 8) {
-					itemsize = sizeof(char);
-				} else if (format == 16) {
-					itemsize = sizeof(short);
-				} else if (format == 32) {
-					itemsize = sizeof(long);
-				}
-				void *recv = (unsigned char *)malloc(size * itemsize);
-				if (recv != NULL) {
-					memcpy(recv, in, size * itemsize);
-					*out = recv;
-				}
-			}
-			XFree(in);
-		};
-		XDeleteProperty(event.xselection.display,
-			event.xselection.requestor, event.xselection.property);
-	}
-	return size * itemsize;
-}
-*/
-import "C"
 import (
 	"bytes"
 	"context"
+	"image"
+	_ "image/jpeg" // for image.Decode
+	_ "image/png"  // for image.Decode
+
+	"os/exec"
 	"time"
-	"unsafe"
 
 	"changkun.de/x/midgard/internal/types"
 )
 
+var (
+	xclip        = "xclip"
+	pasteCmdArgs = []string{xclip, "-out", "-selection", "clipboard"}
+	copyCmdArgs  = []string{xclip, "-in", "-selection", "clipboard"}
+)
+
 func init() {
-	if ret := C.clipboard_init(); ret == 0 {
+	if _, err := exec.LookPath(xclip); err == nil {
 		return
 	}
-	panic("cannot initialize clipboard!")
+	panic("please intall xclip on your system: sudo apt install xclip")
 }
 
 // Read reads the clipboard data of a given resource type.
 // It returns a buf that containing the clipboard data, and ok indicates
 // whether the read is success or fail.
 func Read(t types.MIME) (buf []byte) {
-	ctyp := C.CString(string(t))
-	defer C.free(unsafe.Pointer(ctyp))
-
-	var data *C.uchar
-	n := C.clipboard_read(ctyp, &data)
-	if data == nil {
-		return nil
+	cmds := make([]string, len(pasteCmdArgs))
+	copy(cmds, pasteCmdArgs)
+	if t == types.MIMEImagePNG {
+		cmds = append(cmds, "-t", "image/png")
 	}
-	defer C.free(unsafe.Pointer(data))
-	if n == 0 {
+	pasteCmd := exec.Command(cmds[0], cmds[1:]...)
+	out, err := pasteCmd.CombinedOutput()
+	if err != nil {
 		return nil
 	}
 
-	return C.GoBytes(unsafe.Pointer(data), C.int(n))
+	// double check if it is really an image data:
+	if t == types.MIMEImagePNG {
+		_, _, err = image.Decode(bytes.NewReader(out))
+		if err != nil {
+			return nil
+		}
+	}
+
+	return out
 }
 
 // Write writes the given buf as typ to system clipboard.
 // It returns true if the write is success.
 func Write(buf []byte, t types.MIME) (ret bool) {
-	var s string
-	switch t {
-	case types.MIMEPlainText:
-		s = "UTF8_STRING"
-	case types.MIMEImagePNG:
-		s = "image/png"
+	// FIXME: don't write image data, see #5
+	if t == types.MIMEImagePNG {
+		return true
 	}
 
-	cs := C.CString(s)
-	defer C.free(unsafe.Pointer(cs))
+	copyCmd := exec.Command(copyCmdArgs[0], copyCmdArgs[1:]...)
+	in, err := copyCmd.StdinPipe()
+	if err != nil {
+		return false
+	}
 
-	ok := C.clipboard_write(cs, (*C.uchar)(unsafe.Pointer(&buf[0])), C.size_t(len(buf)))
-	if ok != C.int(0) {
+	if err := copyCmd.Start(); err != nil {
+		return false
+	}
+	if _, err := in.Write(buf); err != nil {
+		return false
+	}
+	if err := in.Close(); err != nil {
+		return false
+	}
+	if err := copyCmd.Wait(); err != nil {
 		return false
 	}
 	return true
