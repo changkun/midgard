@@ -84,7 +84,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 			d.Data = utils.BytesToString(text)
 			d.DaemonID = m.ID
 			b, _ := json.Marshal(d)
-			log.Println("local clipboard has changed, sync to server...")
+			log.Println("local clipboard has changed as text, sync to server...")
 			m.writeCh <- &types.WebsocketMessage{
 				Action:  types.ActionClipboardPut,
 				UserID:  m.ID,
@@ -100,7 +100,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 			d.Data = base64.StdEncoding.EncodeToString(img)
 			d.DaemonID = m.ID
 			b, _ := json.Marshal(d)
-			log.Println("local clipboard has changed, sync to server...")
+			log.Println("local clipboard has changed as image, sync to server...")
 			m.writeCh <- &types.WebsocketMessage{
 				Action:  types.ActionClipboardPut,
 				UserID:  m.ID,

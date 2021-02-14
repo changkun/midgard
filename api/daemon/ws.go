@@ -183,7 +183,7 @@ func (m *Daemon) readFromServer() {
 				raw = utils.StringToBytes(d.Data)
 			}
 
-			log.Printf("universal clipboard has changed from %s, sync with local...", wsm.UserID)
+			log.Printf("universal clipboard has changed from %s, type: %s, sync with local...", wsm.UserID, d.Type)
 			clipboard.Local.Write(d.Type, raw) // change local clipboard
 		}
 	}

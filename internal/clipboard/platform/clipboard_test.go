@@ -5,6 +5,7 @@
 package platform_test
 
 import (
+	"strings"
 	"sync"
 	"testing"
 
@@ -29,16 +30,24 @@ func TestLocalClipboardConcurrentRead(t *testing.T) {
 }
 
 func TestLocalClipboardWrite(t *testing.T) {
-	platform.Write([]byte("hi"), types.MIMEPlainText)
+	s := "hi"
+	platform.Write([]byte(s), types.MIMEPlainText)
 	buf := platform.Read(types.MIMEImagePNG)
 	if buf != nil {
 		t.Errorf("write as text but can be captured as image: %s", string(buf))
 	}
+	if strings.Compare("", string(buf)) != 0 {
+		t.Errorf("expect: %s, go: %v", "", string(buf))
+	}
 
+	s = "there"
 	buf = nil
-	platform.Write([]byte("there"), types.MIMEImagePNG)
+	platform.Write([]byte(s), types.MIMEImagePNG)
 	buf = platform.Read(types.MIMEPlainText)
 	if buf != nil {
 		t.Errorf("write as image but can be captured as text: %s", string(buf))
+	}
+	if strings.Compare("", string(buf)) != 0 {
+		t.Errorf("expect: %s, go: %v", "", string(buf))
 	}
 }
