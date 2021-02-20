@@ -1,4 +1,4 @@
-# midgard
+# midgard ![](https://changkun.de/urlstat?mode=github&repo=changkun/midgard)
 
 midgard is a universal clipboard service.
 
