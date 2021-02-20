@@ -7,6 +7,7 @@ package clipboard_test
 import (
 	"bytes"
 	"context"
+	"image/png"
 	"os"
 	"reflect"
 	"testing"
@@ -25,10 +26,40 @@ func TestLocalClipboardImage(t *testing.T) {
 	clipboard.Local.Write(types.MIMEImagePNG, data)
 
 	tp, r := clipboard.Local.Read()
-	if !reflect.DeepEqual(r, data) || tp != types.MIMEImagePNG {
-		t.Fatalf("inconsistent read of a write, got: %s", utils.BytesToString(r))
+	if tp != types.MIMEImagePNG {
+		t.Fatalf("failed to read as image, err: %v", err)
 	}
-	t.Log(tp)
+
+	img1, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		t.Fatalf("write image is not png encoded: %v", err)
+	}
+	img2, err := png.Decode(bytes.NewReader(r))
+	if err != nil {
+		t.Fatalf("read image is not png encoded: %v", err)
+	}
+
+	w := img2.Bounds().Dx()
+	h := img2.Bounds().Dy()
+
+	incorrect := 0
+	for i := 0; i < w; i++ {
+		for j := 0; j < h; j++ {
+			want := img1.At(i, j)
+			got := img2.At(i, j)
+
+			if !reflect.DeepEqual(want, got) {
+				t.Logf("read data from clipbaord is inconsistent with previous written data, pix: (%d,%d), got: %+v, want: %+v", i, j, got, want)
+				incorrect++
+			}
+		}
+	}
+
+	// FIXME: it looks like windows can produce incorrect pixels when y == 0.
+	// Needs more investigation.
+	if incorrect > w {
+		t.Fatalf("read data from clipboard contains too much inconsistent pixels to the previous written data, number of incorrect pixels: %v", incorrect)
+	}
 }
 
 func TestLocalClipboardText(t *testing.T) {

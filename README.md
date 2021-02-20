@@ -1,4 +1,4 @@
-# midgard ![](https://changkun.de/urlstat?mode=github&repo=changkun/midgard)
+# midgard [![PkgGoDev](https://pkg.go.dev/badge/changkun.de/x/midgard)](https://pkg.go.dev/changkun.de/x/midgard) ![midgard](https://github.com/changkun/midgard/workflows/midgard/badge.svg?branch=main) ![](https://changkun.de/urlstat?mode=github&repo=changkun/midgard)
 
 midgard is a universal clipboard service.
 
