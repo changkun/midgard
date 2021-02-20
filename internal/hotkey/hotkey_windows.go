@@ -2,10 +2,15 @@
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
-// +build !(linux,darwin)
+// +build windows
 
 package hotkey
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
-func handle(ctx context.Context, fn func()) { panic("unimplemented") }
+func handle(ctx context.Context, fn func()) {
+	fmt.Println("hotkey is unimplemented on windows")
+}
