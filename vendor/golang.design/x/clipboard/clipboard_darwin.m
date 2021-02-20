@@ -1,12 +1,18 @@
-// Copyright 2020 Changkun Ou. All rights reserved.
-// Use of this source code is governed by a GPL-3.0
-// license that can be found in the LICENSE file.
+// Copyright 2021 The golang.design Initiative Authors.
+// All rights reserved. Use of this source code is governed
+// by a MIT license that can be found in the LICENSE file.
+//
+// Written by Changkun Ou <changkun.de>
+
+// Interact with NSPasteboard using Objective-C
+// https://developer.apple.com/documentation/appkit/nspasteboard?language=objc
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 
 unsigned int clipboard_read_string(void **out) {
-	NSData *data = [[NSPasteboard generalPasteboard] dataForType:NSPasteboardTypeString];
+	NSPasteboard * pasteboard = [NSPasteboard generalPasteboard];
+	NSData *data = [pasteboard dataForType:NSPasteboardTypeString];
 	if (data == nil) {
 		return 0;
 	}
@@ -17,7 +23,8 @@ unsigned int clipboard_read_string(void **out) {
 }
 
 unsigned int clipboard_read_image(void **out) {
-	NSData *data = [[NSPasteboard generalPasteboard] dataForType:NSPasteboardTypePNG];
+	NSPasteboard * pasteboard = [NSPasteboard generalPasteboard];
+	NSData *data = [pasteboard dataForType:NSPasteboardTypePNG];
 	if (data == nil) {
 		return 0;
 	}
@@ -37,7 +44,6 @@ int clipboard_write_string(const void *bytes, NSInteger n) {
 	}
 	return 0;
 }
-
 int clipboard_write_image(const void *bytes, NSInteger n) {
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
 	NSData *data = [NSData dataWithBytes: bytes length: n];

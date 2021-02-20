@@ -50,8 +50,7 @@ func TestLocalClipboardWatch(t *testing.T) {
 	clipboard.Local.Write(types.MIMEPlainText, utils.StringToBytes(""))
 	_, lastRead := clipboard.Local.Read()
 
-	dataCh := make(chan []byte, 1)
-	clipboard.Local.Watch(ctx, types.MIMEPlainText, dataCh)
+	dataCh := clipboard.Local.Watch(ctx, types.MIMEPlainText)
 
 	w := utils.StringToBytes("changkun.de/x/midgard")
 	go func(ctx context.Context) {

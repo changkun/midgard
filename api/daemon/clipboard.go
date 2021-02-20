@@ -21,11 +21,6 @@ import (
 )
 
 func (m *Daemon) watchLocalClipboard(ctx context.Context) {
-	textCh := make(chan []byte, 1)
-	clipboard.Local.Watch(ctx, types.MIMEPlainText, textCh)
-	imagCh := make(chan []byte, 1)
-	clipboard.Local.Watch(ctx, types.MIMEImagePNG, imagCh)
-
 	last := time.Now()
 	hotkey.Handle(ctx, func() {
 		if time.Now().Sub(last) < time.Second*5 {
@@ -65,6 +60,8 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 		}
 	})
 
+	textCh := clipboard.Local.Watch(ctx, types.MIMEPlainText)
+	imagCh := clipboard.Local.Watch(ctx, types.MIMEImagePNG)
 	for {
 		select {
 		case <-ctx.Done():

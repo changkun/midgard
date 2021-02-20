@@ -9,8 +9,8 @@ import (
 	"context"
 	"sync"
 
-	"changkun.de/x/midgard/internal/clipboard/platform"
 	"changkun.de/x/midgard/internal/types"
+	"golang.design/x/clipboard"
 )
 
 // LocalClipboard is an extension to the Clipboard interface
@@ -19,7 +19,7 @@ type LocalClipboard interface {
 	Clipboard
 	// Watch watches a given type of data from local clipboard and
 	// send the data back through a provided channel.
-	Watch(ctx context.Context, dt types.MIME, dataCh chan []byte)
+	Watch(ctx context.Context, dt types.MIME) <-chan []byte
 }
 
 // Local is a local clipboard that can interact with the OS clipboard.
@@ -41,12 +41,12 @@ func (lc *local) Read() (t types.MIME, buf []byte) {
 		lc.buf = buf
 	}()
 
-	buf = platform.Read(types.MIMEPlainText)
+	buf = clipboard.Read(clipboard.FmtText)
 	if buf != nil {
 		t = types.MIMEPlainText
 		return
 	}
-	buf = platform.Read(types.MIMEImagePNG)
+	buf = clipboard.Read(clipboard.FmtImage)
 	t = types.MIMEImagePNG
 	return
 }
@@ -62,11 +62,23 @@ func (lc *local) Write(t types.MIME, buf []byte) bool {
 	}
 	lc.buf = buf
 	lc.typ = t
-	return platform.Write(buf, t)
+	switch t {
+	case types.MIMEPlainText:
+		clipboard.Write(clipboard.FmtText, buf)
+	case types.MIMEImagePNG:
+		clipboard.Write(clipboard.FmtImage, buf)
+	}
+	return true
 }
 
 // Watch watches clipboard changes and closes the dataCh channel if
 // the the watch context is canceled.
-func (lc *local) Watch(ctx context.Context, dt types.MIME, dataCh chan []byte) {
-	go platform.Watch(ctx, dt, dataCh)
+func (lc *local) Watch(ctx context.Context, dt types.MIME) <-chan []byte {
+	switch dt {
+	case types.MIMEPlainText:
+		return clipboard.Watch(ctx, clipboard.FmtText)
+	case types.MIMEImagePNG:
+		return clipboard.Watch(ctx, clipboard.FmtImage)
+	}
+	return nil
 }

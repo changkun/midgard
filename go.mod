@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/spf13/cobra v1.1.1
+	golang.design/x/clipboard v0.4.2
 	golang.org/x/sys v0.0.0-20200116001909-b77594299b42
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0
