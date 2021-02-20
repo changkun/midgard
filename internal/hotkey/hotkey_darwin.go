@@ -24,7 +24,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"changkun.de/x/midgard/internal/mainthread"
+	"golang.design/x/mainthread"
 )
 
 // This hkCallback tries to avoid a runtime panic error when directly
