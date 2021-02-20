@@ -131,6 +131,11 @@ golang.org/x/net/trace
 # golang.org/x/sys v0.0.0-20200116001909-b77594299b42
 ## explicit
 golang.org/x/sys/unix
+golang.org/x/sys/windows
+golang.org/x/sys/windows/registry
+golang.org/x/sys/windows/svc
+golang.org/x/sys/windows/svc/eventlog
+golang.org/x/sys/windows/svc/mgr
 # golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
