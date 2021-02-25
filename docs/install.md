@@ -22,43 +22,61 @@ CLI    <-------> daemon <-----┐  Secure Websocket      v     HTTPS
 CLI    <-------> daemon <-----┘
 ```
 
+Since midgard serves as a personal service, which does not need to address trust/privacy issue for other customers, it is designed and implemented in a centralized way: everything communicates to a central proxy. This brings several benefits:
+
+1. Central backup (midgard server backups clipboard history, and currently backups code2img/link history to a GitHub repository)
+2. Single connection broadcasting (a device only need a single connection, server broadcasts all messages)
+3. Distributed synchronization consistency (server is the lead)
+
+And more :-)
 
 ## Dependencies
 
-macOS:
+- macOS
 
-```
-$ xcode-select --install
-```
+  ```
+  $ xcode-select --install
+  ```
 
-Linux:
+- Linux
 
-```
-$ sudo apt install -y git xclip libx11-dev
-```
+  ```
+  $ sudo apt install -y git libx11-dev
+  ```
 
-## Binary Build
+- Windows
+
+  ```
+  $ choco install git
+  ```
+
+## Build
+
+### Binary Distribution
 
 ```
 $ git clone https://github.com/changkun/midgard
+
 $ make
+
 $ ln "$(pwd)/mg" /usr/local/bin/mg
+
 $ mg help
-midgard is a universal clipboard service developed by Changkun Ou.
+midgard is a universal clipboard service.
 See https://changkun.de/s/midgard for more details.
 
 Usage:
   mg [command]
 ```
 
-## Docker Build
+### Docker Distribution
 
 Docker build requires you to setup environment variable `SSH_KEY_PATH`
-that points to a RSA private key file, for example:
+that points to a private key file (e.g. RSA, ED25519, etc), for example:
 
 ```
 $ echo $SSH_KEY_PATH
-~/.ssh/id_rsa
+~/.ssh/id_ed25519
 ```
 
 ```
@@ -100,7 +118,7 @@ $ mg daemon stop
 $ mg daemon uninstall
 ```
 
-> Linux requires `sudo`
+> Linux requires `sudo`, windows users may need run PowerShell in "run as administrator" mode.
 
 or
 
@@ -131,49 +149,48 @@ location /midgard {
 }
 ```
 
-If you use traefik, then the following configuration could help:
+If you use traefik, then the following configuration could help (see [changkun/proxy](https://changkun.de/s/proxy) as a complete example):
 
-### Static configuration
+- **Static configuration**:
 
-```yaml
-entryPoints:
-  web:
-    address: :80
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-  websecure:
-    address: :443
+  ```yaml
+  entryPoints:
+    web:
+      address: :80
+      http:
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https
+    websecure:
+      address: :443
 
-certificatesResolvers:
-  changkunResolver:
-    acme:
-      email: your@email.com
-      storage: /path/to/your/acme.json
-      httpChallenge:
-        entryPoint: web
-```
+  certificatesResolvers:
+    changkunResolver:
+      acme:
+        email: your@email.com
+        storage: /path/to/your/acme.json
+        httpChallenge:
+          entryPoint: web
+  ```
 
-### Dynamic configuration
+- **Dynamic configuration**:
 
-```yaml
-http:
-  routers:
-    to-midgard:
-      rule: "Host(`example.com`)&&PathPrefix(`/midgard`)"
-      tls:
-        certResolver: yourCertResolver
-      service: midgard
-  services:
-    midgard:
-      loadBalancer:
-        servers:
-        - url: http://midgard
-```
-
+  ```yaml
+  http:
+    routers:
+      to-midgard:
+        rule: "Host(`example.com`)&&PathPrefix(`/midgard`)"
+        tls:
+          certResolver: yourCertResolver
+        service: midgard
+    services:
+      midgard:
+        loadBalancer:
+          servers:
+          - url: http://midgard
+  ```
 
 ## License
 
-Copyright 2020 [Changkun Ou](https://changkun.de). All rights reserved.
+Copyright 2020-2021 [Changkun Ou](https://changkun.de). All rights reserved.

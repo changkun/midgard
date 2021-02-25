@@ -24,6 +24,7 @@ id      name
 2       changkun-air-arm
 3       changkun-pro-intel
 4       changkun-ubuntu
+5       changkun-win
 ```
 
 ## Allocate Global URL
@@ -108,4 +109,4 @@ See [midgard-code2img](https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31ab
 
 ## License
 
-Copyright 2020 [Changkun Ou](https://changkun.de). All rights reserved.
+Copyright 2020-2021 [Changkun Ou](https://changkun.de). All rights reserved.

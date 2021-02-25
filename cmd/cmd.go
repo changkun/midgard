@@ -18,7 +18,7 @@ func Execute() {
 	var r = &cobra.Command{
 		Use:   "mg",
 		Short: "midgard is a universal clipboard service.",
-		Long: `midgard is a universal clipboard service developed by Changkun Ou.
+		Long: `midgard is a universal clipboard service.
 See https://changkun.de/s/midgard for more details.
 `,
 	}
