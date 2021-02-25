@@ -1,6 +1,6 @@
 # mainthread [![PkgGoDev](https://pkg.go.dev/badge/golang.design/x/mainthread)](https://pkg.go.dev/golang.design/x/mainthread) ![mainthread](https://github.com/golang-design/mainthread/workflows/mainthread/badge.svg?branch=main) ![](https://changkun.de/urlstat?mode=github&repo=golang-design/mainthread)
 
-schedules function to run on the main thread
+schedule functions to run on the main thread
 
 ```go
 import "golang.design/x/mainthread"
@@ -13,9 +13,9 @@ import "golang.design/x/mainthread"
 
 ## API Usage
 
-Package mainthread offers facilities to schedule functions on the
-maint hread. To use this package properly, one must call
-mainthread.Init from the main package. For example:
+Package mainthread offers facilities to schedule functions
+on the main thread. To use this package properly, one must
+call `mainthread.Init` from the main package. For example:
 
 ```go
 package main
@@ -26,18 +26,20 @@ func main() { mainthread.Init(fn) }
 
 // fn is the actual main function 
 func fn() {
-    // mainthread.Call returns when f1 returns. Note that if f1 blocks
-    // it will also block the execution of any subsequent calls on the
-    // main thread.
-    mainthread.Call(f1)
+	// ... do whatever you want to do ...
 
-    // ... do whatever you want to do ...
+	// mainthread.Call returns when f1 returns. Note that if f1 blocks
+	// it will also block the execution of any subsequent calls on the
+	// main thread.
+	mainthread.Call(f1)
 
-    // mainthread.Go returns immediately and f2 is scheduled to be executed
-    // in the future.
-    mainthread.Go(f2)
+	// ... do whatever you want to do ...
 
-    // ... do whatever you want to do ...
+	// mainthread.Go returns immediately and f2 is scheduled to be
+	// executed in the future.
+	mainthread.Go(f2)
+
+	// ... do whatever you want to do ...
 }
 
 func f1() { ... }
