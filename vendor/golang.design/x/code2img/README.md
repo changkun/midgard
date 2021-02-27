@@ -1,6 +1,6 @@
 # code2img [![PkgGoDev](https://pkg.go.dev/badge/golang.design/x/code2img)](https://pkg.go.dev/golang.design/x/code2img) ![](https://changkun.de/urlstat?mode=github&repo=golang-design/code2img)
 
-a carbon service wrapper
+A carbon-now wrapper for Go users and supports for iOS Shortcut
 
 ```go
 import "golang.design/x/code2img"
@@ -8,16 +8,9 @@ import "golang.design/x/code2img"
 
 ## API Usage
 
-Just one API `code2img.Render`, to use it:
+Just one API `code2img.Render`, to use it (see [main.go](./example/main.go)):
 
-```go
-b, err := code2img.Render(context.TODO(), `import "golang.design/x/code2img"`)
-if err != nil {
-    panic(err)
-}
-
-os.WriteFile("code.png", b, os.ModePerm)
-```
+![](./example/code.png)
 
 ## Service Usage
 

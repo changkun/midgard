@@ -19,9 +19,19 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+// Lang is represents a language
+type Lang string
+
+// All kinds of languages
+const (
+	LangAuto Lang = "auto"
+	LangGo   Lang = "text/x-go"
+	LangDiff Lang = "text/x-diff"
+)
+
 // Render renders the given code string and returns a binary buffer
 // that contains a carbon-now based image.
-func Render(ctx context.Context, code string) ([]byte, error) {
+func Render(ctx context.Context, lang Lang, code string) ([]byte, error) {
 	// https://carbon.now.sh/?
 	// bg=rgba(74%2C144%2C226%2C1)&
 	// t=material&
@@ -43,11 +53,15 @@ func Render(ctx context.Context, code string) ([]byte, error) {
 	// es=2x&
 	// wm=false&
 	// code=func%2520main()
+	if _, ok := supportedLang[lang]; !ok {
+		lang = LangAuto
+	}
+
 	var carbonOptions = map[string]string{
 		"bg":     "rgba(74,144,226,1)", // backgroundColor
 		"t":      "material",           // theme
 		"wt":     "none",               // windowTheme
-		"l":      "auto",               // language
+		"l":      string(lang),         // language
 		"ds":     "true",               // dropShadow
 		"dsyoff": "0px",                // dropShadowOffsetY
 		"dsblur": "29px",               // dropShadowBlurRadius
@@ -145,4 +159,12 @@ func screenshot(sel interface{}, picbuf *[]byte, opts ...chromedp.QueryOption) c
 		*picbuf = buf
 		return nil
 	}, append(opts, chromedp.NodeVisible)...)
+}
+
+// if we need more languages, see:
+// https://github.com/carbon-app/carbon/blob/c2357e63efb60330f1c9ef84be4df2e8e94f661c/lib/constants.js
+var supportedLang = map[Lang]int{
+	LangAuto: 0,
+	LangGo:   0,
+	LangDiff: 0,
 }

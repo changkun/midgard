@@ -93,7 +93,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	}
 
 	// render and save the image
-	imgb, err := code2img.Render(c.Request.Context(), in.Code)
+	imgb, err := code2img.Render(c.Request.Context(), code2img.LangAuto, in.Code)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{
 			Message: fmt.Sprintf("failed to render code image: %v", err),

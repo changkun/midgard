@@ -15,5 +15,4 @@
 # vendor/
 data/code/*.go
 data/images/*.png
-code2img
-.idea
+

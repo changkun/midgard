@@ -5,12 +5,12 @@ go 1.16
 require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/golang/protobuf v1.4.1
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/spf13/cobra v1.1.1
 	golang.design/x/clipboard v0.4.4
-	golang.design/x/code2img v0.1.1
+	golang.design/x/code2img v0.1.3
 	golang.design/x/hotkey v0.1.1
 	golang.design/x/mainthread v0.2.1
 	golang.org/x/sys v0.0.0-20210122093101-04d7465088b8
