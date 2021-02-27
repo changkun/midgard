@@ -122,6 +122,9 @@ github.com/ugorji/go/codec
 ## explicit
 golang.design/x/clipboard
 golang.design/x/clipboard/internal/cgo
+# golang.design/x/code2img v0.1.1
+## explicit
+golang.design/x/code2img
 # golang.design/x/hotkey v0.1.1
 ## explicit
 golang.design/x/hotkey

@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/clipboard"
-	"changkun.de/x/midgard/internal/code2img"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
+	"golang.design/x/code2img"
 )
 
 func init() {
@@ -93,7 +93,7 @@ func (m *Midgard) Code2img(c *gin.Context) {
 	}
 
 	// render and save the image
-	imgb, err := code2img.Render(in.Code)
+	imgb, err := code2img.Render(c.Request.Context(), in.Code)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{
 			Message: fmt.Sprintf("failed to render code image: %v", err),
