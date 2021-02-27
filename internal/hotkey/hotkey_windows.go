@@ -2,15 +2,16 @@
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
+//go:build windows
 // +build windows
 
 package hotkey
 
-import (
-	"context"
-	"fmt"
-)
+import "golang.design/x/hotkey"
 
-func handle(ctx context.Context, fn func()) {
-	fmt.Println("hotkey is unimplemented on windows")
+func getModifiers() []hotkey.Modifier {
+	return []hotkey.Modifier{
+		hotkey.ModCtrl,
+		hotkey.ModShift,
+	}
 }

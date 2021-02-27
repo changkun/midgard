@@ -4,7 +4,13 @@
 
 package hotkey
 
-import "context"
+import (
+	"context"
+	"log"
+	"runtime"
+
+	"golang.design/x/hotkey"
+)
 
 // Handle registers an application global hotkey to the system,
 // and returns a channel that will signal if the hotkey is triggered.
@@ -14,5 +20,23 @@ import "context"
 // macOS: Ctrl+Option+s
 // Windows: Unsupported
 func Handle(ctx context.Context, fn func()) {
-	go handle(ctx, fn)
+	hk, err := hotkey.Register(getModifiers(), hotkey.KeyS)
+	if err != nil {
+		log.Printf("Hotkey registration failed: %v", err)
+		return
+	}
+	log.Println("hotkey registration success.")
+
+	go func() {
+		trigger := hk.Listen(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-trigger:
+				fn()
+				runtime.KeepAlive(hk)
+			}
+		}
+	}()
 }
