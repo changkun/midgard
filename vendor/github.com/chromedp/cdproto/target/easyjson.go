@@ -219,6 +219,8 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoTarget2(in *jlexer.Lexer, out
 			out.WaitForDebuggerOnStart = bool(in.Bool())
 		case "flatten":
 			out.Flatten = bool(in.Bool())
+		case "windowOpen":
+			out.WindowOpen = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -247,6 +249,11 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoTarget2(out *jwriter.Writer, 
 		const prefix string = ",\"flatten\":"
 		out.RawString(prefix)
 		out.Bool(bool(in.Flatten))
+	}
+	if in.WindowOpen {
+		const prefix string = ",\"windowOpen\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.WindowOpen))
 	}
 	out.RawByte('}')
 }
@@ -1921,12 +1928,6 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoTarget24(in *jlexer.Lexer, ou
 			continue
 		}
 		switch key {
-		case "disposeOnDetach":
-			out.DisposeOnDetach = bool(in.Bool())
-		case "proxyServer":
-			out.ProxyServer = string(in.String())
-		case "proxyBypassList":
-			out.ProxyBypassList = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -1941,32 +1942,6 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoTarget24(out *jwriter.Writer,
 	out.RawByte('{')
 	first := true
 	_ = first
-	if in.DisposeOnDetach {
-		const prefix string = ",\"disposeOnDetach\":"
-		first = false
-		out.RawString(prefix[1:])
-		out.Bool(bool(in.DisposeOnDetach))
-	}
-	if in.ProxyServer != "" {
-		const prefix string = ",\"proxyServer\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.ProxyServer))
-	}
-	if in.ProxyBypassList != "" {
-		const prefix string = ",\"proxyBypassList\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.ProxyBypassList))
-	}
 	out.RawByte('}')
 }
 

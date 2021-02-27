@@ -325,14 +325,14 @@ func GetInstallabilityErrors() *GetInstallabilityErrorsParams {
 
 // GetInstallabilityErrorsReturns return values.
 type GetInstallabilityErrorsReturns struct {
-	InstallabilityErrors []*InstallabilityError `json:"installabilityErrors,omitempty"`
+	Errors []string `json:"errors,omitempty"`
 }
 
 // Do executes Page.getInstallabilityErrors against the provided context.
 //
 // returns:
-//   installabilityErrors
-func (p *GetInstallabilityErrorsParams) Do(ctx context.Context) (installabilityErrors []*InstallabilityError, err error) {
+//   errors
+func (p *GetInstallabilityErrorsParams) Do(ctx context.Context) (errors []string, err error) {
 	// execute
 	var res GetInstallabilityErrorsReturns
 	err = cdp.Execute(ctx, CommandGetInstallabilityErrors, nil, &res)
@@ -340,7 +340,7 @@ func (p *GetInstallabilityErrorsParams) Do(ctx context.Context) (installabilityE
 		return nil, err
 	}
 
-	return res.InstallabilityErrors, nil
+	return res.Errors, nil
 }
 
 // GetManifestIconsParams [no description].
@@ -613,7 +613,6 @@ type NavigateParams struct {
 	Referrer       string         `json:"referrer,omitempty"`       // Referrer URL.
 	TransitionType TransitionType `json:"transitionType,omitempty"` // Intended transition type.
 	FrameID        cdp.FrameID    `json:"frameId,omitempty"`        // Frame id to navigate, if not specified navigates the top frame.
-	ReferrerPolicy ReferrerPolicy `json:"referrerPolicy,omitempty"` // Referrer-policy used for the navigation.
 }
 
 // Navigate navigates current page to the given URL.
@@ -644,12 +643,6 @@ func (p NavigateParams) WithTransitionType(transitionType TransitionType) *Navig
 // frame.
 func (p NavigateParams) WithFrameID(frameID cdp.FrameID) *NavigateParams {
 	p.FrameID = frameID
-	return &p
-}
-
-// WithReferrerPolicy referrer-policy used for the navigation.
-func (p NavigateParams) WithReferrerPolicy(referrerPolicy ReferrerPolicy) *NavigateParams {
-	p.ReferrerPolicy = referrerPolicy
 	return &p
 }
 

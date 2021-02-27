@@ -3649,8 +3649,6 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime38(in *jlexer.Lexer, o
 			out.DisableBreaks = bool(in.Bool())
 		case "replMode":
 			out.ReplMode = bool(in.Bool())
-		case "allowUnsafeEvalBlockedByCSP":
-			out.AllowUnsafeEvalBlockedByCSP = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -3729,11 +3727,6 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime38(out *jwriter.Writer
 		const prefix string = ",\"replMode\":"
 		out.RawString(prefix)
 		out.Bool(bool(in.ReplMode))
-	}
-	if in.AllowUnsafeEvalBlockedByCSP {
-		const prefix string = ",\"allowUnsafeEvalBlockedByCSP\":"
-		out.RawString(prefix)
-		out.Bool(bool(in.AllowUnsafeEvalBlockedByCSP))
 	}
 	out.RawByte('}')
 }

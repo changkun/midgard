@@ -58,10 +58,9 @@ type EventFrameResized struct{}
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Page#event-frameRequestedNavigation
 type EventFrameRequestedNavigation struct {
-	FrameID     cdp.FrameID                 `json:"frameId"`     // Id of the frame that is being navigated.
-	Reason      ClientNavigationReason      `json:"reason"`      // The reason for the navigation.
-	URL         string                      `json:"url"`         // The destination URL for the requested navigation.
-	Disposition ClientNavigationDisposition `json:"disposition"` // The disposition for the navigation.
+	FrameID cdp.FrameID            `json:"frameId"` // Id of the frame that is being navigated.
+	Reason  ClientNavigationReason `json:"reason"`  // The reason for the navigation.
+	URL     string                 `json:"url"`     // The destination URL for the requested navigation.
 }
 
 // EventFrameStartedLoading fired when frame has started loading.
@@ -82,21 +81,8 @@ type EventFrameStoppedLoading struct {
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Page#event-downloadWillBegin
 type EventDownloadWillBegin struct {
-	FrameID           cdp.FrameID `json:"frameId"`           // Id of the frame that caused download to begin.
-	GUID              string      `json:"guid"`              // Global unique identifier of the download.
-	URL               string      `json:"url"`               // URL of the resource being downloaded.
-	SuggestedFilename string      `json:"suggestedFilename"` // Suggested file name of the resource (the actual name of the file saved on disk may differ).
-}
-
-// EventDownloadProgress fired when download makes progress. Last call has
-// |done| == true.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#event-downloadProgress
-type EventDownloadProgress struct {
-	GUID          string                `json:"guid"`          // Global unique identifier of the download.
-	TotalBytes    float64               `json:"totalBytes"`    // Total expected bytes to download.
-	ReceivedBytes float64               `json:"receivedBytes"` // Total bytes received.
-	State         DownloadProgressState `json:"state"`         // Download status.
+	FrameID cdp.FrameID `json:"frameId"` // Id of the frame that caused download to begin.
+	URL     string      `json:"url"`     // URL of the resource being downloaded.
 }
 
 // EventInterstitialHidden fired when interstitial page was hidden.

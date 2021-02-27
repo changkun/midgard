@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chromedp/sysutil"
+	"github.com/knq/sysutil"
 	"github.com/mailru/easyjson"
 	"github.com/mailru/easyjson/jlexer"
 	"github.com/mailru/easyjson/jwriter"
@@ -329,22 +329,16 @@ type Node struct {
 
 // AttributeValue returns the named attribute for the node.
 func (n *Node) AttributeValue(name string) string {
-	value, _ := n.Attribute(name)
-	return value
-}
-
-// Attribute returns the named attribute for the node and if it exists.
-func (n *Node) Attribute(name string) (string, bool) {
 	n.RLock()
 	defer n.RUnlock()
 
 	for i := 0; i < len(n.Attributes); i += 2 {
 		if n.Attributes[i] == name {
-			return n.Attributes[i+1], true
+			return n.Attributes[i+1]
 		}
 	}
 
-	return "", false
+	return ""
 }
 
 // xpath builds the xpath string.
@@ -513,10 +507,10 @@ const EmptyNodeID = NodeID(0)
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/DOM#type-RGBA
 type RGBA struct {
-	R int64   `json:"r"` // The red component, in the [0-255] range.
-	G int64   `json:"g"` // The green component, in the [0-255] range.
-	B int64   `json:"b"` // The blue component, in the [0-255] range.
-	A float64 `json:"a"` // The alpha component, in the [0-1] range (default: 1).
+	R int64   `json:"r"`           // The red component, in the [0-255] range.
+	G int64   `json:"g"`           // The green component, in the [0-255] range.
+	B int64   `json:"b"`           // The blue component, in the [0-255] range.
+	A float64 `json:"a,omitempty"` // The alpha component, in the [0-1] range (default: 1).
 }
 
 // NodeType node type.

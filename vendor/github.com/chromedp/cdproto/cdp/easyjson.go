@@ -73,7 +73,7 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoCdp(out *jwriter.Writer, in R
 		out.RawString(prefix)
 		out.Int64(int64(in.B))
 	}
-	{
+	if in.A != 0 {
 		const prefix string = ",\"a\":"
 		out.RawString(prefix)
 		out.Float64(float64(in.A))

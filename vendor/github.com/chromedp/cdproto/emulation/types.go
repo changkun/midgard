@@ -77,29 +77,6 @@ func (t *VirtualTimePolicy) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
 }
 
-// UserAgentBrandVersion used to specify User Agent Cient Hints to emulate.
-// See https://wicg.github.io/ua-client-hints.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Emulation#type-UserAgentBrandVersion
-type UserAgentBrandVersion struct {
-	Brand   string `json:"brand"`
-	Version string `json:"version"`
-}
-
-// UserAgentMetadata used to specify User Agent Cient Hints to emulate. See
-// https://wicg.github.io/ua-client-hints.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Emulation#type-UserAgentMetadata
-type UserAgentMetadata struct {
-	Brands          []*UserAgentBrandVersion `json:"brands"`
-	FullVersion     string                   `json:"fullVersion"`
-	Platform        string                   `json:"platform"`
-	PlatformVersion string                   `json:"platformVersion"`
-	Architecture    string                   `json:"architecture"`
-	Model           string                   `json:"model"`
-	Mobile          bool                     `json:"mobile"`
-}
-
 // OrientationType orientation type.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Emulation#type-ScreenOrientation
@@ -192,61 +169,5 @@ func (t *SetEmitTouchEventsForMouseConfiguration) UnmarshalEasyJSON(in *jlexer.L
 
 // UnmarshalJSON satisfies json.Unmarshaler.
 func (t *SetEmitTouchEventsForMouseConfiguration) UnmarshalJSON(buf []byte) error {
-	return easyjson.Unmarshal(buf, t)
-}
-
-// SetEmulatedVisionDeficiencyType vision deficiency to emulate.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Emulation#method-setEmulatedVisionDeficiency
-type SetEmulatedVisionDeficiencyType string
-
-// String returns the SetEmulatedVisionDeficiencyType as string value.
-func (t SetEmulatedVisionDeficiencyType) String() string {
-	return string(t)
-}
-
-// SetEmulatedVisionDeficiencyType values.
-const (
-	SetEmulatedVisionDeficiencyTypeNone          SetEmulatedVisionDeficiencyType = "none"
-	SetEmulatedVisionDeficiencyTypeAchromatopsia SetEmulatedVisionDeficiencyType = "achromatopsia"
-	SetEmulatedVisionDeficiencyTypeBlurredVision SetEmulatedVisionDeficiencyType = "blurredVision"
-	SetEmulatedVisionDeficiencyTypeDeuteranopia  SetEmulatedVisionDeficiencyType = "deuteranopia"
-	SetEmulatedVisionDeficiencyTypeProtanopia    SetEmulatedVisionDeficiencyType = "protanopia"
-	SetEmulatedVisionDeficiencyTypeTritanopia    SetEmulatedVisionDeficiencyType = "tritanopia"
-)
-
-// MarshalEasyJSON satisfies easyjson.Marshaler.
-func (t SetEmulatedVisionDeficiencyType) MarshalEasyJSON(out *jwriter.Writer) {
-	out.String(string(t))
-}
-
-// MarshalJSON satisfies json.Marshaler.
-func (t SetEmulatedVisionDeficiencyType) MarshalJSON() ([]byte, error) {
-	return easyjson.Marshal(t)
-}
-
-// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
-func (t *SetEmulatedVisionDeficiencyType) UnmarshalEasyJSON(in *jlexer.Lexer) {
-	switch SetEmulatedVisionDeficiencyType(in.String()) {
-	case SetEmulatedVisionDeficiencyTypeNone:
-		*t = SetEmulatedVisionDeficiencyTypeNone
-	case SetEmulatedVisionDeficiencyTypeAchromatopsia:
-		*t = SetEmulatedVisionDeficiencyTypeAchromatopsia
-	case SetEmulatedVisionDeficiencyTypeBlurredVision:
-		*t = SetEmulatedVisionDeficiencyTypeBlurredVision
-	case SetEmulatedVisionDeficiencyTypeDeuteranopia:
-		*t = SetEmulatedVisionDeficiencyTypeDeuteranopia
-	case SetEmulatedVisionDeficiencyTypeProtanopia:
-		*t = SetEmulatedVisionDeficiencyTypeProtanopia
-	case SetEmulatedVisionDeficiencyTypeTritanopia:
-		*t = SetEmulatedVisionDeficiencyTypeTritanopia
-
-	default:
-		in.AddError(errors.New("unknown SetEmulatedVisionDeficiencyType value"))
-	}
-}
-
-// UnmarshalJSON satisfies json.Unmarshaler.
-func (t *SetEmulatedVisionDeficiencyType) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
 }

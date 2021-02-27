@@ -296,7 +296,6 @@ const (
 	ClientNavigationReasonMetaTagRefresh        ClientNavigationReason = "metaTagRefresh"
 	ClientNavigationReasonPageBlockInterstitial ClientNavigationReason = "pageBlockInterstitial"
 	ClientNavigationReasonReload                ClientNavigationReason = "reload"
-	ClientNavigationReasonAnchorClick           ClientNavigationReason = "anchorClick"
 )
 
 // MarshalEasyJSON satisfies easyjson.Marshaler.
@@ -326,8 +325,6 @@ func (t *ClientNavigationReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
 		*t = ClientNavigationReasonPageBlockInterstitial
 	case ClientNavigationReasonReload:
 		*t = ClientNavigationReasonReload
-	case ClientNavigationReasonAnchorClick:
-		*t = ClientNavigationReasonAnchorClick
 
 	default:
 		in.AddError(errors.New("unknown ClientNavigationReason value"))
@@ -336,134 +333,6 @@ func (t *ClientNavigationReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
 
 // UnmarshalJSON satisfies json.Unmarshaler.
 func (t *ClientNavigationReason) UnmarshalJSON(buf []byte) error {
-	return easyjson.Unmarshal(buf, t)
-}
-
-// ClientNavigationDisposition [no description].
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-ClientNavigationDisposition
-type ClientNavigationDisposition string
-
-// String returns the ClientNavigationDisposition as string value.
-func (t ClientNavigationDisposition) String() string {
-	return string(t)
-}
-
-// ClientNavigationDisposition values.
-const (
-	ClientNavigationDispositionCurrentTab ClientNavigationDisposition = "currentTab"
-	ClientNavigationDispositionNewTab     ClientNavigationDisposition = "newTab"
-	ClientNavigationDispositionNewWindow  ClientNavigationDisposition = "newWindow"
-	ClientNavigationDispositionDownload   ClientNavigationDisposition = "download"
-)
-
-// MarshalEasyJSON satisfies easyjson.Marshaler.
-func (t ClientNavigationDisposition) MarshalEasyJSON(out *jwriter.Writer) {
-	out.String(string(t))
-}
-
-// MarshalJSON satisfies json.Marshaler.
-func (t ClientNavigationDisposition) MarshalJSON() ([]byte, error) {
-	return easyjson.Marshal(t)
-}
-
-// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
-func (t *ClientNavigationDisposition) UnmarshalEasyJSON(in *jlexer.Lexer) {
-	switch ClientNavigationDisposition(in.String()) {
-	case ClientNavigationDispositionCurrentTab:
-		*t = ClientNavigationDispositionCurrentTab
-	case ClientNavigationDispositionNewTab:
-		*t = ClientNavigationDispositionNewTab
-	case ClientNavigationDispositionNewWindow:
-		*t = ClientNavigationDispositionNewWindow
-	case ClientNavigationDispositionDownload:
-		*t = ClientNavigationDispositionDownload
-
-	default:
-		in.AddError(errors.New("unknown ClientNavigationDisposition value"))
-	}
-}
-
-// UnmarshalJSON satisfies json.Unmarshaler.
-func (t *ClientNavigationDisposition) UnmarshalJSON(buf []byte) error {
-	return easyjson.Unmarshal(buf, t)
-}
-
-// InstallabilityErrorArgument [no description].
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-InstallabilityErrorArgument
-type InstallabilityErrorArgument struct {
-	Name  string `json:"name"`  // Argument name (e.g. name:'minimum-icon-size-in-pixels').
-	Value string `json:"value"` // Argument value (e.g. value:'64').
-}
-
-// InstallabilityError the installability error.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-InstallabilityError
-type InstallabilityError struct {
-	ErrorID        string                         `json:"errorId"`        // The error id (e.g. 'manifest-missing-suitable-icon').
-	ErrorArguments []*InstallabilityErrorArgument `json:"errorArguments"` // The list of error arguments (e.g. {name:'minimum-icon-size-in-pixels', value:'64'}).
-}
-
-// ReferrerPolicy the referring-policy used for the navigation.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-ReferrerPolicy
-type ReferrerPolicy string
-
-// String returns the ReferrerPolicy as string value.
-func (t ReferrerPolicy) String() string {
-	return string(t)
-}
-
-// ReferrerPolicy values.
-const (
-	ReferrerPolicyNoReferrer                  ReferrerPolicy = "noReferrer"
-	ReferrerPolicyNoReferrerWhenDowngrade     ReferrerPolicy = "noReferrerWhenDowngrade"
-	ReferrerPolicyOrigin                      ReferrerPolicy = "origin"
-	ReferrerPolicyOriginWhenCrossOrigin       ReferrerPolicy = "originWhenCrossOrigin"
-	ReferrerPolicySameOrigin                  ReferrerPolicy = "sameOrigin"
-	ReferrerPolicyStrictOrigin                ReferrerPolicy = "strictOrigin"
-	ReferrerPolicyStrictOriginWhenCrossOrigin ReferrerPolicy = "strictOriginWhenCrossOrigin"
-	ReferrerPolicyUnsafeURL                   ReferrerPolicy = "unsafeUrl"
-)
-
-// MarshalEasyJSON satisfies easyjson.Marshaler.
-func (t ReferrerPolicy) MarshalEasyJSON(out *jwriter.Writer) {
-	out.String(string(t))
-}
-
-// MarshalJSON satisfies json.Marshaler.
-func (t ReferrerPolicy) MarshalJSON() ([]byte, error) {
-	return easyjson.Marshal(t)
-}
-
-// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
-func (t *ReferrerPolicy) UnmarshalEasyJSON(in *jlexer.Lexer) {
-	switch ReferrerPolicy(in.String()) {
-	case ReferrerPolicyNoReferrer:
-		*t = ReferrerPolicyNoReferrer
-	case ReferrerPolicyNoReferrerWhenDowngrade:
-		*t = ReferrerPolicyNoReferrerWhenDowngrade
-	case ReferrerPolicyOrigin:
-		*t = ReferrerPolicyOrigin
-	case ReferrerPolicyOriginWhenCrossOrigin:
-		*t = ReferrerPolicyOriginWhenCrossOrigin
-	case ReferrerPolicySameOrigin:
-		*t = ReferrerPolicySameOrigin
-	case ReferrerPolicyStrictOrigin:
-		*t = ReferrerPolicyStrictOrigin
-	case ReferrerPolicyStrictOriginWhenCrossOrigin:
-		*t = ReferrerPolicyStrictOriginWhenCrossOrigin
-	case ReferrerPolicyUnsafeURL:
-		*t = ReferrerPolicyUnsafeURL
-
-	default:
-		in.AddError(errors.New("unknown ReferrerPolicy value"))
-	}
-}
-
-// UnmarshalJSON satisfies json.Unmarshaler.
-func (t *ReferrerPolicy) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
 }
 
@@ -508,53 +377,6 @@ func (t *FileChooserOpenedMode) UnmarshalEasyJSON(in *jlexer.Lexer) {
 
 // UnmarshalJSON satisfies json.Unmarshaler.
 func (t *FileChooserOpenedMode) UnmarshalJSON(buf []byte) error {
-	return easyjson.Unmarshal(buf, t)
-}
-
-// DownloadProgressState download status.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#event-downloadProgress
-type DownloadProgressState string
-
-// String returns the DownloadProgressState as string value.
-func (t DownloadProgressState) String() string {
-	return string(t)
-}
-
-// DownloadProgressState values.
-const (
-	DownloadProgressStateInProgress DownloadProgressState = "inProgress"
-	DownloadProgressStateCompleted  DownloadProgressState = "completed"
-	DownloadProgressStateCanceled   DownloadProgressState = "canceled"
-)
-
-// MarshalEasyJSON satisfies easyjson.Marshaler.
-func (t DownloadProgressState) MarshalEasyJSON(out *jwriter.Writer) {
-	out.String(string(t))
-}
-
-// MarshalJSON satisfies json.Marshaler.
-func (t DownloadProgressState) MarshalJSON() ([]byte, error) {
-	return easyjson.Marshal(t)
-}
-
-// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
-func (t *DownloadProgressState) UnmarshalEasyJSON(in *jlexer.Lexer) {
-	switch DownloadProgressState(in.String()) {
-	case DownloadProgressStateInProgress:
-		*t = DownloadProgressStateInProgress
-	case DownloadProgressStateCompleted:
-		*t = DownloadProgressStateCompleted
-	case DownloadProgressStateCanceled:
-		*t = DownloadProgressStateCanceled
-
-	default:
-		in.AddError(errors.New("unknown DownloadProgressState value"))
-	}
-}
-
-// UnmarshalJSON satisfies json.Unmarshaler.
-func (t *DownloadProgressState) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
 }
 

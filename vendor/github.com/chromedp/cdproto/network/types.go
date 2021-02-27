@@ -202,7 +202,7 @@ func (t *ErrorReason) UnmarshalJSON(buf []byte) error {
 // Headers request / response headers as keys / values of JSON object.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Network#type-Headers
-type Headers map[string]interface{}
+type Headers easyjson.RawMessage
 
 // ConnectionType the underlying connection technology that the browser is
 // supposedly using.
@@ -370,24 +370,22 @@ func (t *CookiePriority) UnmarshalJSON(buf []byte) error {
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Network#type-ResourceTiming
 type ResourceTiming struct {
-	RequestTime              float64 `json:"requestTime"`              // Timing's requestTime is a baseline in seconds, while the other numbers are ticks in milliseconds relatively to this requestTime.
-	ProxyStart               float64 `json:"proxyStart"`               // Started resolving proxy.
-	ProxyEnd                 float64 `json:"proxyEnd"`                 // Finished resolving proxy.
-	DNSStart                 float64 `json:"dnsStart"`                 // Started DNS address resolve.
-	DNSEnd                   float64 `json:"dnsEnd"`                   // Finished DNS address resolve.
-	ConnectStart             float64 `json:"connectStart"`             // Started connecting to the remote host.
-	ConnectEnd               float64 `json:"connectEnd"`               // Connected to the remote host.
-	SslStart                 float64 `json:"sslStart"`                 // Started SSL handshake.
-	SslEnd                   float64 `json:"sslEnd"`                   // Finished SSL handshake.
-	WorkerStart              float64 `json:"workerStart"`              // Started running ServiceWorker.
-	WorkerReady              float64 `json:"workerReady"`              // Finished Starting ServiceWorker.
-	WorkerFetchStart         float64 `json:"workerFetchStart"`         // Started fetch event.
-	WorkerRespondWithSettled float64 `json:"workerRespondWithSettled"` // Settled fetch event respondWith promise.
-	SendStart                float64 `json:"sendStart"`                // Started sending request.
-	SendEnd                  float64 `json:"sendEnd"`                  // Finished sending request.
-	PushStart                float64 `json:"pushStart"`                // Time the server started pushing request.
-	PushEnd                  float64 `json:"pushEnd"`                  // Time the server finished pushing request.
-	ReceiveHeadersEnd        float64 `json:"receiveHeadersEnd"`        // Finished receiving response headers.
+	RequestTime       float64 `json:"requestTime"`       // Timing's requestTime is a baseline in seconds, while the other numbers are ticks in milliseconds relatively to this requestTime.
+	ProxyStart        float64 `json:"proxyStart"`        // Started resolving proxy.
+	ProxyEnd          float64 `json:"proxyEnd"`          // Finished resolving proxy.
+	DNSStart          float64 `json:"dnsStart"`          // Started DNS address resolve.
+	DNSEnd            float64 `json:"dnsEnd"`            // Finished DNS address resolve.
+	ConnectStart      float64 `json:"connectStart"`      // Started connecting to the remote host.
+	ConnectEnd        float64 `json:"connectEnd"`        // Connected to the remote host.
+	SslStart          float64 `json:"sslStart"`          // Started SSL handshake.
+	SslEnd            float64 `json:"sslEnd"`            // Finished SSL handshake.
+	WorkerStart       float64 `json:"workerStart"`       // Started running ServiceWorker.
+	WorkerReady       float64 `json:"workerReady"`       // Finished Starting ServiceWorker.
+	SendStart         float64 `json:"sendStart"`         // Started sending request.
+	SendEnd           float64 `json:"sendEnd"`           // Finished sending request.
+	PushStart         float64 `json:"pushStart"`         // Time the server started pushing request.
+	PushEnd           float64 `json:"pushEnd"`           // Time the server finished pushing request.
+	ReceiveHeadersEnd float64 `json:"receiveHeadersEnd"` // Finished receiving response headers.
 }
 
 // ResourcePriority loading priority of a resource request.
@@ -553,19 +551,14 @@ func (t BlockedReason) String() string {
 
 // BlockedReason values.
 const (
-	BlockedReasonOther                                             BlockedReason = "other"
-	BlockedReasonCsp                                               BlockedReason = "csp"
-	BlockedReasonMixedContent                                      BlockedReason = "mixed-content"
-	BlockedReasonOrigin                                            BlockedReason = "origin"
-	BlockedReasonInspector                                         BlockedReason = "inspector"
-	BlockedReasonSubresourceFilter                                 BlockedReason = "subresource-filter"
-	BlockedReasonContentType                                       BlockedReason = "content-type"
-	BlockedReasonCollapsedByClient                                 BlockedReason = "collapsed-by-client"
-	BlockedReasonCoepFrameResourceNeedsCoepHeader                  BlockedReason = "coep-frame-resource-needs-coep-header"
-	BlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage       BlockedReason = "coop-sandboxed-iframe-cannot-navigate-to-coop-page"
-	BlockedReasonCorpNotSameOrigin                                 BlockedReason = "corp-not-same-origin"
-	BlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep BlockedReason = "corp-not-same-origin-after-defaulted-to-same-origin-by-coep"
-	BlockedReasonCorpNotSameSite                                   BlockedReason = "corp-not-same-site"
+	BlockedReasonOther             BlockedReason = "other"
+	BlockedReasonCsp               BlockedReason = "csp"
+	BlockedReasonMixedContent      BlockedReason = "mixed-content"
+	BlockedReasonOrigin            BlockedReason = "origin"
+	BlockedReasonInspector         BlockedReason = "inspector"
+	BlockedReasonSubresourceFilter BlockedReason = "subresource-filter"
+	BlockedReasonContentType       BlockedReason = "content-type"
+	BlockedReasonCollapsedByClient BlockedReason = "collapsed-by-client"
 )
 
 // MarshalEasyJSON satisfies easyjson.Marshaler.
@@ -597,16 +590,6 @@ func (t *BlockedReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
 		*t = BlockedReasonContentType
 	case BlockedReasonCollapsedByClient:
 		*t = BlockedReasonCollapsedByClient
-	case BlockedReasonCoepFrameResourceNeedsCoepHeader:
-		*t = BlockedReasonCoepFrameResourceNeedsCoepHeader
-	case BlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage:
-		*t = BlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage
-	case BlockedReasonCorpNotSameOrigin:
-		*t = BlockedReasonCorpNotSameOrigin
-	case BlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep:
-		*t = BlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep
-	case BlockedReasonCorpNotSameSite:
-		*t = BlockedReasonCorpNotSameSite
 
 	default:
 		in.AddError(errors.New("unknown BlockedReason value"))
@@ -618,83 +601,30 @@ func (t *BlockedReason) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
 }
 
-// ServiceWorkerResponseSource source of serviceworker response.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Network#type-ServiceWorkerResponseSource
-type ServiceWorkerResponseSource string
-
-// String returns the ServiceWorkerResponseSource as string value.
-func (t ServiceWorkerResponseSource) String() string {
-	return string(t)
-}
-
-// ServiceWorkerResponseSource values.
-const (
-	ServiceWorkerResponseSourceCacheStorage ServiceWorkerResponseSource = "cache-storage"
-	ServiceWorkerResponseSourceHTTPCache    ServiceWorkerResponseSource = "http-cache"
-	ServiceWorkerResponseSourceFallbackCode ServiceWorkerResponseSource = "fallback-code"
-	ServiceWorkerResponseSourceNetwork      ServiceWorkerResponseSource = "network"
-)
-
-// MarshalEasyJSON satisfies easyjson.Marshaler.
-func (t ServiceWorkerResponseSource) MarshalEasyJSON(out *jwriter.Writer) {
-	out.String(string(t))
-}
-
-// MarshalJSON satisfies json.Marshaler.
-func (t ServiceWorkerResponseSource) MarshalJSON() ([]byte, error) {
-	return easyjson.Marshal(t)
-}
-
-// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
-func (t *ServiceWorkerResponseSource) UnmarshalEasyJSON(in *jlexer.Lexer) {
-	switch ServiceWorkerResponseSource(in.String()) {
-	case ServiceWorkerResponseSourceCacheStorage:
-		*t = ServiceWorkerResponseSourceCacheStorage
-	case ServiceWorkerResponseSourceHTTPCache:
-		*t = ServiceWorkerResponseSourceHTTPCache
-	case ServiceWorkerResponseSourceFallbackCode:
-		*t = ServiceWorkerResponseSourceFallbackCode
-	case ServiceWorkerResponseSourceNetwork:
-		*t = ServiceWorkerResponseSourceNetwork
-
-	default:
-		in.AddError(errors.New("unknown ServiceWorkerResponseSource value"))
-	}
-}
-
-// UnmarshalJSON satisfies json.Unmarshaler.
-func (t *ServiceWorkerResponseSource) UnmarshalJSON(buf []byte) error {
-	return easyjson.Unmarshal(buf, t)
-}
-
 // Response HTTP response data.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Network#type-Response
 type Response struct {
-	URL                         string                      `json:"url"`                                   // Response URL. This URL can be different from CachedResource.url in case of redirect.
-	Status                      int64                       `json:"status"`                                // HTTP response status code.
-	StatusText                  string                      `json:"statusText"`                            // HTTP response status text.
-	Headers                     Headers                     `json:"headers"`                               // HTTP response headers.
-	HeadersText                 string                      `json:"headersText,omitempty"`                 // HTTP response headers text.
-	MimeType                    string                      `json:"mimeType"`                              // Resource mimeType as determined by the browser.
-	RequestHeaders              Headers                     `json:"requestHeaders,omitempty"`              // Refined HTTP request headers that were actually transmitted over the network.
-	RequestHeadersText          string                      `json:"requestHeadersText,omitempty"`          // HTTP request headers text.
-	ConnectionReused            bool                        `json:"connectionReused"`                      // Specifies whether physical connection was actually reused for this request.
-	ConnectionID                float64                     `json:"connectionId"`                          // Physical connection id that was actually used for this request.
-	RemoteIPAddress             string                      `json:"remoteIPAddress,omitempty"`             // Remote IP address.
-	RemotePort                  int64                       `json:"remotePort,omitempty"`                  // Remote port.
-	FromDiskCache               bool                        `json:"fromDiskCache,omitempty"`               // Specifies that the request was served from the disk cache.
-	FromServiceWorker           bool                        `json:"fromServiceWorker,omitempty"`           // Specifies that the request was served from the ServiceWorker.
-	FromPrefetchCache           bool                        `json:"fromPrefetchCache,omitempty"`           // Specifies that the request was served from the prefetch cache.
-	EncodedDataLength           float64                     `json:"encodedDataLength"`                     // Total number of bytes received for this request so far.
-	Timing                      *ResourceTiming             `json:"timing,omitempty"`                      // Timing information for the given request.
-	ServiceWorkerResponseSource ServiceWorkerResponseSource `json:"serviceWorkerResponseSource,omitempty"` // Response source of response from ServiceWorker.
-	ResponseTime                *cdp.TimeSinceEpoch         `json:"responseTime,omitempty"`                // The time at which the returned response was generated.
-	CacheStorageCacheName       string                      `json:"cacheStorageCacheName,omitempty"`       // Cache Storage Cache Name.
-	Protocol                    string                      `json:"protocol,omitempty"`                    // Protocol used to fetch this request.
-	SecurityState               security.State              `json:"securityState"`                         // Security state of the request resource.
-	SecurityDetails             *SecurityDetails            `json:"securityDetails,omitempty"`             // Security details for the request.
+	URL                string           `json:"url"`                          // Response URL. This URL can be different from CachedResource.url in case of redirect.
+	Status             int64            `json:"status"`                       // HTTP response status code.
+	StatusText         string           `json:"statusText"`                   // HTTP response status text.
+	Headers            Headers          `json:"headers"`                      // HTTP response headers.
+	HeadersText        string           `json:"headersText,omitempty"`        // HTTP response headers text.
+	MimeType           string           `json:"mimeType"`                     // Resource mimeType as determined by the browser.
+	RequestHeaders     Headers          `json:"requestHeaders,omitempty"`     // Refined HTTP request headers that were actually transmitted over the network.
+	RequestHeadersText string           `json:"requestHeadersText,omitempty"` // HTTP request headers text.
+	ConnectionReused   bool             `json:"connectionReused"`             // Specifies whether physical connection was actually reused for this request.
+	ConnectionID       float64          `json:"connectionId"`                 // Physical connection id that was actually used for this request.
+	RemoteIPAddress    string           `json:"remoteIPAddress,omitempty"`    // Remote IP address.
+	RemotePort         int64            `json:"remotePort,omitempty"`         // Remote port.
+	FromDiskCache      bool             `json:"fromDiskCache,omitempty"`      // Specifies that the request was served from the disk cache.
+	FromServiceWorker  bool             `json:"fromServiceWorker,omitempty"`  // Specifies that the request was served from the ServiceWorker.
+	FromPrefetchCache  bool             `json:"fromPrefetchCache,omitempty"`  // Specifies that the request was served from the prefetch cache.
+	EncodedDataLength  float64          `json:"encodedDataLength"`            // Total number of bytes received for this request so far.
+	Timing             *ResourceTiming  `json:"timing,omitempty"`             // Timing information for the given request.
+	Protocol           string           `json:"protocol,omitempty"`           // Protocol used to fetch this request.
+	SecurityState      security.State   `json:"securityState"`                // Security state of the request resource.
+	SecurityDetails    *SecurityDetails `json:"securityDetails,omitempty"`    // Security details for the request.
 }
 
 // WebSocketRequest webSocket request data.

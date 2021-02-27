@@ -20,6 +20,7 @@ func init() {
 		btime = time.Now()
 		return
 	}
+
 	for _, line := range bytes.SplitN(buf, lineEnd, -1) {
 		if bytes.HasPrefix(line, btimePrefix) {
 			t, err := strconv.ParseInt(string(line[len(btimePrefix):]), 10, 64)
@@ -27,6 +28,7 @@ func init() {
 				btime = time.Now()
 				return
 			}
+
 			btime = time.Unix(t, 0)
 			break
 		}
