@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/spf13/cobra v1.1.1
-	golang.design/x/clipboard v0.4.4
+	golang.design/x/clipboard v0.4.6
 	golang.design/x/code2img v0.1.3
 	golang.design/x/hotkey v0.1.1
 	golang.design/x/mainthread v0.2.1
