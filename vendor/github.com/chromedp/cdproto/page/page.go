@@ -23,8 +23,9 @@ import (
 // AddScriptToEvaluateOnNewDocumentParams evaluates given script in every
 // frame upon creation (before loading frame's scripts).
 type AddScriptToEvaluateOnNewDocumentParams struct {
-	Source    string `json:"source"`
-	WorldName string `json:"worldName,omitempty"` // If specified, creates an isolated world with the given name and evaluates given script in it. This world name will be used as the ExecutionContextDescription::name when the corresponding event is emitted.
+	Source                string `json:"source"`
+	WorldName             string `json:"worldName,omitempty"`             // If specified, creates an isolated world with the given name and evaluates given script in it. This world name will be used as the ExecutionContextDescription::name when the corresponding event is emitted.
+	IncludeCommandLineAPI bool   `json:"includeCommandLineAPI,omitempty"` // Specifies whether command line API should be available to the script, defaults to false.
 }
 
 // AddScriptToEvaluateOnNewDocument evaluates given script in every frame
@@ -45,6 +46,13 @@ func AddScriptToEvaluateOnNewDocument(source string) *AddScriptToEvaluateOnNewDo
 // ExecutionContextDescription::name when the corresponding event is emitted.
 func (p AddScriptToEvaluateOnNewDocumentParams) WithWorldName(worldName string) *AddScriptToEvaluateOnNewDocumentParams {
 	p.WorldName = worldName
+	return &p
+}
+
+// WithIncludeCommandLineAPI specifies whether command line API should be
+// available to the script, defaults to false.
+func (p AddScriptToEvaluateOnNewDocumentParams) WithIncludeCommandLineAPI(includeCommandLineAPI bool) *AddScriptToEvaluateOnNewDocumentParams {
+	p.IncludeCommandLineAPI = includeCommandLineAPI
 	return &p
 }
 
@@ -85,10 +93,11 @@ func (p *BringToFrontParams) Do(ctx context.Context) (err error) {
 
 // CaptureScreenshotParams capture page screenshot.
 type CaptureScreenshotParams struct {
-	Format      CaptureScreenshotFormat `json:"format,omitempty"`      // Image compression format (defaults to png).
-	Quality     int64                   `json:"quality,omitempty"`     // Compression quality from range [0..100] (jpeg only).
-	Clip        *Viewport               `json:"clip,omitempty"`        // Capture the screenshot of a given region only.
-	FromSurface bool                    `json:"fromSurface,omitempty"` // Capture the screenshot from the surface, rather than the view. Defaults to true.
+	Format                CaptureScreenshotFormat `json:"format,omitempty"`                // Image compression format (defaults to png).
+	Quality               int64                   `json:"quality,omitempty"`               // Compression quality from range [0..100] (jpeg only).
+	Clip                  *Viewport               `json:"clip,omitempty"`                  // Capture the screenshot of a given region only.
+	FromSurface           bool                    `json:"fromSurface,omitempty"`           // Capture the screenshot from the surface, rather than the view. Defaults to true.
+	CaptureBeyondViewport bool                    `json:"captureBeyondViewport,omitempty"` // Capture the screenshot beyond the viewport. Defaults to false.
 }
 
 // CaptureScreenshot capture page screenshot.
@@ -122,6 +131,13 @@ func (p CaptureScreenshotParams) WithClip(clip *Viewport) *CaptureScreenshotPara
 // view. Defaults to true.
 func (p CaptureScreenshotParams) WithFromSurface(fromSurface bool) *CaptureScreenshotParams {
 	p.FromSurface = fromSurface
+	return &p
+}
+
+// WithCaptureBeyondViewport capture the screenshot beyond the viewport.
+// Defaults to false.
+func (p CaptureScreenshotParams) WithCaptureBeyondViewport(captureBeyondViewport bool) *CaptureScreenshotParams {
+	p.CaptureBeyondViewport = captureBeyondViewport
 	return &p
 }
 
@@ -325,14 +341,14 @@ func GetInstallabilityErrors() *GetInstallabilityErrorsParams {
 
 // GetInstallabilityErrorsReturns return values.
 type GetInstallabilityErrorsReturns struct {
-	Errors []string `json:"errors,omitempty"`
+	InstallabilityErrors []*InstallabilityError `json:"installabilityErrors,omitempty"`
 }
 
 // Do executes Page.getInstallabilityErrors against the provided context.
 //
 // returns:
-//   errors
-func (p *GetInstallabilityErrorsParams) Do(ctx context.Context) (errors []string, err error) {
+//   installabilityErrors
+func (p *GetInstallabilityErrorsParams) Do(ctx context.Context) (installabilityErrors []*InstallabilityError, err error) {
 	// execute
 	var res GetInstallabilityErrorsReturns
 	err = cdp.Execute(ctx, CommandGetInstallabilityErrors, nil, &res)
@@ -340,7 +356,7 @@ func (p *GetInstallabilityErrorsParams) Do(ctx context.Context) (errors []string
 		return nil, err
 	}
 
-	return res.Errors, nil
+	return res.InstallabilityErrors, nil
 }
 
 // GetManifestIconsParams [no description].
@@ -423,26 +439,32 @@ func GetLayoutMetrics() *GetLayoutMetricsParams {
 
 // GetLayoutMetricsReturns return values.
 type GetLayoutMetricsReturns struct {
-	LayoutViewport *LayoutViewport `json:"layoutViewport,omitempty"` // Metrics relating to the layout viewport.
-	VisualViewport *VisualViewport `json:"visualViewport,omitempty"` // Metrics relating to the visual viewport.
-	ContentSize    *dom.Rect       `json:"contentSize,omitempty"`    // Size of scrollable area.
+	LayoutViewport    *LayoutViewport `json:"layoutViewport"`    // Deprecated metrics relating to the layout viewport. Can be in DP or in CSS pixels depending on the enable-use-zoom-for-dsf flag. Use cssLayoutViewport instead.
+	VisualViewport    *VisualViewport `json:"visualViewport"`    // Deprecated metrics relating to the visual viewport. Can be in DP or in CSS pixels depending on the enable-use-zoom-for-dsf flag. Use cssVisualViewport instead.
+	ContentSize       *dom.Rect       `json:"contentSize"`       // Deprecated size of scrollable area. Can be in DP or in CSS pixels depending on the enable-use-zoom-for-dsf flag. Use cssContentSize instead.
+	CSSLayoutViewport *LayoutViewport `json:"cssLayoutViewport"` // Metrics relating to the layout viewport in CSS pixels.
+	CSSVisualViewport *VisualViewport `json:"cssVisualViewport"` // Metrics relating to the visual viewport in CSS pixels.
+	CSSContentSize    *dom.Rect       `json:"cssContentSize"`    // Size of scrollable area in CSS pixels.
 }
 
 // Do executes Page.getLayoutMetrics against the provided context.
 //
 // returns:
-//   layoutViewport - Metrics relating to the layout viewport.
-//   visualViewport - Metrics relating to the visual viewport.
-//   contentSize - Size of scrollable area.
-func (p *GetLayoutMetricsParams) Do(ctx context.Context) (layoutViewport *LayoutViewport, visualViewport *VisualViewport, contentSize *dom.Rect, err error) {
+//   layoutViewport - Deprecated metrics relating to the layout viewport. Can be in DP or in CSS pixels depending on the enable-use-zoom-for-dsf flag. Use cssLayoutViewport instead.
+//   visualViewport - Deprecated metrics relating to the visual viewport. Can be in DP or in CSS pixels depending on the enable-use-zoom-for-dsf flag. Use cssVisualViewport instead.
+//   contentSize - Deprecated size of scrollable area. Can be in DP or in CSS pixels depending on the enable-use-zoom-for-dsf flag. Use cssContentSize instead.
+//   cssLayoutViewport - Metrics relating to the layout viewport in CSS pixels.
+//   cssVisualViewport - Metrics relating to the visual viewport in CSS pixels.
+//   cssContentSize - Size of scrollable area in CSS pixels.
+func (p *GetLayoutMetricsParams) Do(ctx context.Context) (layoutViewport *LayoutViewport, visualViewport *VisualViewport, contentSize *dom.Rect, cssLayoutViewport *LayoutViewport, cssVisualViewport *VisualViewport, cssContentSize *dom.Rect, err error) {
 	// execute
 	var res GetLayoutMetricsReturns
 	err = cdp.Execute(ctx, CommandGetLayoutMetrics, nil, &res)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
-	return res.LayoutViewport, res.VisualViewport, res.ContentSize, nil
+	return res.LayoutViewport, res.VisualViewport, res.ContentSize, res.CSSLayoutViewport, res.CSSVisualViewport, res.CSSContentSize, nil
 }
 
 // GetNavigationHistoryParams returns navigation history for the current
@@ -613,6 +635,7 @@ type NavigateParams struct {
 	Referrer       string         `json:"referrer,omitempty"`       // Referrer URL.
 	TransitionType TransitionType `json:"transitionType,omitempty"` // Intended transition type.
 	FrameID        cdp.FrameID    `json:"frameId,omitempty"`        // Frame id to navigate, if not specified navigates the top frame.
+	ReferrerPolicy ReferrerPolicy `json:"referrerPolicy,omitempty"` // Referrer-policy used for the navigation.
 }
 
 // Navigate navigates current page to the given URL.
@@ -643,6 +666,12 @@ func (p NavigateParams) WithTransitionType(transitionType TransitionType) *Navig
 // frame.
 func (p NavigateParams) WithFrameID(frameID cdp.FrameID) *NavigateParams {
 	p.FrameID = frameID
+	return &p
+}
+
+// WithReferrerPolicy referrer-policy used for the navigation.
+func (p NavigateParams) WithReferrerPolicy(referrerPolicy ReferrerPolicy) *NavigateParams {
+	p.ReferrerPolicy = referrerPolicy
 	return &p
 }
 
@@ -1040,6 +1069,81 @@ func (p *SetBypassCSPParams) Do(ctx context.Context) (err error) {
 	return cdp.Execute(ctx, CommandSetBypassCSP, p, nil)
 }
 
+// GetPermissionsPolicyStateParams get Permissions Policy state on given
+// frame.
+type GetPermissionsPolicyStateParams struct {
+	FrameID cdp.FrameID `json:"frameId"`
+}
+
+// GetPermissionsPolicyState get Permissions Policy state on given frame.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#method-getPermissionsPolicyState
+//
+// parameters:
+//   frameID
+func GetPermissionsPolicyState(frameID cdp.FrameID) *GetPermissionsPolicyStateParams {
+	return &GetPermissionsPolicyStateParams{
+		FrameID: frameID,
+	}
+}
+
+// GetPermissionsPolicyStateReturns return values.
+type GetPermissionsPolicyStateReturns struct {
+	States []*PermissionsPolicyFeatureState `json:"states,omitempty"`
+}
+
+// Do executes Page.getPermissionsPolicyState against the provided context.
+//
+// returns:
+//   states
+func (p *GetPermissionsPolicyStateParams) Do(ctx context.Context) (states []*PermissionsPolicyFeatureState, err error) {
+	// execute
+	var res GetPermissionsPolicyStateReturns
+	err = cdp.Execute(ctx, CommandGetPermissionsPolicyState, p, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.States, nil
+}
+
+// GetOriginTrialsParams get Origin Trials on given frame.
+type GetOriginTrialsParams struct {
+	FrameID cdp.FrameID `json:"frameId"`
+}
+
+// GetOriginTrials get Origin Trials on given frame.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#method-getOriginTrials
+//
+// parameters:
+//   frameID
+func GetOriginTrials(frameID cdp.FrameID) *GetOriginTrialsParams {
+	return &GetOriginTrialsParams{
+		FrameID: frameID,
+	}
+}
+
+// GetOriginTrialsReturns return values.
+type GetOriginTrialsReturns struct {
+	OriginTrials []*cdp.OriginTrial `json:"originTrials,omitempty"`
+}
+
+// Do executes Page.getOriginTrials against the provided context.
+//
+// returns:
+//   originTrials
+func (p *GetOriginTrialsParams) Do(ctx context.Context) (originTrials []*cdp.OriginTrial, err error) {
+	// execute
+	var res GetOriginTrialsReturns
+	err = cdp.Execute(ctx, CommandGetOriginTrials, p, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.OriginTrials, nil
+}
+
 // SetFontFamiliesParams set generic font families.
 type SetFontFamiliesParams struct {
 	FontFamilies *FontFamilies `json:"fontFamilies"` // Specifies font families to set. If a font family is not specified, it won't be changed.
@@ -1306,13 +1410,13 @@ func (p *StopScreencastParams) Do(ctx context.Context) (err error) {
 }
 
 // SetProduceCompilationCacheParams forces compilation cache to be generated
-// for every subresource script.
+// for every subresource script. See also: Page.produceCompilationCache.
 type SetProduceCompilationCacheParams struct {
 	Enabled bool `json:"enabled"`
 }
 
 // SetProduceCompilationCache forces compilation cache to be generated for
-// every subresource script.
+// every subresource script. See also: Page.produceCompilationCache.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Page#method-setProduceCompilationCache
 //
@@ -1327,6 +1431,44 @@ func SetProduceCompilationCache(enabled bool) *SetProduceCompilationCacheParams 
 // Do executes Page.setProduceCompilationCache against the provided context.
 func (p *SetProduceCompilationCacheParams) Do(ctx context.Context) (err error) {
 	return cdp.Execute(ctx, CommandSetProduceCompilationCache, p, nil)
+}
+
+// ProduceCompilationCacheParams requests backend to produce compilation
+// cache for the specified scripts. Unlike setProduceCompilationCache, this
+// allows client to only produce cache for specific scripts. scripts are
+// appeneded to the list of scripts for which the cache for would produced.
+// Disabling compilation cache with setProduceCompilationCache would reset all
+// pending cache requests. The list may also be reset during page navigation.
+// When script with a matching URL is encountered, the cache is optionally
+// produced upon backend discretion, based on internal heuristics. See also:
+// Page.compilationCacheProduced.
+type ProduceCompilationCacheParams struct {
+	Scripts []*CompilationCacheParams `json:"scripts"`
+}
+
+// ProduceCompilationCache requests backend to produce compilation cache for
+// the specified scripts. Unlike setProduceCompilationCache, this allows client
+// to only produce cache for specific scripts. scripts are appeneded to the list
+// of scripts for which the cache for would produced. Disabling compilation
+// cache with setProduceCompilationCache would reset all pending cache requests.
+// The list may also be reset during page navigation. When script with a
+// matching URL is encountered, the cache is optionally produced upon backend
+// discretion, based on internal heuristics. See also:
+// Page.compilationCacheProduced.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#method-produceCompilationCache
+//
+// parameters:
+//   scripts
+func ProduceCompilationCache(scripts []*CompilationCacheParams) *ProduceCompilationCacheParams {
+	return &ProduceCompilationCacheParams{
+		Scripts: scripts,
+	}
+}
+
+// Do executes Page.produceCompilationCache against the provided context.
+func (p *ProduceCompilationCacheParams) Do(ctx context.Context) (err error) {
+	return cdp.Execute(ctx, CommandProduceCompilationCache, p, nil)
 }
 
 // AddCompilationCacheParams seeds compilation cache for given url.
@@ -1473,6 +1615,8 @@ const (
 	CommandSearchInResource                    = "Page.searchInResource"
 	CommandSetAdBlockingEnabled                = "Page.setAdBlockingEnabled"
 	CommandSetBypassCSP                        = "Page.setBypassCSP"
+	CommandGetPermissionsPolicyState           = "Page.getPermissionsPolicyState"
+	CommandGetOriginTrials                     = "Page.getOriginTrials"
 	CommandSetFontFamilies                     = "Page.setFontFamilies"
 	CommandSetFontSizes                        = "Page.setFontSizes"
 	CommandSetDocumentContent                  = "Page.setDocumentContent"
@@ -1485,6 +1629,7 @@ const (
 	CommandSetWebLifecycleState                = "Page.setWebLifecycleState"
 	CommandStopScreencast                      = "Page.stopScreencast"
 	CommandSetProduceCompilationCache          = "Page.setProduceCompilationCache"
+	CommandProduceCompilationCache             = "Page.produceCompilationCache"
 	CommandAddCompilationCache                 = "Page.addCompilationCache"
 	CommandClearCompilationCache               = "Page.clearCompilationCache"
 	CommandGenerateTestReport                  = "Page.generateTestReport"

@@ -86,6 +86,7 @@ type CallFunctionOnParams struct {
 	AwaitPromise        bool               `json:"awaitPromise,omitempty"`       // Whether execution should await for resulting value and return once awaited promise is resolved.
 	ExecutionContextID  ExecutionContextID `json:"executionContextId,omitempty"` // Specifies execution context which global object will be used to call function on. Either executionContextId or objectId should be specified.
 	ObjectGroup         string             `json:"objectGroup,omitempty"`        // Symbolic group name that can be used to release multiple objects. If objectGroup is not specified and objectId is, objectGroup will be inherited from object.
+	ThrowOnSideEffect   bool               `json:"throwOnSideEffect,omitempty"`  // Whether to throw an exception if side effect cannot be ruled out during evaluation.
 }
 
 // CallFunctionOn calls function with given declaration on the given object.
@@ -162,6 +163,13 @@ func (p CallFunctionOnParams) WithExecutionContextID(executionContextID Executio
 // inherited from object.
 func (p CallFunctionOnParams) WithObjectGroup(objectGroup string) *CallFunctionOnParams {
 	p.ObjectGroup = objectGroup
+	return &p
+}
+
+// WithThrowOnSideEffect whether to throw an exception if side effect cannot
+// be ruled out during evaluation.
+func (p CallFunctionOnParams) WithThrowOnSideEffect(throwOnSideEffect bool) *CallFunctionOnParams {
+	p.ThrowOnSideEffect = throwOnSideEffect
 	return &p
 }
 
@@ -293,19 +301,21 @@ func (p *EnableParams) Do(ctx context.Context) (err error) {
 
 // EvaluateParams evaluates expression on global object.
 type EvaluateParams struct {
-	Expression            string             `json:"expression"`                      // Expression to evaluate.
-	ObjectGroup           string             `json:"objectGroup,omitempty"`           // Symbolic group name that can be used to release multiple objects.
-	IncludeCommandLineAPI bool               `json:"includeCommandLineAPI,omitempty"` // Determines whether Command Line API should be available during the evaluation.
-	Silent                bool               `json:"silent,omitempty"`                // In silent mode exceptions thrown during evaluation are not reported and do not pause execution. Overrides setPauseOnException state.
-	ContextID             ExecutionContextID `json:"contextId,omitempty"`             // Specifies in which execution context to perform evaluation. If the parameter is omitted the evaluation will be performed in the context of the inspected page.
-	ReturnByValue         bool               `json:"returnByValue,omitempty"`         // Whether the result is expected to be a JSON object that should be sent by value.
-	GeneratePreview       bool               `json:"generatePreview,omitempty"`       // Whether preview should be generated for the result.
-	UserGesture           bool               `json:"userGesture,omitempty"`           // Whether execution should be treated as initiated by user in the UI.
-	AwaitPromise          bool               `json:"awaitPromise,omitempty"`          // Whether execution should await for resulting value and return once awaited promise is resolved.
-	ThrowOnSideEffect     bool               `json:"throwOnSideEffect,omitempty"`     // Whether to throw an exception if side effect cannot be ruled out during evaluation. This implies disableBreaks below.
-	Timeout               TimeDelta          `json:"timeout,omitempty"`               // Terminate execution after timing out (number of milliseconds).
-	DisableBreaks         bool               `json:"disableBreaks,omitempty"`         // Disable breakpoints during execution.
-	ReplMode              bool               `json:"replMode,omitempty"`              // Reserved flag for future REPL mode support. Setting this flag has currently no effect.
+	Expression                  string             `json:"expression"`                            // Expression to evaluate.
+	ObjectGroup                 string             `json:"objectGroup,omitempty"`                 // Symbolic group name that can be used to release multiple objects.
+	IncludeCommandLineAPI       bool               `json:"includeCommandLineAPI,omitempty"`       // Determines whether Command Line API should be available during the evaluation.
+	Silent                      bool               `json:"silent,omitempty"`                      // In silent mode exceptions thrown during evaluation are not reported and do not pause execution. Overrides setPauseOnException state.
+	ContextID                   ExecutionContextID `json:"contextId,omitempty"`                   // Specifies in which execution context to perform evaluation. If the parameter is omitted the evaluation will be performed in the context of the inspected page. This is mutually exclusive with uniqueContextId, which offers an alternative way to identify the execution context that is more reliable in a multi-process environment.
+	ReturnByValue               bool               `json:"returnByValue,omitempty"`               // Whether the result is expected to be a JSON object that should be sent by value.
+	GeneratePreview             bool               `json:"generatePreview,omitempty"`             // Whether preview should be generated for the result.
+	UserGesture                 bool               `json:"userGesture,omitempty"`                 // Whether execution should be treated as initiated by user in the UI.
+	AwaitPromise                bool               `json:"awaitPromise,omitempty"`                // Whether execution should await for resulting value and return once awaited promise is resolved.
+	ThrowOnSideEffect           bool               `json:"throwOnSideEffect,omitempty"`           // Whether to throw an exception if side effect cannot be ruled out during evaluation. This implies disableBreaks below.
+	Timeout                     TimeDelta          `json:"timeout,omitempty"`                     // Terminate execution after timing out (number of milliseconds).
+	DisableBreaks               bool               `json:"disableBreaks,omitempty"`               // Disable breakpoints during execution.
+	ReplMode                    bool               `json:"replMode,omitempty"`                    // Setting this flag to true enables let re-declaration and top-level await. Note that let variables can only be re-declared if they originate from replMode themselves.
+	AllowUnsafeEvalBlockedByCSP bool               `json:"allowUnsafeEvalBlockedByCSP,omitempty"` // The Content Security Policy (CSP) for the target might block 'unsafe-eval' which includes eval(), Function(), setTimeout() and setInterval() when called with non-callable arguments. This flag bypasses CSP for this evaluation and allows unsafe-eval. Defaults to true.
+	UniqueContextID             string             `json:"uniqueContextId,omitempty"`             // An alternative way to specify the execution context to evaluate in. Compared to contextId that may be reused across processes, this is guaranteed to be system-unique, so it can be used to prevent accidental evaluation of the expression in context different than intended (e.g. as a result of navigation across process boundaries). This is mutually exclusive with contextId.
 }
 
 // Evaluate evaluates expression on global object.
@@ -343,7 +353,9 @@ func (p EvaluateParams) WithSilent(silent bool) *EvaluateParams {
 
 // WithContextID specifies in which execution context to perform evaluation.
 // If the parameter is omitted the evaluation will be performed in the context
-// of the inspected page.
+// of the inspected page. This is mutually exclusive with uniqueContextId, which
+// offers an alternative way to identify the execution context that is more
+// reliable in a multi-process environment.
 func (p EvaluateParams) WithContextID(contextID ExecutionContextID) *EvaluateParams {
 	p.ContextID = contextID
 	return &p
@@ -395,10 +407,32 @@ func (p EvaluateParams) WithDisableBreaks(disableBreaks bool) *EvaluateParams {
 	return &p
 }
 
-// WithReplMode reserved flag for future REPL mode support. Setting this flag
-// has currently no effect.
+// WithReplMode setting this flag to true enables let re-declaration and
+// top-level await. Note that let variables can only be re-declared if they
+// originate from replMode themselves.
 func (p EvaluateParams) WithReplMode(replMode bool) *EvaluateParams {
 	p.ReplMode = replMode
+	return &p
+}
+
+// WithAllowUnsafeEvalBlockedByCSP the Content Security Policy (CSP) for the
+// target might block 'unsafe-eval' which includes eval(), Function(),
+// setTimeout() and setInterval() when called with non-callable arguments. This
+// flag bypasses CSP for this evaluation and allows unsafe-eval. Defaults to
+// true.
+func (p EvaluateParams) WithAllowUnsafeEvalBlockedByCSP(allowUnsafeEvalBlockedByCSP bool) *EvaluateParams {
+	p.AllowUnsafeEvalBlockedByCSP = allowUnsafeEvalBlockedByCSP
+	return &p
+}
+
+// WithUniqueContextID an alternative way to specify the execution context to
+// evaluate in. Compared to contextId that may be reused across processes, this
+// is guaranteed to be system-unique, so it can be used to prevent accidental
+// evaluation of the expression in context different than intended (e.g. as a
+// result of navigation across process boundaries). This is mutually exclusive
+// with contextId.
+func (p EvaluateParams) WithUniqueContextID(uniqueContextID string) *EvaluateParams {
+	p.UniqueContextID = uniqueContextID
 	return &p
 }
 
@@ -491,10 +525,11 @@ func (p *GetHeapUsageParams) Do(ctx context.Context) (usedSize float64, totalSiz
 // GetPropertiesParams returns properties of a given object. Object group of
 // the result is inherited from the target object.
 type GetPropertiesParams struct {
-	ObjectID               RemoteObjectID `json:"objectId"`                         // Identifier of the object to return properties for.
-	OwnProperties          bool           `json:"ownProperties,omitempty"`          // If true, returns properties belonging only to the element itself, not to its prototype chain.
-	AccessorPropertiesOnly bool           `json:"accessorPropertiesOnly,omitempty"` // If true, returns accessor properties (with getter/setter) only; internal properties are not returned either.
-	GeneratePreview        bool           `json:"generatePreview,omitempty"`        // Whether preview should be generated for the results.
+	ObjectID                 RemoteObjectID `json:"objectId"`                           // Identifier of the object to return properties for.
+	OwnProperties            bool           `json:"ownProperties,omitempty"`            // If true, returns properties belonging only to the element itself, not to its prototype chain.
+	AccessorPropertiesOnly   bool           `json:"accessorPropertiesOnly,omitempty"`   // If true, returns accessor properties (with getter/setter) only; internal properties are not returned either.
+	GeneratePreview          bool           `json:"generatePreview,omitempty"`          // Whether preview should be generated for the results.
+	NonIndexedPropertiesOnly bool           `json:"nonIndexedPropertiesOnly,omitempty"` // If true, returns non-indexed properties only.
 }
 
 // GetProperties returns properties of a given object. Object group of the
@@ -527,6 +562,12 @@ func (p GetPropertiesParams) WithAccessorPropertiesOnly(accessorPropertiesOnly b
 // WithGeneratePreview whether preview should be generated for the results.
 func (p GetPropertiesParams) WithGeneratePreview(generatePreview bool) *GetPropertiesParams {
 	p.GeneratePreview = generatePreview
+	return &p
+}
+
+// WithNonIndexedPropertiesOnly if true, returns non-indexed properties only.
+func (p GetPropertiesParams) WithNonIndexedPropertiesOnly(nonIndexedPropertiesOnly bool) *GetPropertiesParams {
+	p.NonIndexedPropertiesOnly = nonIndexedPropertiesOnly
 	return &p
 }
 
@@ -865,23 +906,21 @@ func (p *TerminateExecutionParams) Do(ctx context.Context) (err error) {
 
 // AddBindingParams if executionContextId is empty, adds binding with the
 // given name on the global objects of all inspected contexts, including those
-// created later, bindings survive reloads. If executionContextId is specified,
-// adds binding only on global object of given execution context. Binding
-// function takes exactly one argument, this argument should be string, in case
-// of any other input, function throws an exception. Each binding function call
-// produces Runtime.bindingCalled notification.
+// created later, bindings survive reloads. Binding function takes exactly one
+// argument, this argument should be string, in case of any other input,
+// function throws an exception. Each binding function call produces
+// Runtime.bindingCalled notification.
 type AddBindingParams struct {
-	Name               string             `json:"name"`
-	ExecutionContextID ExecutionContextID `json:"executionContextId,omitempty"`
+	Name                 string `json:"name"`
+	ExecutionContextName string `json:"executionContextName,omitempty"` // If specified, the binding is exposed to the executionContext with matching name, even for contexts created after the binding is added. See also ExecutionContext.name and worldName parameter to Page.addScriptToEvaluateOnNewDocument. This parameter is mutually exclusive with executionContextId.
 }
 
 // AddBinding if executionContextId is empty, adds binding with the given
 // name on the global objects of all inspected contexts, including those created
-// later, bindings survive reloads. If executionContextId is specified, adds
-// binding only on global object of given execution context. Binding function
-// takes exactly one argument, this argument should be string, in case of any
-// other input, function throws an exception. Each binding function call
-// produces Runtime.bindingCalled notification.
+// later, bindings survive reloads. Binding function takes exactly one argument,
+// this argument should be string, in case of any other input, function throws
+// an exception. Each binding function call produces Runtime.bindingCalled
+// notification.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Runtime#method-addBinding
 //
@@ -893,9 +932,13 @@ func AddBinding(name string) *AddBindingParams {
 	}
 }
 
-// WithExecutionContextID [no description].
-func (p AddBindingParams) WithExecutionContextID(executionContextID ExecutionContextID) *AddBindingParams {
-	p.ExecutionContextID = executionContextID
+// WithExecutionContextName if specified, the binding is exposed to the
+// executionContext with matching name, even for contexts created after the
+// binding is added. See also ExecutionContext.name and worldName parameter to
+// Page.addScriptToEvaluateOnNewDocument. This parameter is mutually exclusive
+// with executionContextId.
+func (p AddBindingParams) WithExecutionContextName(executionContextName string) *AddBindingParams {
+	p.ExecutionContextName = executionContextName
 	return &p
 }
 

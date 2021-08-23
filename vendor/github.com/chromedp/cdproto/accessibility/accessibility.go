@@ -114,14 +114,34 @@ func (p *GetPartialAXTreeParams) Do(ctx context.Context) (nodes []*Node, err err
 	return res.Nodes, nil
 }
 
-// GetFullAXTreeParams fetches the entire accessibility tree.
-type GetFullAXTreeParams struct{}
+// GetFullAXTreeParams fetches the entire accessibility tree for the root
+// Document.
+type GetFullAXTreeParams struct {
+	Depth   int64       `json:"depth,omitempty"`   // The maximum depth at which descendants of the root node should be retrieved. If omitted, the full tree is returned.
+	FrameID cdp.FrameID `json:"frameId,omitempty"` // The frame for whose document the AX tree should be retrieved. If omitted, the root frame is used.
+}
 
-// GetFullAXTree fetches the entire accessibility tree.
+// GetFullAXTree fetches the entire accessibility tree for the root Document.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Accessibility#method-getFullAXTree
+//
+// parameters:
 func GetFullAXTree() *GetFullAXTreeParams {
 	return &GetFullAXTreeParams{}
+}
+
+// WithDepth the maximum depth at which descendants of the root node should
+// be retrieved. If omitted, the full tree is returned.
+func (p GetFullAXTreeParams) WithDepth(depth int64) *GetFullAXTreeParams {
+	p.Depth = depth
+	return &p
+}
+
+// WithFrameID the frame for whose document the AX tree should be retrieved.
+// If omitted, the root frame is used.
+func (p GetFullAXTreeParams) WithFrameID(frameID cdp.FrameID) *GetFullAXTreeParams {
+	p.FrameID = frameID
+	return &p
 }
 
 // GetFullAXTreeReturns return values.
@@ -136,7 +156,135 @@ type GetFullAXTreeReturns struct {
 func (p *GetFullAXTreeParams) Do(ctx context.Context) (nodes []*Node, err error) {
 	// execute
 	var res GetFullAXTreeReturns
-	err = cdp.Execute(ctx, CommandGetFullAXTree, nil, &res)
+	err = cdp.Execute(ctx, CommandGetFullAXTree, p, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Nodes, nil
+}
+
+// GetChildAXNodesParams fetches a particular accessibility node by AXNodeId.
+// Requires enable() to have been called previously.
+type GetChildAXNodesParams struct {
+	ID      NodeID      `json:"id"`
+	FrameID cdp.FrameID `json:"frameId,omitempty"` // The frame in whose document the node resides. If omitted, the root frame is used.
+}
+
+// GetChildAXNodes fetches a particular accessibility node by AXNodeId.
+// Requires enable() to have been called previously.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Accessibility#method-getChildAXNodes
+//
+// parameters:
+//   id
+func GetChildAXNodes(id NodeID) *GetChildAXNodesParams {
+	return &GetChildAXNodesParams{
+		ID: id,
+	}
+}
+
+// WithFrameID the frame in whose document the node resides. If omitted, the
+// root frame is used.
+func (p GetChildAXNodesParams) WithFrameID(frameID cdp.FrameID) *GetChildAXNodesParams {
+	p.FrameID = frameID
+	return &p
+}
+
+// GetChildAXNodesReturns return values.
+type GetChildAXNodesReturns struct {
+	Nodes []*Node `json:"nodes,omitempty"`
+}
+
+// Do executes Accessibility.getChildAXNodes against the provided context.
+//
+// returns:
+//   nodes
+func (p *GetChildAXNodesParams) Do(ctx context.Context) (nodes []*Node, err error) {
+	// execute
+	var res GetChildAXNodesReturns
+	err = cdp.Execute(ctx, CommandGetChildAXNodes, p, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Nodes, nil
+}
+
+// QueryAXTreeParams query a DOM node's accessibility subtree for accessible
+// name and role. This command computes the name and role for all nodes in the
+// subtree, including those that are ignored for accessibility, and returns
+// those that mactch the specified name and role. If no DOM node is specified,
+// or the DOM node does not exist, the command returns an error. If neither
+// accessibleName or role is specified, it returns all the accessibility nodes
+// in the subtree.
+type QueryAXTreeParams struct {
+	NodeID         cdp.NodeID             `json:"nodeId,omitempty"`         // Identifier of the node for the root to query.
+	BackendNodeID  cdp.BackendNodeID      `json:"backendNodeId,omitempty"`  // Identifier of the backend node for the root to query.
+	ObjectID       runtime.RemoteObjectID `json:"objectId,omitempty"`       // JavaScript object id of the node wrapper for the root to query.
+	AccessibleName string                 `json:"accessibleName,omitempty"` // Find nodes with this computed name.
+	Role           string                 `json:"role,omitempty"`           // Find nodes with this computed role.
+}
+
+// QueryAXTree query a DOM node's accessibility subtree for accessible name
+// and role. This command computes the name and role for all nodes in the
+// subtree, including those that are ignored for accessibility, and returns
+// those that mactch the specified name and role. If no DOM node is specified,
+// or the DOM node does not exist, the command returns an error. If neither
+// accessibleName or role is specified, it returns all the accessibility nodes
+// in the subtree.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Accessibility#method-queryAXTree
+//
+// parameters:
+func QueryAXTree() *QueryAXTreeParams {
+	return &QueryAXTreeParams{}
+}
+
+// WithNodeID identifier of the node for the root to query.
+func (p QueryAXTreeParams) WithNodeID(nodeID cdp.NodeID) *QueryAXTreeParams {
+	p.NodeID = nodeID
+	return &p
+}
+
+// WithBackendNodeID identifier of the backend node for the root to query.
+func (p QueryAXTreeParams) WithBackendNodeID(backendNodeID cdp.BackendNodeID) *QueryAXTreeParams {
+	p.BackendNodeID = backendNodeID
+	return &p
+}
+
+// WithObjectID JavaScript object id of the node wrapper for the root to
+// query.
+func (p QueryAXTreeParams) WithObjectID(objectID runtime.RemoteObjectID) *QueryAXTreeParams {
+	p.ObjectID = objectID
+	return &p
+}
+
+// WithAccessibleName find nodes with this computed name.
+func (p QueryAXTreeParams) WithAccessibleName(accessibleName string) *QueryAXTreeParams {
+	p.AccessibleName = accessibleName
+	return &p
+}
+
+// WithRole find nodes with this computed role.
+func (p QueryAXTreeParams) WithRole(role string) *QueryAXTreeParams {
+	p.Role = role
+	return &p
+}
+
+// QueryAXTreeReturns return values.
+type QueryAXTreeReturns struct {
+	Nodes []*Node `json:"nodes,omitempty"` // A list of Accessibility.AXNode matching the specified attributes, including nodes that are ignored for accessibility.
+}
+
+// Do executes Accessibility.queryAXTree against the provided context.
+//
+// returns:
+//   nodes - A list of Accessibility.AXNode matching the specified attributes, including nodes that are ignored for accessibility.
+func (p *QueryAXTreeParams) Do(ctx context.Context) (nodes []*Node, err error) {
+	// execute
+	var res QueryAXTreeReturns
+	err = cdp.Execute(ctx, CommandQueryAXTree, p, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -150,4 +298,6 @@ const (
 	CommandEnable           = "Accessibility.enable"
 	CommandGetPartialAXTree = "Accessibility.getPartialAXTree"
 	CommandGetFullAXTree    = "Accessibility.getFullAXTree"
+	CommandGetChildAXNodes  = "Accessibility.getChildAXNodes"
+	CommandQueryAXTree      = "Accessibility.queryAXTree"
 )

@@ -378,60 +378,33 @@ func (p *RemoveBreakpointParams) Do(ctx context.Context) (err error) {
 	return cdp.Execute(ctx, CommandRemoveBreakpoint, p, nil)
 }
 
-// RestartFrameParams restarts particular call frame from the beginning.
-type RestartFrameParams struct {
-	CallFrameID CallFrameID `json:"callFrameId"` // Call frame identifier to evaluate on.
-}
-
-// RestartFrame restarts particular call frame from the beginning.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#method-restartFrame
-//
-// parameters:
-//   callFrameID - Call frame identifier to evaluate on.
-func RestartFrame(callFrameID CallFrameID) *RestartFrameParams {
-	return &RestartFrameParams{
-		CallFrameID: callFrameID,
-	}
-}
-
-// RestartFrameReturns return values.
-type RestartFrameReturns struct {
-	CallFrames        []*CallFrame          `json:"callFrames,omitempty"`        // New stack trace.
-	AsyncStackTrace   *runtime.StackTrace   `json:"asyncStackTrace,omitempty"`   // Async stack trace, if any.
-	AsyncStackTraceID *runtime.StackTraceID `json:"asyncStackTraceId,omitempty"` // Async stack trace, if any.
-}
-
-// Do executes Debugger.restartFrame against the provided context.
-//
-// returns:
-//   callFrames - New stack trace.
-//   asyncStackTrace - Async stack trace, if any.
-//   asyncStackTraceID - Async stack trace, if any.
-func (p *RestartFrameParams) Do(ctx context.Context) (callFrames []*CallFrame, asyncStackTrace *runtime.StackTrace, asyncStackTraceID *runtime.StackTraceID, err error) {
-	// execute
-	var res RestartFrameReturns
-	err = cdp.Execute(ctx, CommandRestartFrame, p, &res)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	return res.CallFrames, res.AsyncStackTrace, res.AsyncStackTraceID, nil
-}
-
 // ResumeParams resumes JavaScript execution.
-type ResumeParams struct{}
+type ResumeParams struct {
+	TerminateOnResume bool `json:"terminateOnResume,omitempty"` // Set to true to terminate execution upon resuming execution. In contrast to Runtime.terminateExecution, this will allows to execute further JavaScript (i.e. via evaluation) until execution of the paused code is actually resumed, at which point termination is triggered. If execution is currently not paused, this parameter has no effect.
+}
 
 // Resume resumes JavaScript execution.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#method-resume
+//
+// parameters:
 func Resume() *ResumeParams {
 	return &ResumeParams{}
 }
 
+// WithTerminateOnResume set to true to terminate execution upon resuming
+// execution. In contrast to Runtime.terminateExecution, this will allows to
+// execute further JavaScript (i.e. via evaluation) until execution of the
+// paused code is actually resumed, at which point termination is triggered. If
+// execution is currently not paused, this parameter has no effect.
+func (p ResumeParams) WithTerminateOnResume(terminateOnResume bool) *ResumeParams {
+	p.TerminateOnResume = terminateOnResume
+	return &p
+}
+
 // Do executes Debugger.resume against the provided context.
 func (p *ResumeParams) Do(ctx context.Context) (err error) {
-	return cdp.Execute(ctx, CommandResume, nil, nil)
+	return cdp.Execute(ctx, CommandResume, p, nil)
 }
 
 // SearchInContentParams searches for given string in script content.
@@ -980,7 +953,8 @@ func (p *SetVariableValueParams) Do(ctx context.Context) (err error) {
 
 // StepIntoParams steps into the function call.
 type StepIntoParams struct {
-	BreakOnAsyncCall bool `json:"breakOnAsyncCall,omitempty"` // Debugger will pause on the execution of the first async task which was scheduled before next pause.
+	BreakOnAsyncCall bool             `json:"breakOnAsyncCall,omitempty"` // Debugger will pause on the execution of the first async task which was scheduled before next pause.
+	SkipList         []*LocationRange `json:"skipList,omitempty"`         // The skipList specifies location ranges that should be skipped on step into.
 }
 
 // StepInto steps into the function call.
@@ -996,6 +970,13 @@ func StepInto() *StepIntoParams {
 // async task which was scheduled before next pause.
 func (p StepIntoParams) WithBreakOnAsyncCall(breakOnAsyncCall bool) *StepIntoParams {
 	p.BreakOnAsyncCall = breakOnAsyncCall
+	return &p
+}
+
+// WithSkipList the skipList specifies location ranges that should be skipped
+// on step into.
+func (p StepIntoParams) WithSkipList(skipList []*LocationRange) *StepIntoParams {
+	p.SkipList = skipList
 	return &p
 }
 
@@ -1020,18 +1001,29 @@ func (p *StepOutParams) Do(ctx context.Context) (err error) {
 }
 
 // StepOverParams steps over the statement.
-type StepOverParams struct{}
+type StepOverParams struct {
+	SkipList []*LocationRange `json:"skipList,omitempty"` // The skipList specifies location ranges that should be skipped on step over.
+}
 
 // StepOver steps over the statement.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#method-stepOver
+//
+// parameters:
 func StepOver() *StepOverParams {
 	return &StepOverParams{}
 }
 
+// WithSkipList the skipList specifies location ranges that should be skipped
+// on step over.
+func (p StepOverParams) WithSkipList(skipList []*LocationRange) *StepOverParams {
+	p.SkipList = skipList
+	return &p
+}
+
 // Do executes Debugger.stepOver against the provided context.
 func (p *StepOverParams) Do(ctx context.Context) (err error) {
-	return cdp.Execute(ctx, CommandStepOver, nil, nil)
+	return cdp.Execute(ctx, CommandStepOver, p, nil)
 }
 
 // Command names.
@@ -1045,7 +1037,6 @@ const (
 	CommandGetStackTrace                = "Debugger.getStackTrace"
 	CommandPause                        = "Debugger.pause"
 	CommandRemoveBreakpoint             = "Debugger.removeBreakpoint"
-	CommandRestartFrame                 = "Debugger.restartFrame"
 	CommandResume                       = "Debugger.resume"
 	CommandSearchInContent              = "Debugger.searchInContent"
 	CommandSetAsyncCallStackDepth       = "Debugger.setAsyncCallStackDepth"

@@ -12,6 +12,288 @@ import (
 	"github.com/mailru/easyjson/jwriter"
 )
 
+// PermissionsPolicyFeature all Permissions Policy features. This enum should
+// match the one defined in
+// third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-PermissionsPolicyFeature
+type PermissionsPolicyFeature string
+
+// String returns the PermissionsPolicyFeature as string value.
+func (t PermissionsPolicyFeature) String() string {
+	return string(t)
+}
+
+// PermissionsPolicyFeature values.
+const (
+	PermissionsPolicyFeatureAccelerometer               PermissionsPolicyFeature = "accelerometer"
+	PermissionsPolicyFeatureAmbientLightSensor          PermissionsPolicyFeature = "ambient-light-sensor"
+	PermissionsPolicyFeatureAttributionReporting        PermissionsPolicyFeature = "attribution-reporting"
+	PermissionsPolicyFeatureAutoplay                    PermissionsPolicyFeature = "autoplay"
+	PermissionsPolicyFeatureCamera                      PermissionsPolicyFeature = "camera"
+	PermissionsPolicyFeatureChDpr                       PermissionsPolicyFeature = "ch-dpr"
+	PermissionsPolicyFeatureChDeviceMemory              PermissionsPolicyFeature = "ch-device-memory"
+	PermissionsPolicyFeatureChDownlink                  PermissionsPolicyFeature = "ch-downlink"
+	PermissionsPolicyFeatureChEct                       PermissionsPolicyFeature = "ch-ect"
+	PermissionsPolicyFeatureChLang                      PermissionsPolicyFeature = "ch-lang"
+	PermissionsPolicyFeatureChPrefersColorScheme        PermissionsPolicyFeature = "ch-prefers-color-scheme"
+	PermissionsPolicyFeatureChRtt                       PermissionsPolicyFeature = "ch-rtt"
+	PermissionsPolicyFeatureChUa                        PermissionsPolicyFeature = "ch-ua"
+	PermissionsPolicyFeatureChUaArch                    PermissionsPolicyFeature = "ch-ua-arch"
+	PermissionsPolicyFeatureChUaBitness                 PermissionsPolicyFeature = "ch-ua-bitness"
+	PermissionsPolicyFeatureChUaPlatform                PermissionsPolicyFeature = "ch-ua-platform"
+	PermissionsPolicyFeatureChUaModel                   PermissionsPolicyFeature = "ch-ua-model"
+	PermissionsPolicyFeatureChUaMobile                  PermissionsPolicyFeature = "ch-ua-mobile"
+	PermissionsPolicyFeatureChUaFullVersion             PermissionsPolicyFeature = "ch-ua-full-version"
+	PermissionsPolicyFeatureChUaPlatformVersion         PermissionsPolicyFeature = "ch-ua-platform-version"
+	PermissionsPolicyFeatureChUaReduced                 PermissionsPolicyFeature = "ch-ua-reduced"
+	PermissionsPolicyFeatureChViewportHeight            PermissionsPolicyFeature = "ch-viewport-height"
+	PermissionsPolicyFeatureChViewportWidth             PermissionsPolicyFeature = "ch-viewport-width"
+	PermissionsPolicyFeatureChWidth                     PermissionsPolicyFeature = "ch-width"
+	PermissionsPolicyFeatureClipboardRead               PermissionsPolicyFeature = "clipboard-read"
+	PermissionsPolicyFeatureClipboardWrite              PermissionsPolicyFeature = "clipboard-write"
+	PermissionsPolicyFeatureCrossOriginIsolated         PermissionsPolicyFeature = "cross-origin-isolated"
+	PermissionsPolicyFeatureDirectSockets               PermissionsPolicyFeature = "direct-sockets"
+	PermissionsPolicyFeatureDisplayCapture              PermissionsPolicyFeature = "display-capture"
+	PermissionsPolicyFeatureDocumentDomain              PermissionsPolicyFeature = "document-domain"
+	PermissionsPolicyFeatureEncryptedMedia              PermissionsPolicyFeature = "encrypted-media"
+	PermissionsPolicyFeatureExecutionWhileOutOfViewport PermissionsPolicyFeature = "execution-while-out-of-viewport"
+	PermissionsPolicyFeatureExecutionWhileNotRendered   PermissionsPolicyFeature = "execution-while-not-rendered"
+	PermissionsPolicyFeatureFocusWithoutUserActivation  PermissionsPolicyFeature = "focus-without-user-activation"
+	PermissionsPolicyFeatureFullscreen                  PermissionsPolicyFeature = "fullscreen"
+	PermissionsPolicyFeatureFrobulate                   PermissionsPolicyFeature = "frobulate"
+	PermissionsPolicyFeatureGamepad                     PermissionsPolicyFeature = "gamepad"
+	PermissionsPolicyFeatureGeolocation                 PermissionsPolicyFeature = "geolocation"
+	PermissionsPolicyFeatureGyroscope                   PermissionsPolicyFeature = "gyroscope"
+	PermissionsPolicyFeatureHid                         PermissionsPolicyFeature = "hid"
+	PermissionsPolicyFeatureIdleDetection               PermissionsPolicyFeature = "idle-detection"
+	PermissionsPolicyFeatureInterestCohort              PermissionsPolicyFeature = "interest-cohort"
+	PermissionsPolicyFeatureMagnetometer                PermissionsPolicyFeature = "magnetometer"
+	PermissionsPolicyFeatureMicrophone                  PermissionsPolicyFeature = "microphone"
+	PermissionsPolicyFeatureMidi                        PermissionsPolicyFeature = "midi"
+	PermissionsPolicyFeatureOtpCredentials              PermissionsPolicyFeature = "otp-credentials"
+	PermissionsPolicyFeaturePayment                     PermissionsPolicyFeature = "payment"
+	PermissionsPolicyFeaturePictureInPicture            PermissionsPolicyFeature = "picture-in-picture"
+	PermissionsPolicyFeaturePublickeyCredentialsGet     PermissionsPolicyFeature = "publickey-credentials-get"
+	PermissionsPolicyFeatureScreenWakeLock              PermissionsPolicyFeature = "screen-wake-lock"
+	PermissionsPolicyFeatureSerial                      PermissionsPolicyFeature = "serial"
+	PermissionsPolicyFeatureSharedAutofill              PermissionsPolicyFeature = "shared-autofill"
+	PermissionsPolicyFeatureStorageAccessAPI            PermissionsPolicyFeature = "storage-access-api"
+	PermissionsPolicyFeatureSyncXhr                     PermissionsPolicyFeature = "sync-xhr"
+	PermissionsPolicyFeatureTrustTokenRedemption        PermissionsPolicyFeature = "trust-token-redemption"
+	PermissionsPolicyFeatureUsb                         PermissionsPolicyFeature = "usb"
+	PermissionsPolicyFeatureVerticalScroll              PermissionsPolicyFeature = "vertical-scroll"
+	PermissionsPolicyFeatureWebShare                    PermissionsPolicyFeature = "web-share"
+	PermissionsPolicyFeatureWindowPlacement             PermissionsPolicyFeature = "window-placement"
+	PermissionsPolicyFeatureXrSpatialTracking           PermissionsPolicyFeature = "xr-spatial-tracking"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t PermissionsPolicyFeature) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t PermissionsPolicyFeature) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *PermissionsPolicyFeature) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch PermissionsPolicyFeature(in.String()) {
+	case PermissionsPolicyFeatureAccelerometer:
+		*t = PermissionsPolicyFeatureAccelerometer
+	case PermissionsPolicyFeatureAmbientLightSensor:
+		*t = PermissionsPolicyFeatureAmbientLightSensor
+	case PermissionsPolicyFeatureAttributionReporting:
+		*t = PermissionsPolicyFeatureAttributionReporting
+	case PermissionsPolicyFeatureAutoplay:
+		*t = PermissionsPolicyFeatureAutoplay
+	case PermissionsPolicyFeatureCamera:
+		*t = PermissionsPolicyFeatureCamera
+	case PermissionsPolicyFeatureChDpr:
+		*t = PermissionsPolicyFeatureChDpr
+	case PermissionsPolicyFeatureChDeviceMemory:
+		*t = PermissionsPolicyFeatureChDeviceMemory
+	case PermissionsPolicyFeatureChDownlink:
+		*t = PermissionsPolicyFeatureChDownlink
+	case PermissionsPolicyFeatureChEct:
+		*t = PermissionsPolicyFeatureChEct
+	case PermissionsPolicyFeatureChLang:
+		*t = PermissionsPolicyFeatureChLang
+	case PermissionsPolicyFeatureChPrefersColorScheme:
+		*t = PermissionsPolicyFeatureChPrefersColorScheme
+	case PermissionsPolicyFeatureChRtt:
+		*t = PermissionsPolicyFeatureChRtt
+	case PermissionsPolicyFeatureChUa:
+		*t = PermissionsPolicyFeatureChUa
+	case PermissionsPolicyFeatureChUaArch:
+		*t = PermissionsPolicyFeatureChUaArch
+	case PermissionsPolicyFeatureChUaBitness:
+		*t = PermissionsPolicyFeatureChUaBitness
+	case PermissionsPolicyFeatureChUaPlatform:
+		*t = PermissionsPolicyFeatureChUaPlatform
+	case PermissionsPolicyFeatureChUaModel:
+		*t = PermissionsPolicyFeatureChUaModel
+	case PermissionsPolicyFeatureChUaMobile:
+		*t = PermissionsPolicyFeatureChUaMobile
+	case PermissionsPolicyFeatureChUaFullVersion:
+		*t = PermissionsPolicyFeatureChUaFullVersion
+	case PermissionsPolicyFeatureChUaPlatformVersion:
+		*t = PermissionsPolicyFeatureChUaPlatformVersion
+	case PermissionsPolicyFeatureChUaReduced:
+		*t = PermissionsPolicyFeatureChUaReduced
+	case PermissionsPolicyFeatureChViewportHeight:
+		*t = PermissionsPolicyFeatureChViewportHeight
+	case PermissionsPolicyFeatureChViewportWidth:
+		*t = PermissionsPolicyFeatureChViewportWidth
+	case PermissionsPolicyFeatureChWidth:
+		*t = PermissionsPolicyFeatureChWidth
+	case PermissionsPolicyFeatureClipboardRead:
+		*t = PermissionsPolicyFeatureClipboardRead
+	case PermissionsPolicyFeatureClipboardWrite:
+		*t = PermissionsPolicyFeatureClipboardWrite
+	case PermissionsPolicyFeatureCrossOriginIsolated:
+		*t = PermissionsPolicyFeatureCrossOriginIsolated
+	case PermissionsPolicyFeatureDirectSockets:
+		*t = PermissionsPolicyFeatureDirectSockets
+	case PermissionsPolicyFeatureDisplayCapture:
+		*t = PermissionsPolicyFeatureDisplayCapture
+	case PermissionsPolicyFeatureDocumentDomain:
+		*t = PermissionsPolicyFeatureDocumentDomain
+	case PermissionsPolicyFeatureEncryptedMedia:
+		*t = PermissionsPolicyFeatureEncryptedMedia
+	case PermissionsPolicyFeatureExecutionWhileOutOfViewport:
+		*t = PermissionsPolicyFeatureExecutionWhileOutOfViewport
+	case PermissionsPolicyFeatureExecutionWhileNotRendered:
+		*t = PermissionsPolicyFeatureExecutionWhileNotRendered
+	case PermissionsPolicyFeatureFocusWithoutUserActivation:
+		*t = PermissionsPolicyFeatureFocusWithoutUserActivation
+	case PermissionsPolicyFeatureFullscreen:
+		*t = PermissionsPolicyFeatureFullscreen
+	case PermissionsPolicyFeatureFrobulate:
+		*t = PermissionsPolicyFeatureFrobulate
+	case PermissionsPolicyFeatureGamepad:
+		*t = PermissionsPolicyFeatureGamepad
+	case PermissionsPolicyFeatureGeolocation:
+		*t = PermissionsPolicyFeatureGeolocation
+	case PermissionsPolicyFeatureGyroscope:
+		*t = PermissionsPolicyFeatureGyroscope
+	case PermissionsPolicyFeatureHid:
+		*t = PermissionsPolicyFeatureHid
+	case PermissionsPolicyFeatureIdleDetection:
+		*t = PermissionsPolicyFeatureIdleDetection
+	case PermissionsPolicyFeatureInterestCohort:
+		*t = PermissionsPolicyFeatureInterestCohort
+	case PermissionsPolicyFeatureMagnetometer:
+		*t = PermissionsPolicyFeatureMagnetometer
+	case PermissionsPolicyFeatureMicrophone:
+		*t = PermissionsPolicyFeatureMicrophone
+	case PermissionsPolicyFeatureMidi:
+		*t = PermissionsPolicyFeatureMidi
+	case PermissionsPolicyFeatureOtpCredentials:
+		*t = PermissionsPolicyFeatureOtpCredentials
+	case PermissionsPolicyFeaturePayment:
+		*t = PermissionsPolicyFeaturePayment
+	case PermissionsPolicyFeaturePictureInPicture:
+		*t = PermissionsPolicyFeaturePictureInPicture
+	case PermissionsPolicyFeaturePublickeyCredentialsGet:
+		*t = PermissionsPolicyFeaturePublickeyCredentialsGet
+	case PermissionsPolicyFeatureScreenWakeLock:
+		*t = PermissionsPolicyFeatureScreenWakeLock
+	case PermissionsPolicyFeatureSerial:
+		*t = PermissionsPolicyFeatureSerial
+	case PermissionsPolicyFeatureSharedAutofill:
+		*t = PermissionsPolicyFeatureSharedAutofill
+	case PermissionsPolicyFeatureStorageAccessAPI:
+		*t = PermissionsPolicyFeatureStorageAccessAPI
+	case PermissionsPolicyFeatureSyncXhr:
+		*t = PermissionsPolicyFeatureSyncXhr
+	case PermissionsPolicyFeatureTrustTokenRedemption:
+		*t = PermissionsPolicyFeatureTrustTokenRedemption
+	case PermissionsPolicyFeatureUsb:
+		*t = PermissionsPolicyFeatureUsb
+	case PermissionsPolicyFeatureVerticalScroll:
+		*t = PermissionsPolicyFeatureVerticalScroll
+	case PermissionsPolicyFeatureWebShare:
+		*t = PermissionsPolicyFeatureWebShare
+	case PermissionsPolicyFeatureWindowPlacement:
+		*t = PermissionsPolicyFeatureWindowPlacement
+	case PermissionsPolicyFeatureXrSpatialTracking:
+		*t = PermissionsPolicyFeatureXrSpatialTracking
+
+	default:
+		in.AddError(errors.New("unknown PermissionsPolicyFeature value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *PermissionsPolicyFeature) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// PermissionsPolicyBlockReason reason for a permissions policy feature to be
+// disabled.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-PermissionsPolicyBlockReason
+type PermissionsPolicyBlockReason string
+
+// String returns the PermissionsPolicyBlockReason as string value.
+func (t PermissionsPolicyBlockReason) String() string {
+	return string(t)
+}
+
+// PermissionsPolicyBlockReason values.
+const (
+	PermissionsPolicyBlockReasonHeader          PermissionsPolicyBlockReason = "Header"
+	PermissionsPolicyBlockReasonIframeAttribute PermissionsPolicyBlockReason = "IframeAttribute"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t PermissionsPolicyBlockReason) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t PermissionsPolicyBlockReason) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *PermissionsPolicyBlockReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch PermissionsPolicyBlockReason(in.String()) {
+	case PermissionsPolicyBlockReasonHeader:
+		*t = PermissionsPolicyBlockReasonHeader
+	case PermissionsPolicyBlockReasonIframeAttribute:
+		*t = PermissionsPolicyBlockReasonIframeAttribute
+
+	default:
+		in.AddError(errors.New("unknown PermissionsPolicyBlockReason value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *PermissionsPolicyBlockReason) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// PermissionsPolicyBlockLocator [no description].
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-PermissionsPolicyBlockLocator
+type PermissionsPolicyBlockLocator struct {
+	FrameID     cdp.FrameID                  `json:"frameId"`
+	BlockReason PermissionsPolicyBlockReason `json:"blockReason"`
+}
+
+// PermissionsPolicyFeatureState [no description].
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-PermissionsPolicyFeatureState
+type PermissionsPolicyFeatureState struct {
+	Feature PermissionsPolicyFeature       `json:"feature"`
+	Allowed bool                           `json:"allowed"`
+	Locator *PermissionsPolicyBlockLocator `json:"locator,omitempty"`
+}
+
 // FrameResource information about the Resource on the page.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-FrameResource
@@ -296,6 +578,7 @@ const (
 	ClientNavigationReasonMetaTagRefresh        ClientNavigationReason = "metaTagRefresh"
 	ClientNavigationReasonPageBlockInterstitial ClientNavigationReason = "pageBlockInterstitial"
 	ClientNavigationReasonReload                ClientNavigationReason = "reload"
+	ClientNavigationReasonAnchorClick           ClientNavigationReason = "anchorClick"
 )
 
 // MarshalEasyJSON satisfies easyjson.Marshaler.
@@ -325,6 +608,8 @@ func (t *ClientNavigationReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
 		*t = ClientNavigationReasonPageBlockInterstitial
 	case ClientNavigationReasonReload:
 		*t = ClientNavigationReasonReload
+	case ClientNavigationReasonAnchorClick:
+		*t = ClientNavigationReasonAnchorClick
 
 	default:
 		in.AddError(errors.New("unknown ClientNavigationReason value"))
@@ -334,6 +619,597 @@ func (t *ClientNavigationReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
 // UnmarshalJSON satisfies json.Unmarshaler.
 func (t *ClientNavigationReason) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
+}
+
+// ClientNavigationDisposition [no description].
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-ClientNavigationDisposition
+type ClientNavigationDisposition string
+
+// String returns the ClientNavigationDisposition as string value.
+func (t ClientNavigationDisposition) String() string {
+	return string(t)
+}
+
+// ClientNavigationDisposition values.
+const (
+	ClientNavigationDispositionCurrentTab ClientNavigationDisposition = "currentTab"
+	ClientNavigationDispositionNewTab     ClientNavigationDisposition = "newTab"
+	ClientNavigationDispositionNewWindow  ClientNavigationDisposition = "newWindow"
+	ClientNavigationDispositionDownload   ClientNavigationDisposition = "download"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t ClientNavigationDisposition) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t ClientNavigationDisposition) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *ClientNavigationDisposition) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch ClientNavigationDisposition(in.String()) {
+	case ClientNavigationDispositionCurrentTab:
+		*t = ClientNavigationDispositionCurrentTab
+	case ClientNavigationDispositionNewTab:
+		*t = ClientNavigationDispositionNewTab
+	case ClientNavigationDispositionNewWindow:
+		*t = ClientNavigationDispositionNewWindow
+	case ClientNavigationDispositionDownload:
+		*t = ClientNavigationDispositionDownload
+
+	default:
+		in.AddError(errors.New("unknown ClientNavigationDisposition value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *ClientNavigationDisposition) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// InstallabilityErrorArgument [no description].
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-InstallabilityErrorArgument
+type InstallabilityErrorArgument struct {
+	Name  string `json:"name"`  // Argument name (e.g. name:'minimum-icon-size-in-pixels').
+	Value string `json:"value"` // Argument value (e.g. value:'64').
+}
+
+// InstallabilityError the installability error.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-InstallabilityError
+type InstallabilityError struct {
+	ErrorID        string                         `json:"errorId"`        // The error id (e.g. 'manifest-missing-suitable-icon').
+	ErrorArguments []*InstallabilityErrorArgument `json:"errorArguments"` // The list of error arguments (e.g. {name:'minimum-icon-size-in-pixels', value:'64'}).
+}
+
+// ReferrerPolicy the referring-policy used for the navigation.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-ReferrerPolicy
+type ReferrerPolicy string
+
+// String returns the ReferrerPolicy as string value.
+func (t ReferrerPolicy) String() string {
+	return string(t)
+}
+
+// ReferrerPolicy values.
+const (
+	ReferrerPolicyNoReferrer                  ReferrerPolicy = "noReferrer"
+	ReferrerPolicyNoReferrerWhenDowngrade     ReferrerPolicy = "noReferrerWhenDowngrade"
+	ReferrerPolicyOrigin                      ReferrerPolicy = "origin"
+	ReferrerPolicyOriginWhenCrossOrigin       ReferrerPolicy = "originWhenCrossOrigin"
+	ReferrerPolicySameOrigin                  ReferrerPolicy = "sameOrigin"
+	ReferrerPolicyStrictOrigin                ReferrerPolicy = "strictOrigin"
+	ReferrerPolicyStrictOriginWhenCrossOrigin ReferrerPolicy = "strictOriginWhenCrossOrigin"
+	ReferrerPolicyUnsafeURL                   ReferrerPolicy = "unsafeUrl"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t ReferrerPolicy) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t ReferrerPolicy) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *ReferrerPolicy) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch ReferrerPolicy(in.String()) {
+	case ReferrerPolicyNoReferrer:
+		*t = ReferrerPolicyNoReferrer
+	case ReferrerPolicyNoReferrerWhenDowngrade:
+		*t = ReferrerPolicyNoReferrerWhenDowngrade
+	case ReferrerPolicyOrigin:
+		*t = ReferrerPolicyOrigin
+	case ReferrerPolicyOriginWhenCrossOrigin:
+		*t = ReferrerPolicyOriginWhenCrossOrigin
+	case ReferrerPolicySameOrigin:
+		*t = ReferrerPolicySameOrigin
+	case ReferrerPolicyStrictOrigin:
+		*t = ReferrerPolicyStrictOrigin
+	case ReferrerPolicyStrictOriginWhenCrossOrigin:
+		*t = ReferrerPolicyStrictOriginWhenCrossOrigin
+	case ReferrerPolicyUnsafeURL:
+		*t = ReferrerPolicyUnsafeURL
+
+	default:
+		in.AddError(errors.New("unknown ReferrerPolicy value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *ReferrerPolicy) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// CompilationCacheParams per-script compilation cache parameters for
+// Page.produceCompilationCache.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-CompilationCacheParams
+type CompilationCacheParams struct {
+	URL   string `json:"url"`             // The URL of the script to produce a compilation cache entry for.
+	Eager bool   `json:"eager,omitempty"` // A hint to the backend whether eager compilation is recommended. (the actual compilation mode used is upon backend discretion).
+}
+
+// NavigationType the type of a frameNavigated event.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-NavigationType
+type NavigationType string
+
+// String returns the NavigationType as string value.
+func (t NavigationType) String() string {
+	return string(t)
+}
+
+// NavigationType values.
+const (
+	NavigationTypeNavigation              NavigationType = "Navigation"
+	NavigationTypeBackForwardCacheRestore NavigationType = "BackForwardCacheRestore"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t NavigationType) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t NavigationType) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *NavigationType) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch NavigationType(in.String()) {
+	case NavigationTypeNavigation:
+		*t = NavigationTypeNavigation
+	case NavigationTypeBackForwardCacheRestore:
+		*t = NavigationTypeBackForwardCacheRestore
+
+	default:
+		in.AddError(errors.New("unknown NavigationType value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *NavigationType) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// BackForwardCacheNotRestoredReason list of not restored reasons for
+// back-forward cache.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-BackForwardCacheNotRestoredReason
+type BackForwardCacheNotRestoredReason string
+
+// String returns the BackForwardCacheNotRestoredReason as string value.
+func (t BackForwardCacheNotRestoredReason) String() string {
+	return string(t)
+}
+
+// BackForwardCacheNotRestoredReason values.
+const (
+	BackForwardCacheNotRestoredReasonNotMainFrame                                        BackForwardCacheNotRestoredReason = "NotMainFrame"
+	BackForwardCacheNotRestoredReasonBackForwardCacheDisabled                            BackForwardCacheNotRestoredReason = "BackForwardCacheDisabled"
+	BackForwardCacheNotRestoredReasonRelatedActiveContentsExist                          BackForwardCacheNotRestoredReason = "RelatedActiveContentsExist"
+	BackForwardCacheNotRestoredReasonHTTPSTatusNotOK                                     BackForwardCacheNotRestoredReason = "HTTPStatusNotOK"
+	BackForwardCacheNotRestoredReasonSchemeNotHTTPOrHTTPS                                BackForwardCacheNotRestoredReason = "SchemeNotHTTPOrHTTPS"
+	BackForwardCacheNotRestoredReasonLoading                                             BackForwardCacheNotRestoredReason = "Loading"
+	BackForwardCacheNotRestoredReasonWasGrantedMediaAccess                               BackForwardCacheNotRestoredReason = "WasGrantedMediaAccess"
+	BackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled                     BackForwardCacheNotRestoredReason = "DisableForRenderFrameHostCalled"
+	BackForwardCacheNotRestoredReasonDomainNotAllowed                                    BackForwardCacheNotRestoredReason = "DomainNotAllowed"
+	BackForwardCacheNotRestoredReasonHTTPMethodNotGET                                    BackForwardCacheNotRestoredReason = "HTTPMethodNotGET"
+	BackForwardCacheNotRestoredReasonSubframeIsNavigating                                BackForwardCacheNotRestoredReason = "SubframeIsNavigating"
+	BackForwardCacheNotRestoredReasonTimeout                                             BackForwardCacheNotRestoredReason = "Timeout"
+	BackForwardCacheNotRestoredReasonCacheLimit                                          BackForwardCacheNotRestoredReason = "CacheLimit"
+	BackForwardCacheNotRestoredReasonJavaScriptExecution                                 BackForwardCacheNotRestoredReason = "JavaScriptExecution"
+	BackForwardCacheNotRestoredReasonRendererProcessKilled                               BackForwardCacheNotRestoredReason = "RendererProcessKilled"
+	BackForwardCacheNotRestoredReasonRendererProcessCrashed                              BackForwardCacheNotRestoredReason = "RendererProcessCrashed"
+	BackForwardCacheNotRestoredReasonGrantedMediaStreamAccess                            BackForwardCacheNotRestoredReason = "GrantedMediaStreamAccess"
+	BackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed                         BackForwardCacheNotRestoredReason = "SchedulerTrackedFeatureUsed"
+	BackForwardCacheNotRestoredReasonConflictingBrowsingInstance                         BackForwardCacheNotRestoredReason = "ConflictingBrowsingInstance"
+	BackForwardCacheNotRestoredReasonCacheFlushed                                        BackForwardCacheNotRestoredReason = "CacheFlushed"
+	BackForwardCacheNotRestoredReasonServiceWorkerVersionActivation                      BackForwardCacheNotRestoredReason = "ServiceWorkerVersionActivation"
+	BackForwardCacheNotRestoredReasonSessionRestored                                     BackForwardCacheNotRestoredReason = "SessionRestored"
+	BackForwardCacheNotRestoredReasonServiceWorkerPostMessage                            BackForwardCacheNotRestoredReason = "ServiceWorkerPostMessage"
+	BackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded BackForwardCacheNotRestoredReason = "EnteredBackForwardCacheBeforeServiceWorkerHostAdded"
+	BackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite                       BackForwardCacheNotRestoredReason = "RenderFrameHostReused_SameSite"
+	BackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite                      BackForwardCacheNotRestoredReason = "RenderFrameHostReused_CrossSite"
+	BackForwardCacheNotRestoredReasonServiceWorkerClaim                                  BackForwardCacheNotRestoredReason = "ServiceWorkerClaim"
+	BackForwardCacheNotRestoredReasonIgnoreEventAndEvict                                 BackForwardCacheNotRestoredReason = "IgnoreEventAndEvict"
+	BackForwardCacheNotRestoredReasonHaveInnerContents                                   BackForwardCacheNotRestoredReason = "HaveInnerContents"
+	BackForwardCacheNotRestoredReasonTimeoutPuttingInCache                               BackForwardCacheNotRestoredReason = "TimeoutPuttingInCache"
+	BackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory                 BackForwardCacheNotRestoredReason = "BackForwardCacheDisabledByLowMemory"
+	BackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine               BackForwardCacheNotRestoredReason = "BackForwardCacheDisabledByCommandLine"
+	BackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer        BackForwardCacheNotRestoredReason = "NetworkRequestDatapipeDrainedAsBytesConsumer"
+	BackForwardCacheNotRestoredReasonNetworkRequestRedirected                            BackForwardCacheNotRestoredReason = "NetworkRequestRedirected"
+	BackForwardCacheNotRestoredReasonNetworkRequestTimeout                               BackForwardCacheNotRestoredReason = "NetworkRequestTimeout"
+	BackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit                           BackForwardCacheNotRestoredReason = "NetworkExceedsBufferLimit"
+	BackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring                   BackForwardCacheNotRestoredReason = "NavigationCancelledWhileRestoring"
+	BackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry                        BackForwardCacheNotRestoredReason = "NotMostRecentNavigationEntry"
+	BackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender                BackForwardCacheNotRestoredReason = "BackForwardCacheDisabledForPrerender"
+	BackForwardCacheNotRestoredReasonUserAgentOverrideDiffers                            BackForwardCacheNotRestoredReason = "UserAgentOverrideDiffers"
+	BackForwardCacheNotRestoredReasonForegroundCacheLimit                                BackForwardCacheNotRestoredReason = "ForegroundCacheLimit"
+	BackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped                          BackForwardCacheNotRestoredReason = "BrowsingInstanceNotSwapped"
+	BackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate                 BackForwardCacheNotRestoredReason = "BackForwardCacheDisabledForDelegate"
+	BackForwardCacheNotRestoredReasonOptInUnloadHeaderNotPresent                         BackForwardCacheNotRestoredReason = "OptInUnloadHeaderNotPresent"
+	BackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame                       BackForwardCacheNotRestoredReason = "UnloadHandlerExistsInSubFrame"
+	BackForwardCacheNotRestoredReasonServiceWorkerUnregistration                         BackForwardCacheNotRestoredReason = "ServiceWorkerUnregistration"
+	BackForwardCacheNotRestoredReasonCacheControlNoStore                                 BackForwardCacheNotRestoredReason = "CacheControlNoStore"
+	BackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified                   BackForwardCacheNotRestoredReason = "CacheControlNoStoreCookieModified"
+	BackForwardCacheNotRestoredReasonCacheControlNoStoreHTTPOnlyCookieModified           BackForwardCacheNotRestoredReason = "CacheControlNoStoreHTTPOnlyCookieModified"
+	BackForwardCacheNotRestoredReasonNoResponseHead                                      BackForwardCacheNotRestoredReason = "NoResponseHead"
+	BackForwardCacheNotRestoredReasonUnknown                                             BackForwardCacheNotRestoredReason = "Unknown"
+	BackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857        BackForwardCacheNotRestoredReason = "ActivationNavigationsDisallowedForBug1234857"
+	BackForwardCacheNotRestoredReasonWebSocket                                           BackForwardCacheNotRestoredReason = "WebSocket"
+	BackForwardCacheNotRestoredReasonWebTransport                                        BackForwardCacheNotRestoredReason = "WebTransport"
+	BackForwardCacheNotRestoredReasonWebRTC                                              BackForwardCacheNotRestoredReason = "WebRTC"
+	BackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore                  BackForwardCacheNotRestoredReason = "MainResourceHasCacheControlNoStore"
+	BackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache                  BackForwardCacheNotRestoredReason = "MainResourceHasCacheControlNoCache"
+	BackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore                   BackForwardCacheNotRestoredReason = "SubresourceHasCacheControlNoStore"
+	BackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache                   BackForwardCacheNotRestoredReason = "SubresourceHasCacheControlNoCache"
+	BackForwardCacheNotRestoredReasonContainsPlugins                                     BackForwardCacheNotRestoredReason = "ContainsPlugins"
+	BackForwardCacheNotRestoredReasonDocumentLoaded                                      BackForwardCacheNotRestoredReason = "DocumentLoaded"
+	BackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet                            BackForwardCacheNotRestoredReason = "DedicatedWorkerOrWorklet"
+	BackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers                     BackForwardCacheNotRestoredReason = "OutstandingNetworkRequestOthers"
+	BackForwardCacheNotRestoredReasonOutstandingIndexedDBTransaction                     BackForwardCacheNotRestoredReason = "OutstandingIndexedDBTransaction"
+	BackForwardCacheNotRestoredReasonRequestedNotificationsPermission                    BackForwardCacheNotRestoredReason = "RequestedNotificationsPermission"
+	BackForwardCacheNotRestoredReasonRequestedMIDIPermission                             BackForwardCacheNotRestoredReason = "RequestedMIDIPermission"
+	BackForwardCacheNotRestoredReasonRequestedAudioCapturePermission                     BackForwardCacheNotRestoredReason = "RequestedAudioCapturePermission"
+	BackForwardCacheNotRestoredReasonRequestedVideoCapturePermission                     BackForwardCacheNotRestoredReason = "RequestedVideoCapturePermission"
+	BackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors             BackForwardCacheNotRestoredReason = "RequestedBackForwardCacheBlockedSensors"
+	BackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission                   BackForwardCacheNotRestoredReason = "RequestedBackgroundWorkPermission"
+	BackForwardCacheNotRestoredReasonBroadcastChannel                                    BackForwardCacheNotRestoredReason = "BroadcastChannel"
+	BackForwardCacheNotRestoredReasonIndexedDBConnection                                 BackForwardCacheNotRestoredReason = "IndexedDBConnection"
+	BackForwardCacheNotRestoredReasonWebXR                                               BackForwardCacheNotRestoredReason = "WebXR"
+	BackForwardCacheNotRestoredReasonSharedWorker                                        BackForwardCacheNotRestoredReason = "SharedWorker"
+	BackForwardCacheNotRestoredReasonWebLocks                                            BackForwardCacheNotRestoredReason = "WebLocks"
+	BackForwardCacheNotRestoredReasonWebHID                                              BackForwardCacheNotRestoredReason = "WebHID"
+	BackForwardCacheNotRestoredReasonWebShare                                            BackForwardCacheNotRestoredReason = "WebShare"
+	BackForwardCacheNotRestoredReasonRequestedStorageAccessGrant                         BackForwardCacheNotRestoredReason = "RequestedStorageAccessGrant"
+	BackForwardCacheNotRestoredReasonWebNfc                                              BackForwardCacheNotRestoredReason = "WebNfc"
+	BackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch                      BackForwardCacheNotRestoredReason = "OutstandingNetworkRequestFetch"
+	BackForwardCacheNotRestoredReasonOutstandingNetworkRequestXHR                        BackForwardCacheNotRestoredReason = "OutstandingNetworkRequestXHR"
+	BackForwardCacheNotRestoredReasonAppBanner                                           BackForwardCacheNotRestoredReason = "AppBanner"
+	BackForwardCacheNotRestoredReasonPrinting                                            BackForwardCacheNotRestoredReason = "Printing"
+	BackForwardCacheNotRestoredReasonWebDatabase                                         BackForwardCacheNotRestoredReason = "WebDatabase"
+	BackForwardCacheNotRestoredReasonPictureInPicture                                    BackForwardCacheNotRestoredReason = "PictureInPicture"
+	BackForwardCacheNotRestoredReasonPortal                                              BackForwardCacheNotRestoredReason = "Portal"
+	BackForwardCacheNotRestoredReasonSpeechRecognizer                                    BackForwardCacheNotRestoredReason = "SpeechRecognizer"
+	BackForwardCacheNotRestoredReasonIdleManager                                         BackForwardCacheNotRestoredReason = "IdleManager"
+	BackForwardCacheNotRestoredReasonPaymentManager                                      BackForwardCacheNotRestoredReason = "PaymentManager"
+	BackForwardCacheNotRestoredReasonSpeechSynthesis                                     BackForwardCacheNotRestoredReason = "SpeechSynthesis"
+	BackForwardCacheNotRestoredReasonKeyboardLock                                        BackForwardCacheNotRestoredReason = "KeyboardLock"
+	BackForwardCacheNotRestoredReasonWebOTPService                                       BackForwardCacheNotRestoredReason = "WebOTPService"
+	BackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket               BackForwardCacheNotRestoredReason = "OutstandingNetworkRequestDirectSocket"
+	BackForwardCacheNotRestoredReasonIsolatedWorldScript                                 BackForwardCacheNotRestoredReason = "IsolatedWorldScript"
+	BackForwardCacheNotRestoredReasonInjectedStyleSheet                                  BackForwardCacheNotRestoredReason = "InjectedStyleSheet"
+	BackForwardCacheNotRestoredReasonMediaSessionImplOnServiceCreated                    BackForwardCacheNotRestoredReason = "MediaSessionImplOnServiceCreated"
+	BackForwardCacheNotRestoredReasonSecurityHandler                                     BackForwardCacheNotRestoredReason = "SecurityHandler"
+	BackForwardCacheNotRestoredReasonWebAuthenticationAPI                                BackForwardCacheNotRestoredReason = "WebAuthenticationAPI"
+	BackForwardCacheNotRestoredReasonFileChooser                                         BackForwardCacheNotRestoredReason = "FileChooser"
+	BackForwardCacheNotRestoredReasonSerial                                              BackForwardCacheNotRestoredReason = "Serial"
+	BackForwardCacheNotRestoredReasonFileSystemAccess                                    BackForwardCacheNotRestoredReason = "FileSystemAccess"
+	BackForwardCacheNotRestoredReasonMediaDevicesDispatcherHost                          BackForwardCacheNotRestoredReason = "MediaDevicesDispatcherHost"
+	BackForwardCacheNotRestoredReasonWebBluetooth                                        BackForwardCacheNotRestoredReason = "WebBluetooth"
+	BackForwardCacheNotRestoredReasonWebUSB                                              BackForwardCacheNotRestoredReason = "WebUSB"
+	BackForwardCacheNotRestoredReasonMediaSession                                        BackForwardCacheNotRestoredReason = "MediaSession"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t BackForwardCacheNotRestoredReason) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t BackForwardCacheNotRestoredReason) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *BackForwardCacheNotRestoredReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch BackForwardCacheNotRestoredReason(in.String()) {
+	case BackForwardCacheNotRestoredReasonNotMainFrame:
+		*t = BackForwardCacheNotRestoredReasonNotMainFrame
+	case BackForwardCacheNotRestoredReasonBackForwardCacheDisabled:
+		*t = BackForwardCacheNotRestoredReasonBackForwardCacheDisabled
+	case BackForwardCacheNotRestoredReasonRelatedActiveContentsExist:
+		*t = BackForwardCacheNotRestoredReasonRelatedActiveContentsExist
+	case BackForwardCacheNotRestoredReasonHTTPSTatusNotOK:
+		*t = BackForwardCacheNotRestoredReasonHTTPSTatusNotOK
+	case BackForwardCacheNotRestoredReasonSchemeNotHTTPOrHTTPS:
+		*t = BackForwardCacheNotRestoredReasonSchemeNotHTTPOrHTTPS
+	case BackForwardCacheNotRestoredReasonLoading:
+		*t = BackForwardCacheNotRestoredReasonLoading
+	case BackForwardCacheNotRestoredReasonWasGrantedMediaAccess:
+		*t = BackForwardCacheNotRestoredReasonWasGrantedMediaAccess
+	case BackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled:
+		*t = BackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled
+	case BackForwardCacheNotRestoredReasonDomainNotAllowed:
+		*t = BackForwardCacheNotRestoredReasonDomainNotAllowed
+	case BackForwardCacheNotRestoredReasonHTTPMethodNotGET:
+		*t = BackForwardCacheNotRestoredReasonHTTPMethodNotGET
+	case BackForwardCacheNotRestoredReasonSubframeIsNavigating:
+		*t = BackForwardCacheNotRestoredReasonSubframeIsNavigating
+	case BackForwardCacheNotRestoredReasonTimeout:
+		*t = BackForwardCacheNotRestoredReasonTimeout
+	case BackForwardCacheNotRestoredReasonCacheLimit:
+		*t = BackForwardCacheNotRestoredReasonCacheLimit
+	case BackForwardCacheNotRestoredReasonJavaScriptExecution:
+		*t = BackForwardCacheNotRestoredReasonJavaScriptExecution
+	case BackForwardCacheNotRestoredReasonRendererProcessKilled:
+		*t = BackForwardCacheNotRestoredReasonRendererProcessKilled
+	case BackForwardCacheNotRestoredReasonRendererProcessCrashed:
+		*t = BackForwardCacheNotRestoredReasonRendererProcessCrashed
+	case BackForwardCacheNotRestoredReasonGrantedMediaStreamAccess:
+		*t = BackForwardCacheNotRestoredReasonGrantedMediaStreamAccess
+	case BackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed:
+		*t = BackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed
+	case BackForwardCacheNotRestoredReasonConflictingBrowsingInstance:
+		*t = BackForwardCacheNotRestoredReasonConflictingBrowsingInstance
+	case BackForwardCacheNotRestoredReasonCacheFlushed:
+		*t = BackForwardCacheNotRestoredReasonCacheFlushed
+	case BackForwardCacheNotRestoredReasonServiceWorkerVersionActivation:
+		*t = BackForwardCacheNotRestoredReasonServiceWorkerVersionActivation
+	case BackForwardCacheNotRestoredReasonSessionRestored:
+		*t = BackForwardCacheNotRestoredReasonSessionRestored
+	case BackForwardCacheNotRestoredReasonServiceWorkerPostMessage:
+		*t = BackForwardCacheNotRestoredReasonServiceWorkerPostMessage
+	case BackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded:
+		*t = BackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded
+	case BackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite:
+		*t = BackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite
+	case BackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite:
+		*t = BackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite
+	case BackForwardCacheNotRestoredReasonServiceWorkerClaim:
+		*t = BackForwardCacheNotRestoredReasonServiceWorkerClaim
+	case BackForwardCacheNotRestoredReasonIgnoreEventAndEvict:
+		*t = BackForwardCacheNotRestoredReasonIgnoreEventAndEvict
+	case BackForwardCacheNotRestoredReasonHaveInnerContents:
+		*t = BackForwardCacheNotRestoredReasonHaveInnerContents
+	case BackForwardCacheNotRestoredReasonTimeoutPuttingInCache:
+		*t = BackForwardCacheNotRestoredReasonTimeoutPuttingInCache
+	case BackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory:
+		*t = BackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory
+	case BackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine:
+		*t = BackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine
+	case BackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer:
+		*t = BackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer
+	case BackForwardCacheNotRestoredReasonNetworkRequestRedirected:
+		*t = BackForwardCacheNotRestoredReasonNetworkRequestRedirected
+	case BackForwardCacheNotRestoredReasonNetworkRequestTimeout:
+		*t = BackForwardCacheNotRestoredReasonNetworkRequestTimeout
+	case BackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit:
+		*t = BackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit
+	case BackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring:
+		*t = BackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring
+	case BackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry:
+		*t = BackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry
+	case BackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender:
+		*t = BackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender
+	case BackForwardCacheNotRestoredReasonUserAgentOverrideDiffers:
+		*t = BackForwardCacheNotRestoredReasonUserAgentOverrideDiffers
+	case BackForwardCacheNotRestoredReasonForegroundCacheLimit:
+		*t = BackForwardCacheNotRestoredReasonForegroundCacheLimit
+	case BackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped:
+		*t = BackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped
+	case BackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate:
+		*t = BackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate
+	case BackForwardCacheNotRestoredReasonOptInUnloadHeaderNotPresent:
+		*t = BackForwardCacheNotRestoredReasonOptInUnloadHeaderNotPresent
+	case BackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame:
+		*t = BackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame
+	case BackForwardCacheNotRestoredReasonServiceWorkerUnregistration:
+		*t = BackForwardCacheNotRestoredReasonServiceWorkerUnregistration
+	case BackForwardCacheNotRestoredReasonCacheControlNoStore:
+		*t = BackForwardCacheNotRestoredReasonCacheControlNoStore
+	case BackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified:
+		*t = BackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified
+	case BackForwardCacheNotRestoredReasonCacheControlNoStoreHTTPOnlyCookieModified:
+		*t = BackForwardCacheNotRestoredReasonCacheControlNoStoreHTTPOnlyCookieModified
+	case BackForwardCacheNotRestoredReasonNoResponseHead:
+		*t = BackForwardCacheNotRestoredReasonNoResponseHead
+	case BackForwardCacheNotRestoredReasonUnknown:
+		*t = BackForwardCacheNotRestoredReasonUnknown
+	case BackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857:
+		*t = BackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857
+	case BackForwardCacheNotRestoredReasonWebSocket:
+		*t = BackForwardCacheNotRestoredReasonWebSocket
+	case BackForwardCacheNotRestoredReasonWebTransport:
+		*t = BackForwardCacheNotRestoredReasonWebTransport
+	case BackForwardCacheNotRestoredReasonWebRTC:
+		*t = BackForwardCacheNotRestoredReasonWebRTC
+	case BackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore:
+		*t = BackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore
+	case BackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache:
+		*t = BackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache
+	case BackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore:
+		*t = BackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore
+	case BackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache:
+		*t = BackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache
+	case BackForwardCacheNotRestoredReasonContainsPlugins:
+		*t = BackForwardCacheNotRestoredReasonContainsPlugins
+	case BackForwardCacheNotRestoredReasonDocumentLoaded:
+		*t = BackForwardCacheNotRestoredReasonDocumentLoaded
+	case BackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet:
+		*t = BackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet
+	case BackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers:
+		*t = BackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers
+	case BackForwardCacheNotRestoredReasonOutstandingIndexedDBTransaction:
+		*t = BackForwardCacheNotRestoredReasonOutstandingIndexedDBTransaction
+	case BackForwardCacheNotRestoredReasonRequestedNotificationsPermission:
+		*t = BackForwardCacheNotRestoredReasonRequestedNotificationsPermission
+	case BackForwardCacheNotRestoredReasonRequestedMIDIPermission:
+		*t = BackForwardCacheNotRestoredReasonRequestedMIDIPermission
+	case BackForwardCacheNotRestoredReasonRequestedAudioCapturePermission:
+		*t = BackForwardCacheNotRestoredReasonRequestedAudioCapturePermission
+	case BackForwardCacheNotRestoredReasonRequestedVideoCapturePermission:
+		*t = BackForwardCacheNotRestoredReasonRequestedVideoCapturePermission
+	case BackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors:
+		*t = BackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors
+	case BackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission:
+		*t = BackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission
+	case BackForwardCacheNotRestoredReasonBroadcastChannel:
+		*t = BackForwardCacheNotRestoredReasonBroadcastChannel
+	case BackForwardCacheNotRestoredReasonIndexedDBConnection:
+		*t = BackForwardCacheNotRestoredReasonIndexedDBConnection
+	case BackForwardCacheNotRestoredReasonWebXR:
+		*t = BackForwardCacheNotRestoredReasonWebXR
+	case BackForwardCacheNotRestoredReasonSharedWorker:
+		*t = BackForwardCacheNotRestoredReasonSharedWorker
+	case BackForwardCacheNotRestoredReasonWebLocks:
+		*t = BackForwardCacheNotRestoredReasonWebLocks
+	case BackForwardCacheNotRestoredReasonWebHID:
+		*t = BackForwardCacheNotRestoredReasonWebHID
+	case BackForwardCacheNotRestoredReasonWebShare:
+		*t = BackForwardCacheNotRestoredReasonWebShare
+	case BackForwardCacheNotRestoredReasonRequestedStorageAccessGrant:
+		*t = BackForwardCacheNotRestoredReasonRequestedStorageAccessGrant
+	case BackForwardCacheNotRestoredReasonWebNfc:
+		*t = BackForwardCacheNotRestoredReasonWebNfc
+	case BackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch:
+		*t = BackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch
+	case BackForwardCacheNotRestoredReasonOutstandingNetworkRequestXHR:
+		*t = BackForwardCacheNotRestoredReasonOutstandingNetworkRequestXHR
+	case BackForwardCacheNotRestoredReasonAppBanner:
+		*t = BackForwardCacheNotRestoredReasonAppBanner
+	case BackForwardCacheNotRestoredReasonPrinting:
+		*t = BackForwardCacheNotRestoredReasonPrinting
+	case BackForwardCacheNotRestoredReasonWebDatabase:
+		*t = BackForwardCacheNotRestoredReasonWebDatabase
+	case BackForwardCacheNotRestoredReasonPictureInPicture:
+		*t = BackForwardCacheNotRestoredReasonPictureInPicture
+	case BackForwardCacheNotRestoredReasonPortal:
+		*t = BackForwardCacheNotRestoredReasonPortal
+	case BackForwardCacheNotRestoredReasonSpeechRecognizer:
+		*t = BackForwardCacheNotRestoredReasonSpeechRecognizer
+	case BackForwardCacheNotRestoredReasonIdleManager:
+		*t = BackForwardCacheNotRestoredReasonIdleManager
+	case BackForwardCacheNotRestoredReasonPaymentManager:
+		*t = BackForwardCacheNotRestoredReasonPaymentManager
+	case BackForwardCacheNotRestoredReasonSpeechSynthesis:
+		*t = BackForwardCacheNotRestoredReasonSpeechSynthesis
+	case BackForwardCacheNotRestoredReasonKeyboardLock:
+		*t = BackForwardCacheNotRestoredReasonKeyboardLock
+	case BackForwardCacheNotRestoredReasonWebOTPService:
+		*t = BackForwardCacheNotRestoredReasonWebOTPService
+	case BackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket:
+		*t = BackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket
+	case BackForwardCacheNotRestoredReasonIsolatedWorldScript:
+		*t = BackForwardCacheNotRestoredReasonIsolatedWorldScript
+	case BackForwardCacheNotRestoredReasonInjectedStyleSheet:
+		*t = BackForwardCacheNotRestoredReasonInjectedStyleSheet
+	case BackForwardCacheNotRestoredReasonMediaSessionImplOnServiceCreated:
+		*t = BackForwardCacheNotRestoredReasonMediaSessionImplOnServiceCreated
+	case BackForwardCacheNotRestoredReasonSecurityHandler:
+		*t = BackForwardCacheNotRestoredReasonSecurityHandler
+	case BackForwardCacheNotRestoredReasonWebAuthenticationAPI:
+		*t = BackForwardCacheNotRestoredReasonWebAuthenticationAPI
+	case BackForwardCacheNotRestoredReasonFileChooser:
+		*t = BackForwardCacheNotRestoredReasonFileChooser
+	case BackForwardCacheNotRestoredReasonSerial:
+		*t = BackForwardCacheNotRestoredReasonSerial
+	case BackForwardCacheNotRestoredReasonFileSystemAccess:
+		*t = BackForwardCacheNotRestoredReasonFileSystemAccess
+	case BackForwardCacheNotRestoredReasonMediaDevicesDispatcherHost:
+		*t = BackForwardCacheNotRestoredReasonMediaDevicesDispatcherHost
+	case BackForwardCacheNotRestoredReasonWebBluetooth:
+		*t = BackForwardCacheNotRestoredReasonWebBluetooth
+	case BackForwardCacheNotRestoredReasonWebUSB:
+		*t = BackForwardCacheNotRestoredReasonWebUSB
+	case BackForwardCacheNotRestoredReasonMediaSession:
+		*t = BackForwardCacheNotRestoredReasonMediaSession
+
+	default:
+		in.AddError(errors.New("unknown BackForwardCacheNotRestoredReason value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *BackForwardCacheNotRestoredReason) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// BackForwardCacheNotRestoredReasonType types of not restored reasons for
+// back-forward cache.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-BackForwardCacheNotRestoredReasonType
+type BackForwardCacheNotRestoredReasonType string
+
+// String returns the BackForwardCacheNotRestoredReasonType as string value.
+func (t BackForwardCacheNotRestoredReasonType) String() string {
+	return string(t)
+}
+
+// BackForwardCacheNotRestoredReasonType values.
+const (
+	BackForwardCacheNotRestoredReasonTypeSupportPending    BackForwardCacheNotRestoredReasonType = "SupportPending"
+	BackForwardCacheNotRestoredReasonTypePageSupportNeeded BackForwardCacheNotRestoredReasonType = "PageSupportNeeded"
+	BackForwardCacheNotRestoredReasonTypeCircumstantial    BackForwardCacheNotRestoredReasonType = "Circumstantial"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t BackForwardCacheNotRestoredReasonType) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t BackForwardCacheNotRestoredReasonType) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *BackForwardCacheNotRestoredReasonType) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch BackForwardCacheNotRestoredReasonType(in.String()) {
+	case BackForwardCacheNotRestoredReasonTypeSupportPending:
+		*t = BackForwardCacheNotRestoredReasonTypeSupportPending
+	case BackForwardCacheNotRestoredReasonTypePageSupportNeeded:
+		*t = BackForwardCacheNotRestoredReasonTypePageSupportNeeded
+	case BackForwardCacheNotRestoredReasonTypeCircumstantial:
+		*t = BackForwardCacheNotRestoredReasonTypeCircumstantial
+
+	default:
+		in.AddError(errors.New("unknown BackForwardCacheNotRestoredReasonType value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *BackForwardCacheNotRestoredReasonType) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// BackForwardCacheNotRestoredExplanation [no description].
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#type-BackForwardCacheNotRestoredExplanation
+type BackForwardCacheNotRestoredExplanation struct {
+	Type   BackForwardCacheNotRestoredReasonType `json:"type"`   // Type of the reason
+	Reason BackForwardCacheNotRestoredReason     `json:"reason"` // Not restored reason
 }
 
 // FileChooserOpenedMode input mode.
@@ -380,6 +1256,50 @@ func (t *FileChooserOpenedMode) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
 }
 
+// FrameDetachedReason [no description].
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Page#event-frameDetached
+type FrameDetachedReason string
+
+// String returns the FrameDetachedReason as string value.
+func (t FrameDetachedReason) String() string {
+	return string(t)
+}
+
+// FrameDetachedReason values.
+const (
+	FrameDetachedReasonRemove FrameDetachedReason = "remove"
+	FrameDetachedReasonSwap   FrameDetachedReason = "swap"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t FrameDetachedReason) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t FrameDetachedReason) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *FrameDetachedReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch FrameDetachedReason(in.String()) {
+	case FrameDetachedReasonRemove:
+		*t = FrameDetachedReasonRemove
+	case FrameDetachedReasonSwap:
+		*t = FrameDetachedReasonSwap
+
+	default:
+		in.AddError(errors.New("unknown FrameDetachedReason value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *FrameDetachedReason) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
 // CaptureScreenshotFormat image compression format (defaults to png).
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Page#method-captureScreenshot
@@ -394,6 +1314,7 @@ func (t CaptureScreenshotFormat) String() string {
 const (
 	CaptureScreenshotFormatJpeg CaptureScreenshotFormat = "jpeg"
 	CaptureScreenshotFormatPng  CaptureScreenshotFormat = "png"
+	CaptureScreenshotFormatWebp CaptureScreenshotFormat = "webp"
 )
 
 // MarshalEasyJSON satisfies easyjson.Marshaler.
@@ -413,6 +1334,8 @@ func (t *CaptureScreenshotFormat) UnmarshalEasyJSON(in *jlexer.Lexer) {
 		*t = CaptureScreenshotFormatJpeg
 	case CaptureScreenshotFormatPng:
 		*t = CaptureScreenshotFormatPng
+	case CaptureScreenshotFormatWebp:
+		*t = CaptureScreenshotFormatWebp
 
 	default:
 		in.AddError(errors.New("unknown CaptureScreenshotFormat value"))

@@ -16,6 +16,7 @@ import (
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/cdproto/page"
+	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 )
 
@@ -109,13 +110,13 @@ func screenshot(sel interface{}, picbuf *[]byte, opts ...chromedp.QueryOption) c
 		panic("picbuf cannot be nil")
 	}
 
-	return chromedp.QueryAfter(sel, func(ctx context.Context, nodes ...*cdp.Node) error {
+	return chromedp.QueryAfter(sel, func(ctx context.Context, eci runtime.ExecutionContextID, nodes ...*cdp.Node) error {
 		if len(nodes) < 1 {
 			return fmt.Errorf("selector %q did not return any nodes", sel)
 		}
 
 		// get layout metrics
-		_, _, contentSize, err := page.GetLayoutMetrics().Do(ctx)
+		_, _, contentSize, _, _, _, err := page.GetLayoutMetrics().Do(ctx)
 		if err != nil {
 			return err
 		}

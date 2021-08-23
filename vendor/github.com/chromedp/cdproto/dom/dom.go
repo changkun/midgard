@@ -187,6 +187,58 @@ func (p *DescribeNodeParams) Do(ctx context.Context) (node *cdp.Node, err error)
 	return res.Node, nil
 }
 
+// ScrollIntoViewIfNeededParams scrolls the specified rect of the given node
+// into view if not already visible. Note: exactly one between nodeId,
+// backendNodeId and objectId should be passed to identify the node.
+type ScrollIntoViewIfNeededParams struct {
+	NodeID        cdp.NodeID             `json:"nodeId,omitempty"`        // Identifier of the node.
+	BackendNodeID cdp.BackendNodeID      `json:"backendNodeId,omitempty"` // Identifier of the backend node.
+	ObjectID      runtime.RemoteObjectID `json:"objectId,omitempty"`      // JavaScript object id of the node wrapper.
+	Rect          *Rect                  `json:"rect,omitempty"`          // The rect to be scrolled into view, relative to the node's border box, in CSS pixels. When omitted, center of the node will be used, similar to Element.scrollIntoView.
+}
+
+// ScrollIntoViewIfNeeded scrolls the specified rect of the given node into
+// view if not already visible. Note: exactly one between nodeId, backendNodeId
+// and objectId should be passed to identify the node.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/DOM#method-scrollIntoViewIfNeeded
+//
+// parameters:
+func ScrollIntoViewIfNeeded() *ScrollIntoViewIfNeededParams {
+	return &ScrollIntoViewIfNeededParams{}
+}
+
+// WithNodeID identifier of the node.
+func (p ScrollIntoViewIfNeededParams) WithNodeID(nodeID cdp.NodeID) *ScrollIntoViewIfNeededParams {
+	p.NodeID = nodeID
+	return &p
+}
+
+// WithBackendNodeID identifier of the backend node.
+func (p ScrollIntoViewIfNeededParams) WithBackendNodeID(backendNodeID cdp.BackendNodeID) *ScrollIntoViewIfNeededParams {
+	p.BackendNodeID = backendNodeID
+	return &p
+}
+
+// WithObjectID JavaScript object id of the node wrapper.
+func (p ScrollIntoViewIfNeededParams) WithObjectID(objectID runtime.RemoteObjectID) *ScrollIntoViewIfNeededParams {
+	p.ObjectID = objectID
+	return &p
+}
+
+// WithRect the rect to be scrolled into view, relative to the node's border
+// box, in CSS pixels. When omitted, center of the node will be used, similar to
+// Element.scrollIntoView.
+func (p ScrollIntoViewIfNeededParams) WithRect(rect *Rect) *ScrollIntoViewIfNeededParams {
+	p.Rect = rect
+	return &p
+}
+
+// Do executes DOM.scrollIntoViewIfNeeded against the provided context.
+func (p *ScrollIntoViewIfNeededParams) Do(ctx context.Context) (err error) {
+	return cdp.Execute(ctx, CommandScrollIntoViewIfNeeded, p, nil)
+}
+
 // DisableParams disables DOM agent for the given page.
 type DisableParams struct{}
 
@@ -479,56 +531,54 @@ func (p *GetDocumentParams) Do(ctx context.Context) (root *cdp.Node, err error) 
 	return res.Root, nil
 }
 
-// GetFlattenedDocumentParams returns the root DOM node (and optionally the
-// subtree) to the caller.
-type GetFlattenedDocumentParams struct {
-	Depth  int64 `json:"depth,omitempty"`  // The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the entire subtree or provide an integer larger than 0.
-	Pierce bool  `json:"pierce,omitempty"` // Whether or not iframes and shadow roots should be traversed when returning the subtree (default is false).
+// GetNodesForSubtreeByStyleParams finds nodes with a given computed style in
+// a subtree.
+type GetNodesForSubtreeByStyleParams struct {
+	NodeID         cdp.NodeID                  `json:"nodeId"`           // Node ID pointing to the root of a subtree.
+	ComputedStyles []*CSSComputedStyleProperty `json:"computedStyles"`   // The style to filter nodes by (includes nodes if any of properties matches).
+	Pierce         bool                        `json:"pierce,omitempty"` // Whether or not iframes and shadow roots in the same target should be traversed when returning the results (default is false).
 }
 
-// GetFlattenedDocument returns the root DOM node (and optionally the
-// subtree) to the caller.
+// GetNodesForSubtreeByStyle finds nodes with a given computed style in a
+// subtree.
 //
-// See: https://chromedevtools.github.io/devtools-protocol/tot/DOM#method-getFlattenedDocument
+// See: https://chromedevtools.github.io/devtools-protocol/tot/DOM#method-getNodesForSubtreeByStyle
 //
 // parameters:
-func GetFlattenedDocument() *GetFlattenedDocumentParams {
-	return &GetFlattenedDocumentParams{}
+//   nodeID - Node ID pointing to the root of a subtree.
+//   computedStyles - The style to filter nodes by (includes nodes if any of properties matches).
+func GetNodesForSubtreeByStyle(nodeID cdp.NodeID, computedStyles []*CSSComputedStyleProperty) *GetNodesForSubtreeByStyleParams {
+	return &GetNodesForSubtreeByStyleParams{
+		NodeID:         nodeID,
+		ComputedStyles: computedStyles,
+	}
 }
 
-// WithDepth the maximum depth at which children should be retrieved,
-// defaults to 1. Use -1 for the entire subtree or provide an integer larger
-// than 0.
-func (p GetFlattenedDocumentParams) WithDepth(depth int64) *GetFlattenedDocumentParams {
-	p.Depth = depth
-	return &p
-}
-
-// WithPierce whether or not iframes and shadow roots should be traversed
-// when returning the subtree (default is false).
-func (p GetFlattenedDocumentParams) WithPierce(pierce bool) *GetFlattenedDocumentParams {
+// WithPierce whether or not iframes and shadow roots in the same target
+// should be traversed when returning the results (default is false).
+func (p GetNodesForSubtreeByStyleParams) WithPierce(pierce bool) *GetNodesForSubtreeByStyleParams {
 	p.Pierce = pierce
 	return &p
 }
 
-// GetFlattenedDocumentReturns return values.
-type GetFlattenedDocumentReturns struct {
-	Nodes []*cdp.Node `json:"nodes,omitempty"` // Resulting node.
+// GetNodesForSubtreeByStyleReturns return values.
+type GetNodesForSubtreeByStyleReturns struct {
+	NodeIds []cdp.NodeID `json:"nodeIds,omitempty"` // Resulting nodes.
 }
 
-// Do executes DOM.getFlattenedDocument against the provided context.
+// Do executes DOM.getNodesForSubtreeByStyle against the provided context.
 //
 // returns:
-//   nodes - Resulting node.
-func (p *GetFlattenedDocumentParams) Do(ctx context.Context) (nodes []*cdp.Node, err error) {
+//   nodeIds - Resulting nodes.
+func (p *GetNodesForSubtreeByStyleParams) Do(ctx context.Context) (nodeIds []cdp.NodeID, err error) {
 	// execute
-	var res GetFlattenedDocumentReturns
-	err = cdp.Execute(ctx, CommandGetFlattenedDocument, p, &res)
+	var res GetNodesForSubtreeByStyleReturns
+	err = cdp.Execute(ctx, CommandGetNodesForSubtreeByStyle, p, &res)
 	if err != nil {
 		return nil, err
 	}
 
-	return res.Nodes, nil
+	return res.NodeIds, nil
 }
 
 // GetNodeForLocationParams returns node id at given location. Depending on
@@ -1597,47 +1647,139 @@ func (p *GetFrameOwnerParams) Do(ctx context.Context) (backendNodeID cdp.Backend
 	return res.BackendNodeID, res.NodeID, nil
 }
 
+// GetContainerForNodeParams returns the container of the given node based on
+// container query conditions. If containerName is given, it will find the
+// nearest container with a matching name; otherwise it will find the nearest
+// container regardless of its container name.
+type GetContainerForNodeParams struct {
+	NodeID        cdp.NodeID `json:"nodeId"`
+	ContainerName string     `json:"containerName,omitempty"`
+}
+
+// GetContainerForNode returns the container of the given node based on
+// container query conditions. If containerName is given, it will find the
+// nearest container with a matching name; otherwise it will find the nearest
+// container regardless of its container name.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/DOM#method-getContainerForNode
+//
+// parameters:
+//   nodeID
+func GetContainerForNode(nodeID cdp.NodeID) *GetContainerForNodeParams {
+	return &GetContainerForNodeParams{
+		NodeID: nodeID,
+	}
+}
+
+// WithContainerName [no description].
+func (p GetContainerForNodeParams) WithContainerName(containerName string) *GetContainerForNodeParams {
+	p.ContainerName = containerName
+	return &p
+}
+
+// GetContainerForNodeReturns return values.
+type GetContainerForNodeReturns struct {
+	NodeID cdp.NodeID `json:"nodeId,omitempty"` // The container node for the given node, or null if not found.
+}
+
+// Do executes DOM.getContainerForNode against the provided context.
+//
+// returns:
+//   nodeID - The container node for the given node, or null if not found.
+func (p *GetContainerForNodeParams) Do(ctx context.Context) (nodeID cdp.NodeID, err error) {
+	// execute
+	var res GetContainerForNodeReturns
+	err = cdp.Execute(ctx, CommandGetContainerForNode, p, &res)
+	if err != nil {
+		return 0, err
+	}
+
+	return res.NodeID, nil
+}
+
+// GetQueryingDescendantsForContainerParams returns the descendants of a
+// container query container that have container queries against this container.
+type GetQueryingDescendantsForContainerParams struct {
+	NodeID cdp.NodeID `json:"nodeId"` // Id of the container node to find querying descendants from.
+}
+
+// GetQueryingDescendantsForContainer returns the descendants of a container
+// query container that have container queries against this container.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/DOM#method-getQueryingDescendantsForContainer
+//
+// parameters:
+//   nodeID - Id of the container node to find querying descendants from.
+func GetQueryingDescendantsForContainer(nodeID cdp.NodeID) *GetQueryingDescendantsForContainerParams {
+	return &GetQueryingDescendantsForContainerParams{
+		NodeID: nodeID,
+	}
+}
+
+// GetQueryingDescendantsForContainerReturns return values.
+type GetQueryingDescendantsForContainerReturns struct {
+	NodeIds []cdp.NodeID `json:"nodeIds,omitempty"` // Descendant nodes with container queries against the given container.
+}
+
+// Do executes DOM.getQueryingDescendantsForContainer against the provided context.
+//
+// returns:
+//   nodeIds - Descendant nodes with container queries against the given container.
+func (p *GetQueryingDescendantsForContainerParams) Do(ctx context.Context) (nodeIds []cdp.NodeID, err error) {
+	// execute
+	var res GetQueryingDescendantsForContainerReturns
+	err = cdp.Execute(ctx, CommandGetQueryingDescendantsForContainer, p, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.NodeIds, nil
+}
+
 // Command names.
 const (
-	CommandCollectClassNamesFromSubtree    = "DOM.collectClassNamesFromSubtree"
-	CommandCopyTo                          = "DOM.copyTo"
-	CommandDescribeNode                    = "DOM.describeNode"
-	CommandDisable                         = "DOM.disable"
-	CommandDiscardSearchResults            = "DOM.discardSearchResults"
-	CommandEnable                          = "DOM.enable"
-	CommandFocus                           = "DOM.focus"
-	CommandGetAttributes                   = "DOM.getAttributes"
-	CommandGetBoxModel                     = "DOM.getBoxModel"
-	CommandGetContentQuads                 = "DOM.getContentQuads"
-	CommandGetDocument                     = "DOM.getDocument"
-	CommandGetFlattenedDocument            = "DOM.getFlattenedDocument"
-	CommandGetNodeForLocation              = "DOM.getNodeForLocation"
-	CommandGetOuterHTML                    = "DOM.getOuterHTML"
-	CommandGetRelayoutBoundary             = "DOM.getRelayoutBoundary"
-	CommandGetSearchResults                = "DOM.getSearchResults"
-	CommandMarkUndoableState               = "DOM.markUndoableState"
-	CommandMoveTo                          = "DOM.moveTo"
-	CommandPerformSearch                   = "DOM.performSearch"
-	CommandPushNodeByPathToFrontend        = "DOM.pushNodeByPathToFrontend"
-	CommandPushNodesByBackendIdsToFrontend = "DOM.pushNodesByBackendIdsToFrontend"
-	CommandQuerySelector                   = "DOM.querySelector"
-	CommandQuerySelectorAll                = "DOM.querySelectorAll"
-	CommandRedo                            = "DOM.redo"
-	CommandRemoveAttribute                 = "DOM.removeAttribute"
-	CommandRemoveNode                      = "DOM.removeNode"
-	CommandRequestChildNodes               = "DOM.requestChildNodes"
-	CommandRequestNode                     = "DOM.requestNode"
-	CommandResolveNode                     = "DOM.resolveNode"
-	CommandSetAttributeValue               = "DOM.setAttributeValue"
-	CommandSetAttributesAsText             = "DOM.setAttributesAsText"
-	CommandSetFileInputFiles               = "DOM.setFileInputFiles"
-	CommandSetNodeStackTracesEnabled       = "DOM.setNodeStackTracesEnabled"
-	CommandGetNodeStackTraces              = "DOM.getNodeStackTraces"
-	CommandGetFileInfo                     = "DOM.getFileInfo"
-	CommandSetInspectedNode                = "DOM.setInspectedNode"
-	CommandSetNodeName                     = "DOM.setNodeName"
-	CommandSetNodeValue                    = "DOM.setNodeValue"
-	CommandSetOuterHTML                    = "DOM.setOuterHTML"
-	CommandUndo                            = "DOM.undo"
-	CommandGetFrameOwner                   = "DOM.getFrameOwner"
+	CommandCollectClassNamesFromSubtree       = "DOM.collectClassNamesFromSubtree"
+	CommandCopyTo                             = "DOM.copyTo"
+	CommandDescribeNode                       = "DOM.describeNode"
+	CommandScrollIntoViewIfNeeded             = "DOM.scrollIntoViewIfNeeded"
+	CommandDisable                            = "DOM.disable"
+	CommandDiscardSearchResults               = "DOM.discardSearchResults"
+	CommandEnable                             = "DOM.enable"
+	CommandFocus                              = "DOM.focus"
+	CommandGetAttributes                      = "DOM.getAttributes"
+	CommandGetBoxModel                        = "DOM.getBoxModel"
+	CommandGetContentQuads                    = "DOM.getContentQuads"
+	CommandGetDocument                        = "DOM.getDocument"
+	CommandGetNodesForSubtreeByStyle          = "DOM.getNodesForSubtreeByStyle"
+	CommandGetNodeForLocation                 = "DOM.getNodeForLocation"
+	CommandGetOuterHTML                       = "DOM.getOuterHTML"
+	CommandGetRelayoutBoundary                = "DOM.getRelayoutBoundary"
+	CommandGetSearchResults                   = "DOM.getSearchResults"
+	CommandMarkUndoableState                  = "DOM.markUndoableState"
+	CommandMoveTo                             = "DOM.moveTo"
+	CommandPerformSearch                      = "DOM.performSearch"
+	CommandPushNodeByPathToFrontend           = "DOM.pushNodeByPathToFrontend"
+	CommandPushNodesByBackendIdsToFrontend    = "DOM.pushNodesByBackendIdsToFrontend"
+	CommandQuerySelector                      = "DOM.querySelector"
+	CommandQuerySelectorAll                   = "DOM.querySelectorAll"
+	CommandRedo                               = "DOM.redo"
+	CommandRemoveAttribute                    = "DOM.removeAttribute"
+	CommandRemoveNode                         = "DOM.removeNode"
+	CommandRequestChildNodes                  = "DOM.requestChildNodes"
+	CommandRequestNode                        = "DOM.requestNode"
+	CommandResolveNode                        = "DOM.resolveNode"
+	CommandSetAttributeValue                  = "DOM.setAttributeValue"
+	CommandSetAttributesAsText                = "DOM.setAttributesAsText"
+	CommandSetFileInputFiles                  = "DOM.setFileInputFiles"
+	CommandSetNodeStackTracesEnabled          = "DOM.setNodeStackTracesEnabled"
+	CommandGetNodeStackTraces                 = "DOM.getNodeStackTraces"
+	CommandGetFileInfo                        = "DOM.getFileInfo"
+	CommandSetInspectedNode                   = "DOM.setInspectedNode"
+	CommandSetNodeName                        = "DOM.setNodeName"
+	CommandSetNodeValue                       = "DOM.setNodeValue"
+	CommandSetOuterHTML                       = "DOM.setOuterHTML"
+	CommandUndo                               = "DOM.undo"
+	CommandGetFrameOwner                      = "DOM.getFrameOwner"
+	CommandGetContainerForNode                = "DOM.getContainerForNode"
+	CommandGetQueryingDescendantsForContainer = "DOM.getQueryingDescendantsForContainer"
 )

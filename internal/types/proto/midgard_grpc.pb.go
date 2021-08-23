@@ -11,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // MidgardClient is the client API for Midgard service.
@@ -104,7 +105,7 @@ type UnsafeMidgardServer interface {
 }
 
 func RegisterMidgardServer(s grpc.ServiceRegistrar, srv MidgardServer) {
-	s.RegisterService(&_Midgard_serviceDesc, srv)
+	s.RegisterService(&Midgard_ServiceDesc, srv)
 }
 
 func _Midgard_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -179,7 +180,10 @@ func _Midgard_ListDaemons_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Midgard_serviceDesc = grpc.ServiceDesc{
+// Midgard_ServiceDesc is the grpc.ServiceDesc for Midgard service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Midgard_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.Midgard",
 	HandlerType: (*MidgardServer)(nil),
 	Methods: []grpc.MethodDesc{

@@ -10,13 +10,13 @@ BINARY = mg
 TARGET = -o $(BINARY)
 MIDGARD_HOME = changkun.de/x/midgard
 BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/internal/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/internal/version.BuildTime=$(BUILDTIME)"
-BUILD_FLAGS = $(BUILD_SETTINGS) -mod=vendor
+BUILD_FLAGS = $(BUILD_SETTINGS) -mod=vendor -x -work
 
 all:
 	go build $(TARGET) $(BUILD_FLAGS)
 install:
-	go get google.golang.org/protobuf/cmd/protoc-gen-go \
-         google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 gen:
 	go generate ./...
 dep:

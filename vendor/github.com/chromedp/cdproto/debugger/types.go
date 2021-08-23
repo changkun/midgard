@@ -48,6 +48,15 @@ type ScriptPosition struct {
 	ColumnNumber int64 `json:"columnNumber"`
 }
 
+// LocationRange location range within one script.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#type-LocationRange
+type LocationRange struct {
+	ScriptID runtime.ScriptID `json:"scriptId"`
+	Start    *ScriptPosition  `json:"start"`
+	End      *ScriptPosition  `json:"end"`
+}
+
 // CallFrame JavaScript call frame. Array of call frames form the call stack.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#type-CallFrame
@@ -91,6 +100,58 @@ type BreakLocation struct {
 	Type         BreakLocationType `json:"type,omitempty"`
 }
 
+// ScriptLanguage enum of possible script languages.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#type-ScriptLanguage
+type ScriptLanguage string
+
+// String returns the ScriptLanguage as string value.
+func (t ScriptLanguage) String() string {
+	return string(t)
+}
+
+// ScriptLanguage values.
+const (
+	ScriptLanguageJavaScript  ScriptLanguage = "JavaScript"
+	ScriptLanguageWebAssembly ScriptLanguage = "WebAssembly"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t ScriptLanguage) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t ScriptLanguage) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *ScriptLanguage) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch ScriptLanguage(in.String()) {
+	case ScriptLanguageJavaScript:
+		*t = ScriptLanguageJavaScript
+	case ScriptLanguageWebAssembly:
+		*t = ScriptLanguageWebAssembly
+
+	default:
+		in.AddError(errors.New("unknown ScriptLanguage value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *ScriptLanguage) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
+// DebugSymbols debug symbols available for a wasm script.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#type-DebugSymbols
+type DebugSymbols struct {
+	Type        DebugSymbolsType `json:"type"`                  // Type of the debug symbols.
+	ExternalURL string           `json:"externalURL,omitempty"` // URL of the external symbol source.
+}
+
 // ScopeType scope type.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#type-Scope
@@ -103,15 +164,16 @@ func (t ScopeType) String() string {
 
 // ScopeType values.
 const (
-	ScopeTypeGlobal  ScopeType = "global"
-	ScopeTypeLocal   ScopeType = "local"
-	ScopeTypeWith    ScopeType = "with"
-	ScopeTypeClosure ScopeType = "closure"
-	ScopeTypeCatch   ScopeType = "catch"
-	ScopeTypeBlock   ScopeType = "block"
-	ScopeTypeScript  ScopeType = "script"
-	ScopeTypeEval    ScopeType = "eval"
-	ScopeTypeModule  ScopeType = "module"
+	ScopeTypeGlobal              ScopeType = "global"
+	ScopeTypeLocal               ScopeType = "local"
+	ScopeTypeWith                ScopeType = "with"
+	ScopeTypeClosure             ScopeType = "closure"
+	ScopeTypeCatch               ScopeType = "catch"
+	ScopeTypeBlock               ScopeType = "block"
+	ScopeTypeScript              ScopeType = "script"
+	ScopeTypeEval                ScopeType = "eval"
+	ScopeTypeModule              ScopeType = "module"
+	ScopeTypeWasmExpressionStack ScopeType = "wasm-expression-stack"
 )
 
 // MarshalEasyJSON satisfies easyjson.Marshaler.
@@ -145,6 +207,8 @@ func (t *ScopeType) UnmarshalEasyJSON(in *jlexer.Lexer) {
 		*t = ScopeTypeEval
 	case ScopeTypeModule:
 		*t = ScopeTypeModule
+	case ScopeTypeWasmExpressionStack:
+		*t = ScopeTypeWasmExpressionStack
 
 	default:
 		in.AddError(errors.New("unknown ScopeType value"))
@@ -203,6 +267,56 @@ func (t *BreakLocationType) UnmarshalJSON(buf []byte) error {
 	return easyjson.Unmarshal(buf, t)
 }
 
+// DebugSymbolsType type of the debug symbols.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#type-DebugSymbols
+type DebugSymbolsType string
+
+// String returns the DebugSymbolsType as string value.
+func (t DebugSymbolsType) String() string {
+	return string(t)
+}
+
+// DebugSymbolsType values.
+const (
+	DebugSymbolsTypeNone          DebugSymbolsType = "None"
+	DebugSymbolsTypeSourceMap     DebugSymbolsType = "SourceMap"
+	DebugSymbolsTypeEmbeddedDWARF DebugSymbolsType = "EmbeddedDWARF"
+	DebugSymbolsTypeExternalDWARF DebugSymbolsType = "ExternalDWARF"
+)
+
+// MarshalEasyJSON satisfies easyjson.Marshaler.
+func (t DebugSymbolsType) MarshalEasyJSON(out *jwriter.Writer) {
+	out.String(string(t))
+}
+
+// MarshalJSON satisfies json.Marshaler.
+func (t DebugSymbolsType) MarshalJSON() ([]byte, error) {
+	return easyjson.Marshal(t)
+}
+
+// UnmarshalEasyJSON satisfies easyjson.Unmarshaler.
+func (t *DebugSymbolsType) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	switch DebugSymbolsType(in.String()) {
+	case DebugSymbolsTypeNone:
+		*t = DebugSymbolsTypeNone
+	case DebugSymbolsTypeSourceMap:
+		*t = DebugSymbolsTypeSourceMap
+	case DebugSymbolsTypeEmbeddedDWARF:
+		*t = DebugSymbolsTypeEmbeddedDWARF
+	case DebugSymbolsTypeExternalDWARF:
+		*t = DebugSymbolsTypeExternalDWARF
+
+	default:
+		in.AddError(errors.New("unknown DebugSymbolsType value"))
+	}
+}
+
+// UnmarshalJSON satisfies json.Unmarshaler.
+func (t *DebugSymbolsType) UnmarshalJSON(buf []byte) error {
+	return easyjson.Unmarshal(buf, t)
+}
+
 // PausedReason pause reason.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Debugger#event-paused
@@ -217,6 +331,7 @@ func (t PausedReason) String() string {
 const (
 	PausedReasonAmbiguous        PausedReason = "ambiguous"
 	PausedReasonAssert           PausedReason = "assert"
+	PausedReasonCSPViolation     PausedReason = "CSPViolation"
 	PausedReasonDebugCommand     PausedReason = "debugCommand"
 	PausedReasonDOM              PausedReason = "DOM"
 	PausedReasonEventListener    PausedReason = "EventListener"
@@ -245,6 +360,8 @@ func (t *PausedReason) UnmarshalEasyJSON(in *jlexer.Lexer) {
 		*t = PausedReasonAmbiguous
 	case PausedReasonAssert:
 		*t = PausedReasonAssert
+	case PausedReasonCSPViolation:
+		*t = PausedReasonCSPViolation
 	case PausedReasonDebugCommand:
 		*t = PausedReasonDebugCommand
 	case PausedReasonDOM:

@@ -1,5 +1,23 @@
 # Gin ChangeLog
 
+## Gin v1.7.3
+
+### BUGFIXES
+
+* fix level 1 router match [#2767](https://github.com/gin-gonic/gin/issues/2767), [#2796](https://github.com/gin-gonic/gin/issues/2796)
+
+## Gin v1.7.2
+
+### BUGFIXES
+
+* Fix conflict between param and exact path [#2706](https://github.com/gin-gonic/gin/issues/2706). Close issue [#2682](https://github.com/gin-gonic/gin/issues/2682) [#2696](https://github.com/gin-gonic/gin/issues/2696).
+
+## Gin v1.7.1
+
+### BUGFIXES
+
+* fix: data race with trustedCIDRs from [#2674](https://github.com/gin-gonic/gin/issues/2674)([#2675](https://github.com/gin-gonic/gin/pull/2675))
+
 ## Gin v1.7.0
 
 ### BUGFIXES

@@ -28,7 +28,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime(in *jlexer.Lexer, out
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -87,7 +87,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime1(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -160,7 +160,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime2(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -313,7 +313,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime3(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -379,7 +379,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime4(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -445,7 +445,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime5(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -540,7 +540,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime6(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -655,7 +655,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime7(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -714,7 +714,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime8(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -780,7 +780,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime9(in *jlexer.Lexer, ou
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -918,7 +918,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime10(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -984,7 +984,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime11(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1050,7 +1050,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime12(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1125,7 +1125,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime13(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1198,7 +1198,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime14(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1300,7 +1300,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime15(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1461,7 +1461,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime16(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1572,7 +1572,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime17(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1759,7 +1759,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime18(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1840,7 +1840,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime19(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -1937,7 +1937,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime20(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2004,7 +2004,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime21(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2241,7 +2241,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime22(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2257,6 +2257,8 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime22(in *jlexer.Lexer, o
 			out.AccessorPropertiesOnly = bool(in.Bool())
 		case "generatePreview":
 			out.GeneratePreview = bool(in.Bool())
+		case "nonIndexedPropertiesOnly":
+			out.NonIndexedPropertiesOnly = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -2290,6 +2292,11 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime22(out *jwriter.Writer
 		const prefix string = ",\"generatePreview\":"
 		out.RawString(prefix)
 		out.Bool(bool(in.GeneratePreview))
+	}
+	if in.NonIndexedPropertiesOnly {
+		const prefix string = ",\"nonIndexedPropertiesOnly\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.NonIndexedPropertiesOnly))
 	}
 	out.RawByte('}')
 }
@@ -2328,7 +2335,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime23(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2395,7 +2402,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime24(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2454,7 +2461,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime25(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2533,7 +2540,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime26(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2592,7 +2599,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime27(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2606,6 +2613,8 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime27(in *jlexer.Lexer, o
 			out.Origin = string(in.String())
 		case "name":
 			out.Name = string(in.String())
+		case "uniqueId":
+			out.UniqueID = string(in.String())
 		case "auxData":
 			(out.AuxData).UnmarshalEasyJSON(in)
 		default:
@@ -2636,6 +2645,11 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime27(out *jwriter.Writer
 		const prefix string = ",\"name\":"
 		out.RawString(prefix)
 		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"uniqueId\":"
+		out.RawString(prefix)
+		out.String(string(in.UniqueID))
 	}
 	if (in.AuxData).IsDefined() {
 		const prefix string = ",\"auxData\":"
@@ -2679,7 +2693,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime28(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2721,6 +2735,8 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime28(in *jlexer.Lexer, o
 			}
 		case "executionContextId":
 			out.ExecutionContextID = ExecutionContextID(in.Int64())
+		case "exceptionMetaData":
+			(out.ExceptionMetaData).UnmarshalEasyJSON(in)
 		default:
 			in.SkipRecursive()
 		}
@@ -2780,6 +2796,11 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime28(out *jwriter.Writer
 		out.RawString(prefix)
 		out.Int64(int64(in.ExecutionContextID))
 	}
+	if (in.ExceptionMetaData).IsDefined() {
+		const prefix string = ",\"exceptionMetaData\":"
+		out.RawString(prefix)
+		(in.ExceptionMetaData).MarshalEasyJSON(out)
+	}
 	out.RawByte('}')
 }
 
@@ -2817,7 +2838,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime29(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2837,6 +2858,8 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime29(in *jlexer.Lexer, o
 			}
 		case "hints":
 			(out.Hints).UnmarshalEasyJSON(in)
+		case "executionContextId":
+			out.ExecutionContextID = ExecutionContextID(in.Int64())
 		default:
 			in.SkipRecursive()
 		}
@@ -2864,6 +2887,11 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime29(out *jwriter.Writer
 		const prefix string = ",\"hints\":"
 		out.RawString(prefix)
 		(in.Hints).MarshalEasyJSON(out)
+	}
+	if in.ExecutionContextID != 0 {
+		const prefix string = ",\"executionContextId\":"
+		out.RawString(prefix)
+		out.Int64(int64(in.ExecutionContextID))
 	}
 	out.RawByte('}')
 }
@@ -2902,7 +2930,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime30(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -2961,7 +2989,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime31(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3027,7 +3055,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime32(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3105,7 +3133,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime33(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3202,7 +3230,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime34(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3275,7 +3303,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime35(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3440,7 +3468,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime36(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3520,7 +3548,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime37(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3615,7 +3643,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime38(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3649,6 +3677,10 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime38(in *jlexer.Lexer, o
 			out.DisableBreaks = bool(in.Bool())
 		case "replMode":
 			out.ReplMode = bool(in.Bool())
+		case "allowUnsafeEvalBlockedByCSP":
+			out.AllowUnsafeEvalBlockedByCSP = bool(in.Bool())
+		case "uniqueContextId":
+			out.UniqueContextID = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -3728,6 +3760,16 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime38(out *jwriter.Writer
 		out.RawString(prefix)
 		out.Bool(bool(in.ReplMode))
 	}
+	if in.AllowUnsafeEvalBlockedByCSP {
+		const prefix string = ",\"allowUnsafeEvalBlockedByCSP\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.AllowUnsafeEvalBlockedByCSP))
+	}
+	if in.UniqueContextID != "" {
+		const prefix string = ",\"uniqueContextId\":"
+		out.RawString(prefix)
+		out.String(string(in.UniqueContextID))
+	}
 	out.RawByte('}')
 }
 
@@ -3765,7 +3807,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime39(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3864,7 +3906,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime40(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3923,7 +3965,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime41(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -3982,7 +4024,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime42(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4041,7 +4083,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime43(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4114,7 +4156,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime44(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4201,7 +4243,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime45(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4288,7 +4330,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime46(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4383,7 +4425,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime47(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4440,6 +4482,8 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime47(in *jlexer.Lexer, o
 			out.ExecutionContextID = ExecutionContextID(in.Int64())
 		case "objectGroup":
 			out.ObjectGroup = string(in.String())
+		case "throwOnSideEffect":
+			out.ThrowOnSideEffect = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -4517,6 +4561,11 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime47(out *jwriter.Writer
 		out.RawString(prefix)
 		out.String(string(in.ObjectGroup))
 	}
+	if in.ThrowOnSideEffect {
+		const prefix string = ",\"throwOnSideEffect\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.ThrowOnSideEffect))
+	}
 	out.RawByte('}')
 }
 
@@ -4554,7 +4603,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime48(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4648,7 +4697,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime49(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4739,7 +4788,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime50(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4834,7 +4883,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime51(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4914,7 +4963,7 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime52(in *jlexer.Lexer, o
 	}
 	in.Delim('{')
 	for !in.IsDelim('}') {
-		key := in.UnsafeString()
+		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		if in.IsNull() {
 			in.Skip()
@@ -4924,8 +4973,8 @@ func easyjsonC5a4559bDecodeGithubComChromedpCdprotoRuntime52(in *jlexer.Lexer, o
 		switch key {
 		case "name":
 			out.Name = string(in.String())
-		case "executionContextId":
-			out.ExecutionContextID = ExecutionContextID(in.Int64())
+		case "executionContextName":
+			out.ExecutionContextName = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -4945,10 +4994,10 @@ func easyjsonC5a4559bEncodeGithubComChromedpCdprotoRuntime52(out *jwriter.Writer
 		out.RawString(prefix[1:])
 		out.String(string(in.Name))
 	}
-	if in.ExecutionContextID != 0 {
-		const prefix string = ",\"executionContextId\":"
+	if in.ExecutionContextName != "" {
+		const prefix string = ",\"executionContextName\":"
 		out.RawString(prefix)
-		out.Int64(int64(in.ExecutionContextID))
+		out.String(string(in.ExecutionContextName))
 	}
 	out.RawByte('}')
 }

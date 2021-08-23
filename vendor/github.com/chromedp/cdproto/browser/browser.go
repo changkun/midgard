@@ -17,9 +17,9 @@ import (
 
 // SetPermissionParams set permission settings for given origin.
 type SetPermissionParams struct {
-	Origin           string                `json:"origin"`                     // Origin the permission applies to.
 	Permission       *PermissionDescriptor `json:"permission"`                 // Descriptor of permission to override.
 	Setting          PermissionSetting     `json:"setting"`                    // Setting of the permission.
+	Origin           string                `json:"origin,omitempty"`           // Origin the permission applies to, all origins if not specified.
 	BrowserContextID cdp.BrowserContextID  `json:"browserContextId,omitempty"` // Context to override. When omitted, default browser context is used.
 }
 
@@ -28,15 +28,19 @@ type SetPermissionParams struct {
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Browser#method-setPermission
 //
 // parameters:
-//   origin - Origin the permission applies to.
 //   permission - Descriptor of permission to override.
 //   setting - Setting of the permission.
-func SetPermission(origin string, permission *PermissionDescriptor, setting PermissionSetting) *SetPermissionParams {
+func SetPermission(permission *PermissionDescriptor, setting PermissionSetting) *SetPermissionParams {
 	return &SetPermissionParams{
-		Origin:     origin,
 		Permission: permission,
 		Setting:    setting,
 	}
+}
+
+// WithOrigin origin the permission applies to, all origins if not specified.
+func (p SetPermissionParams) WithOrigin(origin string) *SetPermissionParams {
+	p.Origin = origin
+	return &p
 }
 
 // WithBrowserContextID context to override. When omitted, default browser
@@ -54,8 +58,8 @@ func (p *SetPermissionParams) Do(ctx context.Context) (err error) {
 // GrantPermissionsParams grant specific permissions to the given origin and
 // reject all others.
 type GrantPermissionsParams struct {
-	Origin           string               `json:"origin"`
 	Permissions      []PermissionType     `json:"permissions"`
+	Origin           string               `json:"origin,omitempty"`           // Origin the permission applies to, all origins if not specified.
 	BrowserContextID cdp.BrowserContextID `json:"browserContextId,omitempty"` // BrowserContext to override permissions. When omitted, default browser context is used.
 }
 
@@ -65,13 +69,17 @@ type GrantPermissionsParams struct {
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Browser#method-grantPermissions
 //
 // parameters:
-//   origin
 //   permissions
-func GrantPermissions(origin string, permissions []PermissionType) *GrantPermissionsParams {
+func GrantPermissions(permissions []PermissionType) *GrantPermissionsParams {
 	return &GrantPermissionsParams{
-		Origin:      origin,
 		Permissions: permissions,
 	}
+}
+
+// WithOrigin origin the permission applies to, all origins if not specified.
+func (p GrantPermissionsParams) WithOrigin(origin string) *GrantPermissionsParams {
+	p.Origin = origin
+	return &p
 }
 
 // WithBrowserContextID browserContext to override permissions. When omitted,
@@ -110,6 +118,81 @@ func (p ResetPermissionsParams) WithBrowserContextID(browserContextID cdp.Browse
 // Do executes Browser.resetPermissions against the provided context.
 func (p *ResetPermissionsParams) Do(ctx context.Context) (err error) {
 	return cdp.Execute(ctx, CommandResetPermissions, p, nil)
+}
+
+// SetDownloadBehaviorParams set the behavior when downloading a file.
+type SetDownloadBehaviorParams struct {
+	Behavior         SetDownloadBehaviorBehavior `json:"behavior"`                   // Whether to allow all or deny all download requests, or use default Chrome behavior if available (otherwise deny). |allowAndName| allows download and names files according to their dowmload guids.
+	BrowserContextID cdp.BrowserContextID        `json:"browserContextId,omitempty"` // BrowserContext to set download behavior. When omitted, default browser context is used.
+	DownloadPath     string                      `json:"downloadPath,omitempty"`     // The default path to save downloaded files to. This is required if behavior is set to 'allow' or 'allowAndName'.
+	EventsEnabled    bool                        `json:"eventsEnabled,omitempty"`    // Whether to emit download events (defaults to false).
+}
+
+// SetDownloadBehavior set the behavior when downloading a file.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Browser#method-setDownloadBehavior
+//
+// parameters:
+//   behavior - Whether to allow all or deny all download requests, or use default Chrome behavior if available (otherwise deny). |allowAndName| allows download and names files according to their dowmload guids.
+func SetDownloadBehavior(behavior SetDownloadBehaviorBehavior) *SetDownloadBehaviorParams {
+	return &SetDownloadBehaviorParams{
+		Behavior: behavior,
+	}
+}
+
+// WithBrowserContextID browserContext to set download behavior. When
+// omitted, default browser context is used.
+func (p SetDownloadBehaviorParams) WithBrowserContextID(browserContextID cdp.BrowserContextID) *SetDownloadBehaviorParams {
+	p.BrowserContextID = browserContextID
+	return &p
+}
+
+// WithDownloadPath the default path to save downloaded files to. This is
+// required if behavior is set to 'allow' or 'allowAndName'.
+func (p SetDownloadBehaviorParams) WithDownloadPath(downloadPath string) *SetDownloadBehaviorParams {
+	p.DownloadPath = downloadPath
+	return &p
+}
+
+// WithEventsEnabled whether to emit download events (defaults to false).
+func (p SetDownloadBehaviorParams) WithEventsEnabled(eventsEnabled bool) *SetDownloadBehaviorParams {
+	p.EventsEnabled = eventsEnabled
+	return &p
+}
+
+// Do executes Browser.setDownloadBehavior against the provided context.
+func (p *SetDownloadBehaviorParams) Do(ctx context.Context) (err error) {
+	return cdp.Execute(ctx, CommandSetDownloadBehavior, p, nil)
+}
+
+// CancelDownloadParams cancel a download if in progress.
+type CancelDownloadParams struct {
+	GUID             string               `json:"guid"`                       // Global unique identifier of the download.
+	BrowserContextID cdp.BrowserContextID `json:"browserContextId,omitempty"` // BrowserContext to perform the action in. When omitted, default browser context is used.
+}
+
+// CancelDownload cancel a download if in progress.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Browser#method-cancelDownload
+//
+// parameters:
+//   guid - Global unique identifier of the download.
+func CancelDownload(guid string) *CancelDownloadParams {
+	return &CancelDownloadParams{
+		GUID: guid,
+	}
+}
+
+// WithBrowserContextID browserContext to perform the action in. When
+// omitted, default browser context is used.
+func (p CancelDownloadParams) WithBrowserContextID(browserContextID cdp.BrowserContextID) *CancelDownloadParams {
+	p.BrowserContextID = browserContextID
+	return &p
+}
+
+// Do executes Browser.cancelDownload against the provided context.
+func (p *CancelDownloadParams) Do(ctx context.Context) (err error) {
+	return cdp.Execute(ctx, CommandCancelDownload, p, nil)
 }
 
 // CloseParams close browser gracefully.
@@ -459,11 +542,36 @@ func (p *SetDockTileParams) Do(ctx context.Context) (err error) {
 	return cdp.Execute(ctx, CommandSetDockTile, p, nil)
 }
 
+// ExecuteBrowserCommandParams invoke custom browser commands used by
+// telemetry.
+type ExecuteBrowserCommandParams struct {
+	CommandID CommandID `json:"commandId"`
+}
+
+// ExecuteBrowserCommand invoke custom browser commands used by telemetry.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Browser#method-executeBrowserCommand
+//
+// parameters:
+//   commandID
+func ExecuteBrowserCommand(commandID CommandID) *ExecuteBrowserCommandParams {
+	return &ExecuteBrowserCommandParams{
+		CommandID: commandID,
+	}
+}
+
+// Do executes Browser.executeBrowserCommand against the provided context.
+func (p *ExecuteBrowserCommandParams) Do(ctx context.Context) (err error) {
+	return cdp.Execute(ctx, CommandExecuteBrowserCommand, p, nil)
+}
+
 // Command names.
 const (
 	CommandSetPermission         = "Browser.setPermission"
 	CommandGrantPermissions      = "Browser.grantPermissions"
 	CommandResetPermissions      = "Browser.resetPermissions"
+	CommandSetDownloadBehavior   = "Browser.setDownloadBehavior"
+	CommandCancelDownload        = "Browser.cancelDownload"
 	CommandClose                 = "Browser.close"
 	CommandCrash                 = "Browser.crash"
 	CommandCrashGpuProcess       = "Browser.crashGpuProcess"
@@ -475,4 +583,5 @@ const (
 	CommandGetWindowForTarget    = "Browser.getWindowForTarget"
 	CommandSetWindowBounds       = "Browser.setWindowBounds"
 	CommandSetDockTile           = "Browser.setDockTile"
+	CommandExecuteBrowserCommand = "Browser.executeBrowserCommand"
 )

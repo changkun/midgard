@@ -117,8 +117,9 @@ func (p *StartParams) Do(ctx context.Context) (err error) {
 // JavaScript executed before enabling precise code coverage may be incomplete.
 // Enabling prevents running optimized code and resets execution counters.
 type StartPreciseCoverageParams struct {
-	CallCount bool `json:"callCount,omitempty"` // Collect accurate call counts beyond simple 'covered' or 'not covered'.
-	Detailed  bool `json:"detailed,omitempty"`  // Collect block-based coverage.
+	CallCount             bool `json:"callCount,omitempty"`             // Collect accurate call counts beyond simple 'covered' or 'not covered'.
+	Detailed              bool `json:"detailed,omitempty"`              // Collect block-based coverage.
+	AllowTriggeredUpdates bool `json:"allowTriggeredUpdates,omitempty"` // Allow the backend to send updates on its own initiative
 }
 
 // StartPreciseCoverage enable precise code coverage. Coverage data for
@@ -142,6 +143,13 @@ func (p StartPreciseCoverageParams) WithCallCount(callCount bool) *StartPreciseC
 // WithDetailed collect block-based coverage.
 func (p StartPreciseCoverageParams) WithDetailed(detailed bool) *StartPreciseCoverageParams {
 	p.Detailed = detailed
+	return &p
+}
+
+// WithAllowTriggeredUpdates allow the backend to send updates on its own
+// initiative.
+func (p StartPreciseCoverageParams) WithAllowTriggeredUpdates(allowTriggeredUpdates bool) *StartPreciseCoverageParams {
+	p.AllowTriggeredUpdates = allowTriggeredUpdates
 	return &p
 }
 
@@ -309,81 +317,18 @@ func (p *TakeTypeProfileParams) Do(ctx context.Context) (result []*ScriptTypePro
 	return res.Result, nil
 }
 
-// EnableRuntimeCallStatsParams enable run time call stats collection.
-type EnableRuntimeCallStatsParams struct{}
-
-// EnableRuntimeCallStats enable run time call stats collection.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Profiler#method-enableRuntimeCallStats
-func EnableRuntimeCallStats() *EnableRuntimeCallStatsParams {
-	return &EnableRuntimeCallStatsParams{}
-}
-
-// Do executes Profiler.enableRuntimeCallStats against the provided context.
-func (p *EnableRuntimeCallStatsParams) Do(ctx context.Context) (err error) {
-	return cdp.Execute(ctx, CommandEnableRuntimeCallStats, nil, nil)
-}
-
-// DisableRuntimeCallStatsParams disable run time call stats collection.
-type DisableRuntimeCallStatsParams struct{}
-
-// DisableRuntimeCallStats disable run time call stats collection.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Profiler#method-disableRuntimeCallStats
-func DisableRuntimeCallStats() *DisableRuntimeCallStatsParams {
-	return &DisableRuntimeCallStatsParams{}
-}
-
-// Do executes Profiler.disableRuntimeCallStats against the provided context.
-func (p *DisableRuntimeCallStatsParams) Do(ctx context.Context) (err error) {
-	return cdp.Execute(ctx, CommandDisableRuntimeCallStats, nil, nil)
-}
-
-// GetRuntimeCallStatsParams retrieve run time call stats.
-type GetRuntimeCallStatsParams struct{}
-
-// GetRuntimeCallStats retrieve run time call stats.
-//
-// See: https://chromedevtools.github.io/devtools-protocol/tot/Profiler#method-getRuntimeCallStats
-func GetRuntimeCallStats() *GetRuntimeCallStatsParams {
-	return &GetRuntimeCallStatsParams{}
-}
-
-// GetRuntimeCallStatsReturns return values.
-type GetRuntimeCallStatsReturns struct {
-	Result []*CounterInfo `json:"result,omitempty"` // Collected counter information.
-}
-
-// Do executes Profiler.getRuntimeCallStats against the provided context.
-//
-// returns:
-//   result - Collected counter information.
-func (p *GetRuntimeCallStatsParams) Do(ctx context.Context) (result []*CounterInfo, err error) {
-	// execute
-	var res GetRuntimeCallStatsReturns
-	err = cdp.Execute(ctx, CommandGetRuntimeCallStats, nil, &res)
-	if err != nil {
-		return nil, err
-	}
-
-	return res.Result, nil
-}
-
 // Command names.
 const (
-	CommandDisable                 = "Profiler.disable"
-	CommandEnable                  = "Profiler.enable"
-	CommandGetBestEffortCoverage   = "Profiler.getBestEffortCoverage"
-	CommandSetSamplingInterval     = "Profiler.setSamplingInterval"
-	CommandStart                   = "Profiler.start"
-	CommandStartPreciseCoverage    = "Profiler.startPreciseCoverage"
-	CommandStartTypeProfile        = "Profiler.startTypeProfile"
-	CommandStop                    = "Profiler.stop"
-	CommandStopPreciseCoverage     = "Profiler.stopPreciseCoverage"
-	CommandStopTypeProfile         = "Profiler.stopTypeProfile"
-	CommandTakePreciseCoverage     = "Profiler.takePreciseCoverage"
-	CommandTakeTypeProfile         = "Profiler.takeTypeProfile"
-	CommandEnableRuntimeCallStats  = "Profiler.enableRuntimeCallStats"
-	CommandDisableRuntimeCallStats = "Profiler.disableRuntimeCallStats"
-	CommandGetRuntimeCallStats     = "Profiler.getRuntimeCallStats"
+	CommandDisable               = "Profiler.disable"
+	CommandEnable                = "Profiler.enable"
+	CommandGetBestEffortCoverage = "Profiler.getBestEffortCoverage"
+	CommandSetSamplingInterval   = "Profiler.setSamplingInterval"
+	CommandStart                 = "Profiler.start"
+	CommandStartPreciseCoverage  = "Profiler.startPreciseCoverage"
+	CommandStartTypeProfile      = "Profiler.startTypeProfile"
+	CommandStop                  = "Profiler.stop"
+	CommandStopPreciseCoverage   = "Profiler.stopPreciseCoverage"
+	CommandStopTypeProfile       = "Profiler.stopTypeProfile"
+	CommandTakePreciseCoverage   = "Profiler.takePreciseCoverage"
+	CommandTakeTypeProfile       = "Profiler.takeTypeProfile"
 )

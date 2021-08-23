@@ -133,24 +133,9 @@ func CloseTarget(targetID ID) *CloseTargetParams {
 	}
 }
 
-// CloseTargetReturns return values.
-type CloseTargetReturns struct {
-	Success bool `json:"success,omitempty"`
-}
-
 // Do executes Target.closeTarget against the provided context.
-//
-// returns:
-//   success
-func (p *CloseTargetParams) Do(ctx context.Context) (success bool, err error) {
-	// execute
-	var res CloseTargetReturns
-	err = cdp.Execute(ctx, CommandCloseTarget, p, &res)
-	if err != nil {
-		return false, err
-	}
-
-	return res.Success, nil
+func (p *CloseTargetParams) Do(ctx context.Context) (err error) {
+	return cdp.Execute(ctx, CommandCloseTarget, p, nil)
 }
 
 // ExposeDevToolsProtocolParams inject object to the target's main frame that
@@ -194,14 +179,40 @@ func (p *ExposeDevToolsProtocolParams) Do(ctx context.Context) (err error) {
 
 // CreateBrowserContextParams creates a new empty BrowserContext. Similar to
 // an incognito profile but you can have more than one.
-type CreateBrowserContextParams struct{}
+type CreateBrowserContextParams struct {
+	DisposeOnDetach bool   `json:"disposeOnDetach,omitempty"` // If specified, disposes this context when debugging session disconnects.
+	ProxyServer     string `json:"proxyServer,omitempty"`     // Proxy server, similar to the one passed to --proxy-server
+	ProxyBypassList string `json:"proxyBypassList,omitempty"` // Proxy bypass list, similar to the one passed to --proxy-bypass-list
+}
 
 // CreateBrowserContext creates a new empty BrowserContext. Similar to an
 // incognito profile but you can have more than one.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Target#method-createBrowserContext
+//
+// parameters:
 func CreateBrowserContext() *CreateBrowserContextParams {
 	return &CreateBrowserContextParams{}
+}
+
+// WithDisposeOnDetach if specified, disposes this context when debugging
+// session disconnects.
+func (p CreateBrowserContextParams) WithDisposeOnDetach(disposeOnDetach bool) *CreateBrowserContextParams {
+	p.DisposeOnDetach = disposeOnDetach
+	return &p
+}
+
+// WithProxyServer proxy server, similar to the one passed to --proxy-server.
+func (p CreateBrowserContextParams) WithProxyServer(proxyServer string) *CreateBrowserContextParams {
+	p.ProxyServer = proxyServer
+	return &p
+}
+
+// WithProxyBypassList proxy bypass list, similar to the one passed to
+// --proxy-bypass-list.
+func (p CreateBrowserContextParams) WithProxyBypassList(proxyBypassList string) *CreateBrowserContextParams {
+	p.ProxyBypassList = proxyBypassList
+	return &p
 }
 
 // CreateBrowserContextReturns return values.
@@ -216,7 +227,7 @@ type CreateBrowserContextReturns struct {
 func (p *CreateBrowserContextParams) Do(ctx context.Context) (browserContextID cdp.BrowserContextID, err error) {
 	// execute
 	var res CreateBrowserContextReturns
-	err = cdp.Execute(ctx, CommandCreateBrowserContext, nil, &res)
+	err = cdp.Execute(ctx, CommandCreateBrowserContext, p, &res)
 	if err != nil {
 		return "", err
 	}
@@ -258,7 +269,7 @@ func (p *GetBrowserContextsParams) Do(ctx context.Context) (browserContextIds []
 
 // CreateTargetParams creates a new page.
 type CreateTargetParams struct {
-	URL                     string               `json:"url"`                               // The initial URL the page will be navigated to.
+	URL                     string               `json:"url"`                               // The initial URL the page will be navigated to. An empty string indicates about:blank.
 	Width                   int64                `json:"width,omitempty"`                   // Frame width in DIP (headless chrome only).
 	Height                  int64                `json:"height,omitempty"`                  // Frame height in DIP (headless chrome only).
 	BrowserContextID        cdp.BrowserContextID `json:"browserContextId,omitempty"`        // The browser context to create the page in.
@@ -272,7 +283,7 @@ type CreateTargetParams struct {
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Target#method-createTarget
 //
 // parameters:
-//   url - The initial URL the page will be navigated to.
+//   url - The initial URL the page will be navigated to. An empty string indicates about:blank.
 func CreateTarget(url string) *CreateTargetParams {
 	return &CreateTargetParams{
 		URL: url,
@@ -461,18 +472,21 @@ func (p *GetTargetsParams) Do(ctx context.Context) (targetInfos []*Info, err err
 // SetAutoAttachParams controls whether to automatically attach to new
 // targets which are considered to be related to this one. When turned on,
 // attaches to all existing related targets as well. When turned off,
-// automatically detaches from all currently attached targets.
+// automatically detaches from all currently attached targets. This also clears
+// all targets added by autoAttachRelated from the list of targets to watch for
+// creation of related targets.
 type SetAutoAttachParams struct {
 	AutoAttach             bool `json:"autoAttach"`             // Whether to auto-attach to related targets.
 	WaitForDebuggerOnStart bool `json:"waitForDebuggerOnStart"` // Whether to pause new targets when attaching to them. Use Runtime.runIfWaitingForDebugger to run paused targets.
 	Flatten                bool `json:"flatten,omitempty"`      // Enables "flat" access to the session via specifying sessionId attribute in the commands. We plan to make this the default, deprecate non-flattened mode, and eventually retire it. See crbug.com/991325.
-	WindowOpen             bool `json:"windowOpen,omitempty"`   // Auto-attach to the targets created via window.open from current target.
 }
 
 // SetAutoAttach controls whether to automatically attach to new targets
 // which are considered to be related to this one. When turned on, attaches to
 // all existing related targets as well. When turned off, automatically detaches
-// from all currently attached targets.
+// from all currently attached targets. This also clears all targets added by
+// autoAttachRelated from the list of targets to watch for creation of related
+// targets.
 //
 // See: https://chromedevtools.github.io/devtools-protocol/tot/Target#method-setAutoAttach
 //
@@ -494,16 +508,44 @@ func (p SetAutoAttachParams) WithFlatten(flatten bool) *SetAutoAttachParams {
 	return &p
 }
 
-// WithWindowOpen auto-attach to the targets created via window.open from
-// current target.
-func (p SetAutoAttachParams) WithWindowOpen(windowOpen bool) *SetAutoAttachParams {
-	p.WindowOpen = windowOpen
-	return &p
-}
-
 // Do executes Target.setAutoAttach against the provided context.
 func (p *SetAutoAttachParams) Do(ctx context.Context) (err error) {
 	return cdp.Execute(ctx, CommandSetAutoAttach, p, nil)
+}
+
+// AutoAttachRelatedParams adds the specified target to the list of targets
+// that will be monitored for any related target creation (such as child frames,
+// child workers and new versions of service worker) and reported through
+// attachedToTarget. This cancel the effect of any previous setAutoAttach and is
+// also cancelled by subsequent setAutoAttach. Only available at the Browser
+// target.
+type AutoAttachRelatedParams struct {
+	TargetID               ID   `json:"targetId"`
+	WaitForDebuggerOnStart bool `json:"waitForDebuggerOnStart"` // Whether to pause new targets when attaching to them. Use Runtime.runIfWaitingForDebugger to run paused targets.
+}
+
+// AutoAttachRelated adds the specified target to the list of targets that
+// will be monitored for any related target creation (such as child frames,
+// child workers and new versions of service worker) and reported through
+// attachedToTarget. This cancel the effect of any previous setAutoAttach and is
+// also cancelled by subsequent setAutoAttach. Only available at the Browser
+// target.
+//
+// See: https://chromedevtools.github.io/devtools-protocol/tot/Target#method-autoAttachRelated
+//
+// parameters:
+//   targetID
+//   waitForDebuggerOnStart - Whether to pause new targets when attaching to them. Use Runtime.runIfWaitingForDebugger to run paused targets.
+func AutoAttachRelated(targetID ID, waitForDebuggerOnStart bool) *AutoAttachRelatedParams {
+	return &AutoAttachRelatedParams{
+		TargetID:               targetID,
+		WaitForDebuggerOnStart: waitForDebuggerOnStart,
+	}
+}
+
+// Do executes Target.autoAttachRelated against the provided context.
+func (p *AutoAttachRelatedParams) Do(ctx context.Context) (err error) {
+	return cdp.Execute(ctx, CommandAutoAttachRelated, p, nil)
 }
 
 // SetDiscoverTargetsParams controls whether to discover available targets
@@ -569,6 +611,7 @@ const (
 	CommandGetTargetInfo          = "Target.getTargetInfo"
 	CommandGetTargets             = "Target.getTargets"
 	CommandSetAutoAttach          = "Target.setAutoAttach"
+	CommandAutoAttachRelated      = "Target.autoAttachRelated"
 	CommandSetDiscoverTargets     = "Target.setDiscoverTargets"
 	CommandSetRemoteLocations     = "Target.setRemoteLocations"
 )

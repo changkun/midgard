@@ -400,6 +400,11 @@ type nodeValue struct {
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
 func (n *node) getValue(path string, params *Params, unescape bool) (value nodeValue) {
+	var (
+		skippedPath string
+		latestNode  = n // Caching the latest node
+	)
+
 walk: // Outer loop for walking the tree
 	for {
 		prefix := n.path
@@ -411,9 +416,29 @@ walk: // Outer loop for walking the tree
 				idxc := path[0]
 				for i, c := range []byte(n.indices) {
 					if c == idxc {
+						//  strings.HasPrefix(n.children[len(n.children)-1].path, ":") == n.wildChild
+						if n.wildChild {
+							skippedPath = prefix + path
+							latestNode = &node{
+								path:      n.path,
+								wildChild: n.wildChild,
+								nType:     n.nType,
+								priority:  n.priority,
+								children:  n.children,
+								handlers:  n.handlers,
+								fullPath:  n.fullPath,
+							}
+						}
+
 						n = n.children[i]
 						continue walk
 					}
+				}
+				// If the path at the end of the loop is not equal to '/' and the current node has no child nodes
+				// the current node needs to be equal to the latest matching node
+				matched := path != "/" && !n.wildChild
+				if matched {
+					n = latestNode
 				}
 
 				// If there is no wildcard pattern, recommend a redirection
@@ -421,7 +446,7 @@ walk: // Outer loop for walking the tree
 					// Nothing found.
 					// We can recommend to redirect to the same URL without a
 					// trailing slash if a leaf exists for that path.
-					value.tsr = (path == "/" && n.handlers != nil)
+					value.tsr = path == "/" && n.handlers != nil
 					return
 				}
 
@@ -430,6 +455,16 @@ walk: // Outer loop for walking the tree
 
 				switch n.nType {
 				case param:
+					// fix truncate the parameter
+					// tree_test.go  line: 204
+					if matched {
+						path = prefix + path
+						// The saved path is used after the prefix route is intercepted by matching
+						if n.indices == "/" {
+							path = skippedPath[1:]
+						}
+					}
+
 					// Find param end (either '/' or path end)
 					end := 0
 					for end < len(path) && path[end] != '/' {
@@ -513,6 +548,11 @@ walk: // Outer loop for walking the tree
 		}
 
 		if path == prefix {
+			// If the current path does not equal '/' and the node does not have a registered handle and the most recently matched node has a child node
+			// the current node needs to be equal to the latest matching node
+			if latestNode.wildChild && n.handlers == nil && path != "/" {
+				n = latestNode.children[len(latestNode.children)-1]
+			}
 			// We should have reached the node containing the handle.
 			// Check if this node has a handle registered.
 			if value.handlers = n.handlers; value.handlers != nil {
@@ -542,11 +582,25 @@ walk: // Outer loop for walking the tree
 			return
 		}
 
+		if path != "/" && len(skippedPath) > 0 && strings.HasSuffix(skippedPath, path) {
+			path = skippedPath
+			// Reduce the number of cycles
+			n, latestNode = latestNode, n
+			// skippedPath cannot execute
+			// example:
+			// * /:cc/cc
+			// call /a/cc 	     expectations:match/200      Actual:match/200
+			// call /a/dd 	     expectations:unmatch/404    Actual: panic
+			// call /addr/dd/aa  expectations:unmatch/404    Actual: panic
+			// skippedPath: It can only be executed if the secondary route is not found
+			skippedPath = ""
+			continue walk
+		}
+
 		// Nothing found. We can recommend to redirect to the same URL with an
 		// extra trailing slash if a leaf exists for that path
-		value.tsr = (path == "/") ||
-			(len(prefix) == len(path)+1 && prefix[len(path)] == '/' &&
-				path == prefix[:len(prefix)-1] && n.handlers != nil)
+		value.tsr = path == "/" ||
+			(len(prefix) == len(path)+1 && n.handlers != nil)
 		return
 	}
 }
