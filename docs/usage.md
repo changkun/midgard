@@ -1,5 +1,7 @@
 # Midgard Usage
 
+English | [中文](./usage.cn.md)
+
 Midgard CLI offers several command to interact
 with the midgard server and daemon.
 

@@ -1,5 +1,7 @@
 # Midgard Installation
 
+English | [中文](./install.cn.md)
+
 ## Architecture
 
 Before start installing/using midgard, it is necessary to
