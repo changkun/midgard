@@ -6,6 +6,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"log/syslog"
 	"os"
 	"os/exec"
@@ -50,6 +51,7 @@ func (s *darwinLaunchdService) Install() error {
 		return fmt.Errorf("service already exists: %s", confPath)
 	}
 
+	log.Println("createing: ", confPath)
 	f, err := os.Create(confPath)
 	if err != nil {
 		return err
@@ -92,32 +94,31 @@ func (s *darwinLaunchdService) Remove() error {
 	s.Stop()
 
 	confPath := s.getServiceFilePath()
+	log.Println("removing: ", confPath)
 	return os.Remove(confPath)
 }
 
 func (s *darwinLaunchdService) Start() error {
 	confPath := s.getServiceFilePath()
 	cmd := exec.Command("launchctl", "load", confPath)
+	log.Println("exec: ", cmd.String())
 	return cmd.Run()
 }
 func (s *darwinLaunchdService) Stop() error {
 	confPath := s.getServiceFilePath()
 	cmd := exec.Command("launchctl", "unload", confPath)
+	log.Println("exec: ", cmd.String())
 	return cmd.Run()
 }
 
 func (s *darwinLaunchdService) Run(onStart, onStop func() error) error {
-	var err error
-
-	err = onStart()
+	err := onStart()
 	if err != nil {
 		return err
 	}
 
-	var sigChan = make(chan os.Signal, 3)
-
+	sigChan := make(chan os.Signal, 3)
 	signal.Notify(sigChan, os.Interrupt, os.Kill)
-
 	<-sigChan
 
 	return onStop()

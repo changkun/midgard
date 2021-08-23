@@ -7,6 +7,7 @@ package service
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"log/syslog"
 	"os"
 	"os/exec"
@@ -133,6 +134,7 @@ func (s *linuxService) Install() error {
 		return fmt.Errorf("service already exists: %s", confPath)
 	}
 
+	log.Println("creating: ", confPath)
 	f, err := os.Create(confPath)
 	if err != nil {
 		return err
@@ -192,6 +194,7 @@ func (s *linuxService) Remove() error {
 	if s.flavor == initSystemd {
 		exec.Command("systemctl", "disable", s.name+".service").Run()
 	}
+	log.Println("removing: ", s.flavor.ConfigPath(s.name))
 	if err := os.Remove(s.flavor.ConfigPath(s.name)); err != nil {
 		return err
 	}
@@ -217,10 +220,13 @@ func (s *linuxService) Run(onStart, onStop func() error) (err error) {
 func (s *linuxService) Start() error {
 	switch s.flavor {
 	case initSystemd:
+		log.Println("exec: systemctl start " + s.name + ".service")
 		return exec.Command("systemctl", "start", s.name+".service").Run()
 	case initUpstart:
+		log.Println("exec: initctl start " + s.name)
 		return exec.Command("initctl", "start", s.name).Run()
 	default:
+		log.Println("exec: service " + s.name + " start")
 		return exec.Command("service", s.name, "start").Run()
 	}
 }
@@ -228,10 +234,13 @@ func (s *linuxService) Start() error {
 func (s *linuxService) Stop() error {
 	switch s.flavor {
 	case initSystemd:
+		log.Println("exec: systemctl stop " + s.name + ".service")
 		return exec.Command("systemctl", "stop", s.name+".service").Start()
 	case initUpstart:
+		log.Println("exec: initctl stop " + s.name)
 		return exec.Command("initctl", "stop", s.name).Start()
 	default:
+		log.Println("exec: service " + s.name + " stop")
 		return exec.Command("service", s.name, "stop").Start()
 	}
 }
