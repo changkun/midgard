@@ -6,6 +6,7 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -37,7 +38,10 @@ type Daemon struct {
 func NewDaemon() *Daemon {
 	id, err := os.Hostname()
 	if err != nil {
-		id = utils.NewUUID()
+		id, err = utils.NewUUIDShort()
+		if err != nil {
+			panic(fmt.Errorf("failed to initialize deamon: %v", err))
+		}
 	}
 	return &Daemon{
 		ID:      id,

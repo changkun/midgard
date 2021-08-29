@@ -5,18 +5,65 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"math"
 	"math/big"
 	"sort"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
-// NewUUID returns a new UUIDv4, encoded with base57.
-func NewUUID() string {
-	return uuidEncoder.Encode(uuid.New())
+// random function
+var rander = rand.Reader
+
+var nilUUID uuid // empty UUID, all zeros
+
+// A uuid is a 128 bit (16 byte) Universal Unique IDentifier
+// as defined in RFC 4122.
+type uuid [16]byte
+
+// String returns the string form of uuid
+// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+// or "" if uuid is invalid.
+func (u uuid) String() string {
+	var buf [36]byte
+	encodeHex(buf[:], u)
+	return string(buf[:])
+}
+
+// NewUUID creates a new uuid.
+func NewUUID() (uuid, error) {
+	var u uuid
+	_, err := io.ReadFull(rander, u[:])
+	if err != nil {
+		return nilUUID, err
+	}
+	u[6] = (u[6] & 0x0f) | 0x40 // Version 4
+	u[8] = (u[8] & 0x3f) | 0x80 // Variant is 10
+	return u, nil
+}
+
+func encodeHex(dst []byte, u uuid) {
+	hex.Encode(dst, u[:4])
+	dst[8] = '-'
+	hex.Encode(dst[9:13], u[4:6])
+	dst[13] = '-'
+	hex.Encode(dst[14:18], u[6:8])
+	dst[18] = '-'
+	hex.Encode(dst[19:23], u[8:10])
+	dst[23] = '-'
+	hex.Encode(dst[24:], u[10:])
+}
+
+// NewUUIDShort creates a new uuid and encodes it to a short form.
+func NewUUIDShort() (string, error) {
+	id, err := NewUUID()
+	if err != nil {
+		return "", err
+	}
+	return uuidEncoder.Encode(id), nil
 }
 
 // a is the default alphabet used.
@@ -39,7 +86,7 @@ func (a *alphabet) Index(t string) (int64, error) {
 			return int64(i), nil
 		}
 	}
-	return 0, fmt.Errorf("Element '%v' is not part of the alphabet", t)
+	return 0, fmt.Errorf("element '%v' is not part of the alphabet", t)
 }
 
 // newAlphabet removes duplicates and sort it to ensure reproducability.
@@ -83,7 +130,7 @@ type base57 struct {
 // Encode encodes uuid.UUID into a string using the least significant
 // bits (LSB) first according to the alphabet. if the most significant
 // bits (MSB) are 0, the string might be shorter.
-func (b base57) Encode(u uuid.UUID) string {
+func (b base57) Encode(u uuid) string {
 	var num big.Int
 	num.SetString(strings.Replace(u.String(), "-", "", 4), 16)
 

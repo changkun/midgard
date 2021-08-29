@@ -28,6 +28,9 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 	)
 	if data != nil {
 		body, err = json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !strings.HasPrefix(api, "https://") || !strings.HasPrefix(api, "http://") {
@@ -40,6 +43,9 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 
 	c := &http.Client{}
 	req, err := http.NewRequest(method, api, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
 	req.SetBasicAuth(config.Get().Server.Auth.User, config.Get().Server.Auth.Pass)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.Do(req)

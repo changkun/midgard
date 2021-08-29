@@ -231,9 +231,14 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 	root := config.RepoPath
 	var path string
 
+	id, err := utils.NewUUIDShort()
+	if err != nil {
+		panic(fmt.Errorf("failed to create a short uuid: %v", err))
+	}
+
 	// if URI is empty, then generate a random path
 	if in.URI == "" {
-		path = root + "/random/" + utils.NewUUID() + ext
+		path = root + "/random/" + id + ext
 	} else {
 		path = root + "/" + strings.TrimPrefix(in.URI, "/")
 	}

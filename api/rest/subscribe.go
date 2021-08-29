@@ -84,7 +84,11 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			break
 		}
 		if idExist {
-			wsm.UserID += "-" + utils.NewUUID()
+			id, err := utils.NewUUIDShort()
+			if err != nil {
+				panic(fmt.Errorf("failed to create a new uuid: %v", err))
+			}
+			wsm.UserID += "-" + id
 		}
 
 		// register to the subscribers
