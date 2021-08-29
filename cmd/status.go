@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/term"
 	"changkun.de/x/midgard/internal/types"
@@ -46,7 +47,7 @@ var statusCmd = &cobra.Command{
 		}
 
 		// check daemon status
-		utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
+		daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
 			_, err := c.Ping(ctx, &proto.PingInput{})
 			if err != nil {
 				s += fmt.Sprintf("daemon status: %s, details:\n%v\n",

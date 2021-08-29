@@ -13,7 +13,6 @@ import (
 	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/service"
 	"changkun.de/x/midgard/internal/types/proto"
-	"changkun.de/x/midgard/internal/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/status"
 )
@@ -59,7 +58,7 @@ var daemonCmd = &cobra.Command{
 			m.Serve()
 			os.Exit(0) // this closes clipboard NSApplication on darwin
 		case "ls":
-			utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
+			daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
 				out, err := c.ListDaemons(ctx, &proto.ListDaemonsInput{})
 				if err != nil {
 					log.Println("cannot list daemons:", status.Convert(err).Message())

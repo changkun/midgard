@@ -6,17 +6,12 @@ package utils
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"changkun.de/x/midgard/internal/config"
-	"changkun.de/x/midgard/internal/types/proto"
-	"google.golang.org/grpc"
 )
 
 // Request conducts a http request for a given method, api endpoint, and
@@ -54,19 +49,4 @@ func Request(method, api string, data interface{}) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	return io.ReadAll(resp.Body)
-}
-
-// Connect connects to a midgard client
-func Connect(callback func(ctx context.Context, c proto.MidgardClient)) {
-	// We don't need authentication here. Daemon is running
-	// on a local machine.
-	conn, err := grpc.Dial(config.D().Addr, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: \n\t%v", err)
-	}
-	defer conn.Close()
-	client := proto.NewMidgardClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	callback(ctx, client)
 }
