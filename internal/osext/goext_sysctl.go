@@ -1,8 +1,8 @@
-// Copyright 2012 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Copyright 2020-2021 Changkun Ou. All rights reserved.
+// Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
-// +build !go1.8,darwin !go1.8,freebsd openbsd
+//go:build darwin || freebsd || openbsd
 
 package osext
 

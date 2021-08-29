@@ -208,8 +208,6 @@ github.com/json-iterator/go v1.1.11/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
-github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 h1:iQTw/8FWTuc7uiaSepXwyf3o52HaUYcV+Tu66S3F5GA=
-github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
@@ -312,12 +310,12 @@ go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqe
 go.uber.org/atomic v1.7.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=
 go.uber.org/multierr v1.6.0/go.mod h1:cdWPpRnG4AhwMwsgIHip0KRBQjJy5kYEpYjJxpXp9iU=
 go.uber.org/zap v1.17.0/go.mod h1:MXVU+bhUf/A7Xi2HNOnopQOrmycQ5Ih87HtOu4q5SSo=
-golang.design/x/clipboard v0.5.0 h1:op1y3xFc4dZpb8L2BmrO691F9nl35+WmkEpXmKeemUE=
-golang.design/x/clipboard v0.5.0/go.mod h1:qeqSK917apkom3WLMIvJpdj/hQvwhJgz3v3TuZOquBY=
+golang.design/x/clipboard v0.5.1 h1:uTnMGAZkscDGOa1Y+rrrf4RJfLJzLatocRI8TyQyuTQ=
+golang.design/x/clipboard v0.5.1/go.mod h1:qeqSK917apkom3WLMIvJpdj/hQvwhJgz3v3TuZOquBY=
 golang.design/x/code2img v0.1.4 h1:js2TctNU+5CqFzTDnJh0ZRVosY/42ICdeH8rA4TpgQk=
 golang.design/x/code2img v0.1.4/go.mod h1:Rggpfy4QDVUhTd4zQy2ZtUGMED0DGXgQcFvEEppw31U=
-golang.design/x/hotkey v0.1.2 h1:LLDwEmi0rT12e57Xrl0MEMKBGbrPUt2eHM3Uagabm3s=
-golang.design/x/hotkey v0.1.2/go.mod h1:mnYDu9dvK6wx9GfDZd39EdtwIATthI6gBxLMeJuTMfE=
+golang.design/x/hotkey v0.2.0 h1:uw9ABvIaY2dy+mUankHJtY7OAGQ5nocQLSuAX5ipe5w=
+golang.design/x/hotkey v0.2.0/go.mod h1:Ruj2A0a15r6NuDJHHZT0tzveg1rIk5GmPcYisMenTFk=
 golang.design/x/mainthread v0.2.1 h1:IUGVW1acDfKoQtFeeS/RD/YYiKK8jxwkJXIQuKuL+ig=
 golang.design/x/mainthread v0.2.1/go.mod h1:vYX7cF2b3pTJMGM/hc13NmN6kblKnf4/IyvHeu259L0=
 golang.org/x/crypto v0.0.0-20181029021203-45a5f77698d3/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=

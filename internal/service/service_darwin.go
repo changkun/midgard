@@ -15,7 +15,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kardianos/osext"
+	"changkun.de/x/midgard/internal/osext"
 )
 
 func newService(c *config) (s *darwinLaunchdService, err error) {

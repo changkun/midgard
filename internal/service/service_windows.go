@@ -7,7 +7,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/kardianos/osext"
+	"changkun.de/x/midgard/internal/osext"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
