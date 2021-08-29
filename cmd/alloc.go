@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 
+	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
@@ -43,7 +44,7 @@ func init() {
 // allocate request the midgard daemon to allocate a given URL for
 // a given resource, or the content from the midgard universal clipboard.
 func allocate(dstpath, srcpath string) {
-	utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
+	daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
 		out, err := c.AllocateURL(ctx, &proto.AllocateURLInput{
 			DesiredPath: dstpath,
 			SourcePath:  srcpath,

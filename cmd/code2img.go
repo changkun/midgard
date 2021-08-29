@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
+	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types/proto"
-	"changkun.de/x/midgard/internal/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/status"
 )
@@ -33,7 +33,7 @@ var code2imgCmd = &cobra.Command{
 	Long:  `creates an image version of the code in a file or clipboard.`,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
-		utils.Connect(func(ctx context.Context, c proto.MidgardClient) {
+		daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
 			var (
 				codepath string
 				start    int64
