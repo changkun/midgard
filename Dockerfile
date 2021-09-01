@@ -8,9 +8,9 @@ COPY . .
 RUN apt update && apt install -y wget gcc xclip libx11-dev
 RUN mkdir -p /root/goes
 RUN cd /root/goes && wget https://dl.google.com/go/go1.16.linux-amd64.tar.gz 
-RUN cd /root/goes && tar xvf go1.16.linux-amd64.tar.gz && rm go1.16.linux-amd64.tar.gz 
-RUN cd /root/goes && mv /root/goes/go /root/goes/go1.16 
-RUN cd /root/goes && ln -s /root/goes/go1.16 /root/goes/go 
+RUN cd /root/goes && tar xvf go1.17.linux-amd64.tar.gz && rm go1.17.linux-amd64.tar.gz 
+RUN cd /root/goes && mv /root/goes/go /root/goes/go1.17
+RUN cd /root/goes && ln -s /root/goes/go1.17 /root/goes/go 
 RUN cd /root/goes && export GOROOT=~/goes/go
 RUN /root/goes/go/bin/go build -mod=vendor
 

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
-package rest
+package serv
 
 import (
 	"container/list"
@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
@@ -46,7 +47,7 @@ func (m *Midgard) Serve() {
 	go func() {
 		defer wg.Done()
 		q := make(chan os.Signal, 1)
-		signal.Notify(q, os.Interrupt, os.Kill)
+		signal.Notify(q, os.Interrupt, syscall.SIGTERM)
 		sig := <-q
 		log.Printf("%v", sig)
 		cancel()
@@ -83,7 +84,6 @@ func (m *Midgard) serveHTTP() {
 	if err != http.ErrServerClosed {
 		log.Printf("close with error: %v", err)
 	}
-	return
 }
 
 func init() {

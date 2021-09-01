@@ -34,8 +34,8 @@ message AllocateURLOutput {
 
 message CodeToImageInput {
     string CodePath = 1;
-    int64 Start = 2;
-    int64 End = 3;
+    int64  Start = 2;
+    int64  End = 3;
 }
 
 message CodeToImageOutput {
@@ -45,5 +45,6 @@ message CodeToImageOutput {
 
 message ListDaemonsInput {}
 message ListDaemonsOutput {
-    string Daemons = 1;
+    repeated int64  Id = 1;
+    repeated string Daemons = 2;
 }

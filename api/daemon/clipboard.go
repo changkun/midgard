@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	"changkun.de/x/midgard/api/serv"
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/hotkey"
@@ -23,7 +24,7 @@ import (
 func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 	last := time.Now()
 	hotkey.Handle(ctx, func() {
-		if time.Now().Sub(last) < time.Second*5 {
+		if time.Since(last) < time.Second*5 {
 			log.Println("pressing hotkey too fast, ignoring")
 			return
 		}
@@ -31,13 +32,12 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 
 		var msg string
 		defer func() {
-			log.Printf(msg)
-			clipboard.Local.Write(
-				types.MIMEPlainText, utils.StringToBytes(msg))
+			log.Println(msg)
+			clipboard.Local.Write(types.MIMEPlainText, utils.StringToBytes(msg))
 		}()
 
 		log.Println("hotkey triggered")
-		res, err := utils.Request(
+		res, err := serv.Connect(
 			http.MethodPut,
 			types.EndpointAllocateURL,
 			&types.AllocateURLInput{

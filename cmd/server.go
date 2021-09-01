@@ -5,7 +5,7 @@
 package cmd
 
 import (
-	"changkun.de/x/midgard/api/rest"
+	"changkun.de/x/midgard/api/serv"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +16,7 @@ var serverCmd = &cobra.Command{
 	Long:  `Run the Midgard server`,
 	Args:  cobra.ExactArgs(0),
 	Run: func(_ *cobra.Command, args []string) {
-		m := rest.NewMidgard()
+		m := serv.NewMidgard()
 		m.Serve()
 	},
 }

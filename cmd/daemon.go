@@ -65,7 +65,10 @@ var daemonCmd = &cobra.Command{
 					return
 				}
 				log.Println("active daemons:")
-				fmt.Println(out.Daemons)
+				fmt.Println("id\tname")
+				for i := 0; i < len(out.Id); i++ {
+					fmt.Printf("%d\t%v\n", out.Id[i], out.Daemons[i])
+				}
 			})
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])

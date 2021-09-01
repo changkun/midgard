@@ -2,7 +2,7 @@
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
-package rest
+package serv
 
 import (
 	"container/list"
@@ -53,6 +53,10 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 
 	// read messages from socket
 	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		log.Printf("failed to read message from the connection: %v", err)
+		return
+	}
 	wsm := &types.WebsocketMessage{}
 	err = json.Unmarshal(msg, wsm)
 	if err != nil {
@@ -178,16 +182,26 @@ func (m *Midgard) handleListDaemons(conn *websocket.Conn, u *user, data []byte) 
 		}
 	}()
 
-	resp := "id\tname\n"
-
+	var devices []struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	}
 	for e := m.users.Front(); e != nil; e = e.Next() {
 		u := e.Value.(*user)
-		resp += fmt.Sprintf("%d\t%s\n", u.index, u.id)
+		devices = append(devices, struct {
+			Id   int    `json:"id"`
+			Name string `json:"name"`
+		}{int(u.index), u.id})
+	}
+
+	b, err := json.Marshal(devices)
+	if err != nil {
+		return
 	}
 
 	return conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
 		Action: types.ActionListDaemonsResponse,
-		Data:   utils.StringToBytes(resp),
+		Data:   b,
 	}).Encode())
 }
 

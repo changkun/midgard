@@ -11,11 +11,11 @@ import (
 	"net/http"
 
 	"changkun.de/x/midgard/api/daemon"
+	"changkun.de/x/midgard/api/serv"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/term"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
-	"changkun.de/x/midgard/internal/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/status"
 )
@@ -29,7 +29,7 @@ var statusCmd = &cobra.Command{
 		var s string
 
 		// check server status
-		res, err := utils.Request(http.MethodGet,
+		res, err := serv.Connect(http.MethodGet,
 			config.Get().Domain+"/midgard/ping", nil)
 		if err != nil {
 			s += fmt.Sprintf("server status: %s, %v\n",

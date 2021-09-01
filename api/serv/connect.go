@@ -1,8 +1,8 @@
-// Copyright 2020-2021 Changkun Ou. All rights reserved.
+// Copyright 2021 Changkun Ou. All rights reserved.
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
-package utils
+package serv
 
 import (
 	"bytes"
@@ -14,9 +14,9 @@ import (
 	"changkun.de/x/midgard/internal/config"
 )
 
-// Request conducts a http request for a given method, api endpoint, and
+// Connect connects a http request for a given method, api endpoint, and
 // data attached as application/json Content-Type.
-func Request(method, api string, data interface{}) ([]byte, error) {
+func Connect(method, api string, data interface{}) ([]byte, error) {
 	var (
 		body []byte
 		err  error

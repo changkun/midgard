@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
@@ -63,7 +64,7 @@ func (m *Daemon) Serve() {
 			log.Println("graceful shutdown assistant is terminated.")
 		}()
 		q := make(chan os.Signal, 1)
-		signal.Notify(q, os.Interrupt, os.Kill)
+		signal.Notify(q, os.Interrupt, syscall.SIGTERM)
 		sig := <-q
 		log.Printf("%v", sig)
 		log.Printf("shutting down midgard daemon ...")
@@ -94,6 +95,14 @@ func (m *Daemon) Serve() {
 		}()
 		m.serveRPC()
 	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer func() {
+			log.Println("systray is terminated.")
+		}()
+		Start()
+	}()
 	wg.Wait()
 
 	log.Printf("daemon is down, good bye!")
@@ -108,7 +117,6 @@ func (m *Daemon) serveRPC() {
 	}
 
 	m.s = grpc.NewServer(
-		grpc.MaxMsgSize(maxMessageSize),
 		grpc.MaxRecvMsgSize(maxMessageSize),
 		grpc.MaxSendMsgSize(maxMessageSize),
 		grpc.ConnectionTimeout(time.Minute*5),

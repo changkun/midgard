@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"changkun.de/x/midgard/api/serv"
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
@@ -58,8 +59,7 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 		uri = strings.TrimSuffix(in.DesiredPath, dext) + sext
 	}
 
-	res, err := utils.Request(
-		http.MethodPut,
+	res, err := serv.Connect(http.MethodPut,
 		types.EndpointAllocateURL,
 		&types.AllocateURLInput{
 			Source: source,
@@ -120,7 +120,7 @@ func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (o
 		}
 	}
 
-	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image, &types.Code2ImgInput{Code: code})
+	res, err := serv.Connect(http.MethodPost, types.EndpointCode2Image, &types.Code2ImgInput{Code: code})
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert: %w", err)
 	}
@@ -160,7 +160,25 @@ func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (o
 			switch resp.Action {
 			case types.ActionListDaemonsResponse:
 				m.readChs.Delete(m.ID)
-				return &proto.ListDaemonsOutput{Daemons: utils.BytesToString(resp.Data)}, nil
+
+				var devices []struct {
+					Id   int    `json:"id"`
+					Name string `json:"name"`
+				}
+				err := json.Unmarshal(resp.Data, &devices)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse list message: %w", err)
+				}
+
+				var (
+					ids []int64
+					nas []string
+				)
+				for i := 0; i < len(devices); i++ {
+					ids = append(ids, int64(devices[i].Id))
+					nas = append(nas, devices[i].Name)
+				}
+				return &proto.ListDaemonsOutput{Id: ids, Daemons: nas}, nil
 			default:
 				log.Println(resp.Message)
 			}
