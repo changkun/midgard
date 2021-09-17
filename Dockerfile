@@ -5,17 +5,18 @@
 FROM chromedp/headless-shell:latest AS builder-env
 WORKDIR /app
 COPY . .
-RUN apt update && apt install -y wget gcc xclip libx11-dev
+RUN apt update && apt install -y wget gcc libx11-dev
 RUN mkdir -p /root/goes
-RUN cd /root/goes && wget https://dl.google.com/go/go1.16.linux-amd64.tar.gz 
-RUN cd /root/goes && tar xvf go1.16.linux-amd64.tar.gz && rm go1.16.linux-amd64.tar.gz 
-RUN cd /root/goes && mv /root/goes/go /root/goes/go1.16 
-RUN cd /root/goes && ln -s /root/goes/go1.16 /root/goes/go 
+ARG GOVERSION
+RUN cd /root/goes && wget https://dl.google.com/go/$GOVERSION.linux-amd64.tar.gz 
+RUN cd /root/goes && tar xvf $GOVERSION.linux-amd64.tar.gz && rm $GOVERSION.linux-amd64.tar.gz 
+RUN cd /root/goes && mv /root/goes/go /root/goes/$GOVERSION
+RUN cd /root/goes && ln -s /root/goes/$GOVERSION /root/goes/go
 RUN cd /root/goes && export GOROOT=~/goes/go
 RUN /root/goes/go/bin/go build -mod=vendor
 
 FROM chromedp/headless-shell:latest
-RUN apt update && apt install -y dumb-init git xclip libx11-dev
+RUN apt update && apt install -y dumb-init git libx11-dev
 ENTRYPOINT ["dumb-init", "--"]
 
 WORKDIR /app

@@ -11,6 +11,7 @@ TARGET = -o $(BINARY)
 MIDGARD_HOME = changkun.de/x/midgard
 BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/internal/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/internal/version.BuildTime=$(BUILDTIME)"
 BUILD_FLAGS = $(BUILD_SETTINGS) -mod=vendor -x -work
+GOVERSION = $(shell curl -s 'https://golang.org/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $$2}' | tr -d ',"') # get latest go version
 
 all:
 	go build $(TARGET) $(BUILD_FLAGS)
@@ -24,7 +25,7 @@ dep:
 	go mod vendor
 build:
 	cp -f $(SSH_KEY_PATH) id_rsa
-	docker build -t $(IMAGE):latest .
+	docker build --build-arg GOVERSION=$(GOVERSION) -t $(IMAGE):latest .
 	rm id_rsa
 up:
 	docker-compose up -d
