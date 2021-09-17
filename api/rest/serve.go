@@ -26,7 +26,8 @@ import (
 
 // Midgard is the midgard server that serves all API endpoints.
 type Midgard struct {
-	s *http.Server
+	s      *http.Server
+	status *myStatus
 
 	mu    sync.Mutex
 	users *list.List
@@ -34,7 +35,7 @@ type Midgard struct {
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{users: list.New()}
+	return &Midgard{status: newMyStatus(), users: list.New()}
 }
 
 // Serve serves Midgard RESTful APIs.
@@ -42,11 +43,11 @@ func (m *Midgard) Serve() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		q := make(chan os.Signal, 1)
-		signal.Notify(q, os.Interrupt, os.Kill)
+		signal.Notify(q, os.Interrupt)
 		sig := <-q
 		log.Printf("%v", sig)
 		cancel()
@@ -58,10 +59,17 @@ func (m *Midgard) Serve() {
 			log.Printf("failed to shudown api service: %v", err)
 		}
 	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		m.refreshStatus(ctx)
+	}()
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		m.serveHTTP()
 	}()
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		backup(ctx)
@@ -83,7 +91,6 @@ func (m *Midgard) serveHTTP() {
 	if err != http.ErrServerClosed {
 		log.Printf("close with error: %v", err)
 	}
-	return
 }
 
 func init() {
@@ -115,6 +122,7 @@ func backup(ctx context.Context) {
 
 	// initialize data as a git repo if not exists
 	var old = "-old"
+	var haveOld = false
 
 	_, err := os.Stat(config.RepoPath)
 	if !errors.Is(err, os.ErrNotExist) { // repo folder exists
@@ -130,6 +138,7 @@ func backup(ctx context.Context) {
 		if err != nil {
 			log.Fatalf("cannot rename your folder: %v", err)
 		}
+		haveOld = true
 		// rm -rf data/repo
 		log.Printf("rm -rf %s", config.RepoPath)
 		err = os.RemoveAll(config.RepoPath)
@@ -155,11 +164,20 @@ func backup(ctx context.Context) {
 	if err != nil {
 		log.Fatalf("failed to merge old data into repo folder: %v", err)
 	}
-	// cp -r data/repo-old data/repo
-	log.Printf("cp -r %s %s", config.RepoPath+old, config.RepoPath)
-	err = utils.Copy(config.RepoPath+old, config.RepoPath)
-	if err != nil {
-		log.Fatalf("failed to merge old data into repo folder: %v", err)
+	if haveOld {
+		// .git folder may fail to operate(permission denied),
+		// set everything to 755.
+		err := exec.Command("chmod", "-R", "0755", config.RepoPath).Run()
+		if err != nil {
+			log.Fatalf("failed to change permission: %v", err)
+		}
+
+		// cp -r data/repo-old data/repo
+		log.Printf("cp -r %s %s", config.RepoPath+old, config.RepoPath)
+		err = utils.Copy(config.RepoPath+old, config.RepoPath)
+		if err != nil {
+			log.Fatalf("failed to merge old data into repo folder: %v", err)
+		}
 	}
 
 	// seems ok, start commit the local changes
