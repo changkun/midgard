@@ -115,5 +115,4 @@ func (m *Midgard) Code2img(c *gin.Context) {
 		Image:   config.S().Store.Prefix + imgfile,
 		Message: "render success",
 	})
-	return
 }

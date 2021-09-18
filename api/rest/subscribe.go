@@ -53,6 +53,10 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 
 	// read messages from socket
 	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		log.Printf("failed to read message from connection: %v", err)
+		return
+	}
 	wsm := &types.WebsocketMessage{}
 	err = json.Unmarshal(msg, wsm)
 	if err != nil {
@@ -145,6 +149,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 
 		switch wsm.Action {
 		case types.ActionClipboardPut:
+			log.Println("put clipboard request is received.")
 			err := m.handleActionClipboardPut(conn, u, wsm.Data)
 			if err != nil {
 				log.Println("failed to put clipboard:", err)
@@ -154,6 +159,12 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			err := m.handleListDaemons(conn, u, wsm.Data)
 			if err != nil {
 				log.Println("failed to list daemons:", err)
+			}
+		case types.ActionUpdateOfficeStatusRequest:
+			log.Println("update office status request is received.")
+			err := m.handleOfficeStatusUpdate(conn, u, wsm.Data)
+			if err != nil {
+				log.Println("failed to update office status.")
 			}
 		default:
 			log.Println("unsupported message:", utils.BytesToString(msg))

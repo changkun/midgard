@@ -16,15 +16,17 @@ var (
 
 // All actions from daemons
 const (
-	ActionNone                WebsocketAction = "none"
-	ActionHandshakeRegister                   = "register"
-	ActionHandshakeReady                      = "ready"
-	ActionClipboardChanged                    = "cbchanged"
-	ActionClipboardGet                        = "cbget"
-	ActionClipboardPut                        = "cbput"
-	ActionListDaemonsRequest                  = "lsdaemonreq"
-	ActionListDaemonsResponse                 = "lsdaemonsres"
-	ActionTerminate                           = "terminate"
+	ActionNone                       WebsocketAction = "none"
+	ActionHandshakeRegister                          = "register"
+	ActionHandshakeReady                             = "ready"
+	ActionClipboardChanged                           = "cbchanged"
+	ActionClipboardGet                               = "cbget"
+	ActionClipboardPut                               = "cbput"
+	ActionListDaemonsRequest                         = "lsdaemonreq"
+	ActionListDaemonsResponse                        = "lsdaemonsres"
+	ActionUpdateOfficeStatusRequest                  = "updateofficereq"
+	ActionUpdateOfficeStatusResponse                 = "updateofficeres"
+	ActionTerminate                                  = "terminate"
 )
 
 // WebsocketAction is an action between midgard daemon and midgard server

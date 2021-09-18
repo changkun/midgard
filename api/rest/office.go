@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"changkun.de/x/midgard/internal/types"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
-
-// TODO: think about how daemons can update the status here.
 
 // Office returns the reported office status
 func (m *Midgard) Office(c *gin.Context) {
@@ -38,6 +38,24 @@ func (m *Midgard) refreshStatus(ctx context.Context) {
 	}
 }
 
+// handleOfficeStatusUpdate handles the update request from daemon.
+func (m *Midgard) handleOfficeStatusUpdate(conn *websocket.Conn, u *user, data []byte) (err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	defer func() {
+		if err != nil {
+			err = terminate(conn, err)
+		}
+	}()
+
+	log.Println("i'd like to update office status")
+
+	return conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+		Action: types.ActionUpdateOfficeStatusResponse,
+		Data:   nil,
+	}).Encode())
+}
+
 var unknownMessage = "Sorry, I can't tell you at the moment."
 
 type officeStatus = int32
@@ -50,18 +68,24 @@ const (
 )
 
 type myStatus struct {
-	mu            sync.RWMutex
-	status        officeStatus
-	lastAvailable time.Time
-	// TODO: vacation mode
+	mu             sync.RWMutex
+	status         officeStatus
+	lastAvailable  time.Time // when did he leave?
+	estimateReturn time.Time // when will he be back?
 }
 
 func newMyStatus() *myStatus {
 	return &myStatus{
-		status:        statusUnknown,
-		lastAvailable: time.Now(),
+		status:         statusUnknown,
+		lastAvailable:  time.Now(),
+		estimateReturn: time.Now().Add(time.Hour), // default back in an hour.
 	}
 }
+
+// status machine
+// working -> not working
+// not working -> working
+// working ->
 
 func (s *myStatus) String() string {
 	s.mu.RLock()
@@ -88,7 +112,18 @@ func (s *myStatus) String() string {
 	case statusOff:
 		message = fmt.Sprintf("No, he left %s ago.", time.Since(s.lastAvailable).Round(time.Second))
 	case statusVacation:
-		message = fmt.Sprintf("No, he is on vacation and will return soon.")
+		if time.Since(s.estimateReturn) > 0 {
+			// date invalid
+			message = "No, he is on vacation and will return soon."
+		} else {
+			var date string
+			if s.estimateReturn.Year() == time.Now().Year() { // same year
+				date = s.estimateReturn.Format("02 Jan")
+			} else {
+				date = s.estimateReturn.Format("Jan 2, 2006")
+			}
+			message = fmt.Sprintf("No, he is on vacation and will return at %v", date)
+		}
 	}
 
 	return message
@@ -102,10 +137,26 @@ func (s *myStatus) Update(status officeStatus) {
 	oldStatus := s.status
 	s.status = status
 
-	// from On to Off
-	if oldStatus == statusOn && status == statusOff {
+	switch {
+	case oldStatus == statusOn && status == statusOff:
 		s.lastAvailable = time.Now()
+	case oldStatus == statusOn && status == statusVacation:
+		s.lastAvailable = time.Now()
+	case oldStatus == statusOn && status == statusOn:
+		// nothing
+	case oldStatus == statusOff && status == statusOn:
+		// nothing
+	case oldStatus == statusOff && status == statusVacation:
+		// nothing
+	case oldStatus == statusOff && status == statusOff:
+		// nothing
+	case oldStatus == statusVacation && status == statusOn:
+		// nothing
+	case oldStatus == statusVacation && status == statusOff:
+		// nothing
+	case oldStatus == statusVacation && status == statusVacation:
+		// nothing
+	default:
+		// nothing
 	}
-
-	// TODO: more state machine.
 }
