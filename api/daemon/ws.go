@@ -55,6 +55,10 @@ func (m *Daemon) wsConnect() error {
 		return fmt.Errorf("failed to send handshake message: %w", err)
 	}
 	_, msg, err := m.ws.ReadMessage()
+	if err != nil {
+		return fmt.Errorf("failed to read message for handshake: %w", err)
+	}
+
 	wsm := &types.WebsocketMessage{}
 	err = wsm.Decode(msg)
 	if err != nil {

@@ -24,8 +24,9 @@ import (
 
 // Daemon is the midgard daemon that interact with midgard server.
 type Daemon struct {
-	ID string
 	sync.Mutex
+
+	ID      string
 	s       *grpc.Server
 	ws      *websocket.Conn
 	readChs sync.Map                     // {string: chan *types.WebsocketMessage}
@@ -63,7 +64,7 @@ func (m *Daemon) Serve() {
 			log.Println("graceful shutdown assistant is terminated.")
 		}()
 		q := make(chan os.Signal, 1)
-		signal.Notify(q, os.Interrupt, os.Kill)
+		signal.Notify(q, os.Interrupt)
 		sig := <-q
 		log.Printf("%v", sig)
 		log.Printf("shutting down midgard daemon ...")
@@ -71,9 +72,7 @@ func (m *Daemon) Serve() {
 		cancel()
 	}()
 	go func() {
-		defer func() {
-			log.Println("websocket is terminated.")
-		}()
+		defer log.Println("websocket is terminated.")
 		m.wsConnect()
 		m.handleIO(ctx)
 		m.wsClose()
@@ -81,17 +80,19 @@ func (m *Daemon) Serve() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer func() {
-			log.Println("clipboard watcher is terminated.")
-		}()
+		defer log.Println("clipboard watcher is terminated.")
 		m.watchLocalClipboard(ctx)
 	}()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer func() {
-			log.Println("rpc server is terminated.")
-		}()
+		defer log.Println("office watcher is terminated.")
+		m.watchOfficeStatus(ctx)
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer log.Println("rpc server is terminated.")
 		m.serveRPC()
 	}()
 	wg.Wait()
@@ -108,7 +109,6 @@ func (m *Daemon) serveRPC() {
 	}
 
 	m.s = grpc.NewServer(
-		grpc.MaxMsgSize(maxMessageSize),
 		grpc.MaxRecvMsgSize(maxMessageSize),
 		grpc.MaxSendMsgSize(maxMessageSize),
 		grpc.ConnectionTimeout(time.Minute*5),
