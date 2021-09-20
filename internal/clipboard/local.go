@@ -57,7 +57,7 @@ func (lc *local) Write(t types.MIME, buf []byte) bool {
 	defer lc.Unlock()
 
 	// if the local copy is the same with the write, do not bother.
-	if bytes.Compare(lc.buf, buf) == 0 {
+	if bytes.Equal(lc.buf, buf) {
 		return true // but we recognize it as a success write
 	}
 	lc.buf = buf

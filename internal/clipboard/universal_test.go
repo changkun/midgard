@@ -18,12 +18,12 @@ func TestUniversalClipboard(t *testing.T) {
 	clipboard.Universal.Write(types.MIMEPlainText, buf)
 
 	got := clipboard.Universal.ReadAs(types.MIMEPlainText)
-	if bytes.Compare(buf, got) != 0 {
+	if !bytes.Equal(buf, got) {
 		t.Fatalf("failed to put data into ub.")
 	}
 
 	got = clipboard.Universal.ReadAs(types.MIMEImagePNG)
-	if bytes.Compare(buf, got) == 0 {
+	if bytes.Equal(buf, got) {
 		t.Fatalf("unexpected read from ub, want blank, got %v", utils.BytesToString(got))
 	}
 
@@ -32,7 +32,7 @@ func TestUniversalClipboard(t *testing.T) {
 	if tt != types.MIMEPlainText {
 		t.Fatalf("incorrect data type")
 	}
-	if bytes.Compare(buf, got) != 0 {
+	if !bytes.Equal(buf, got) {
 		t.Fatalf("incorrect data from clipboard")
 	}
 

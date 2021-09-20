@@ -109,7 +109,7 @@ func TestLocalClipboardWatch(t *testing.T) {
 				}
 				return
 			}
-			if bytes.Compare(data, w) != 0 {
+			if !bytes.Equal(data, w) {
 				t.Fatalf("received data from watch mismatch, want: %v, got %v", utils.BytesToString(w), utils.BytesToString(data))
 			}
 			lastRead = data

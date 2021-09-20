@@ -77,7 +77,7 @@ func (uc *universal) ReadAs(t types.MIME) []byte {
 func (uc *universal) Write(t types.MIME, buf []byte) bool {
 	uc.Lock()
 	defer uc.Unlock()
-	if uc.typ == t && bytes.Compare(uc.buf, buf) == 0 {
+	if uc.typ == t && bytes.Equal(uc.buf, buf) {
 		return false
 	}
 
