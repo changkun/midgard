@@ -5,7 +5,7 @@
 FROM chromedp/headless-shell:latest AS builder-env
 WORKDIR /app
 COPY . .
-RUN apt update && apt install -y wget gcc libx11-dev
+RUN apt update && apt install -y wget gcc
 RUN mkdir -p /root/goes
 ARG GOVERSION
 RUN cd /root/goes && wget https://dl.google.com/go/$GOVERSION.linux-amd64.tar.gz
@@ -16,7 +16,7 @@ RUN cd /root/goes && export GOROOT=~/goes/go
 RUN CGO_ENABLED=0 /root/goes/go/bin/go build -mod=vendor
 
 FROM chromedp/headless-shell:latest
-RUN apt update && apt install -y dumb-init git libx11-dev
+RUN apt update && apt install -y dumb-init git
 ENTRYPOINT ["dumb-init", "--"]
 
 WORKDIR /app
