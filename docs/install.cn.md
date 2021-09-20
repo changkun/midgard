@@ -35,19 +35,19 @@ Midgard 的用户可以通过命令行与 midgard 本地守护进程进行通信
 
 ## 依赖
 
-- macOS 端需要安装 Xcode 开发套件：
+- macOS 端（仅客户端）需要安装 Xcode 开发套件：
 
   ```sh
   $ xcode-select --install
   ```
 
-- Linux 端需要安装 X11 开发文件和 git 工具：
+- Linux 端（仅客户端）需要安装 X11 开发文件和 git 工具：
 
   ```sh
   $ sudo apt install -y git libx11-dev
   ```
 
-- Windows 端需要安装 git 工具：
+- Windows 端（仅客户端）需要安装 git 工具：
 
   ```sh
   $ choco install git
@@ -76,7 +76,7 @@ Usage:
   mg [command]
 ```
 
-### 容器镜像
+### 容器镜像（推荐）
 
 容器镜像的构建需要设置环境变量 `SSH_KEY_PATH`，该变量用于指向一个私钥文件（用于同步 GitHub 仓库，例如 RSA, ED25519, 等）。例如：
 

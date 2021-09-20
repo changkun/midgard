@@ -14,6 +14,17 @@ server status: OK
 daemon status: OK
 ```
 
+## 通过 Git 备份数据
+
+Midgard 使用 Git 备份所有数据，并将数据存储在 ./data 文件夹下. Midgard 服务端会
+自动与配置好的 Git 仓库进行同步，相关设置参见 [../config.yml](../config.yml)
+
+注意，请使用 git 而非 https 协议：
+
+```
+git config --global url."git@github.com:".insteadOf "https://github.com/"
+```
+
 ## 显示全部活跃设备
 
 检查所有连接的设备：

@@ -29,6 +29,17 @@ id      name
 5       changkun-win
 ```
 
+## Backup Data using Git
+
+Midgard uses Git to backup all the data. All data are stored in the `./data` folder with some naming convention. Midgard server will sync with the configured Git repository,
+see settings in [../config.yml](../config.yml)
+
+Note, to sync the data, use git instead of https protocol:
+
+```
+git config --global url."git@github.com:".insteadOf "https://github.com/"
+```
+
 ## Allocate Global URL
 
 Allocate a global url to persist the data:

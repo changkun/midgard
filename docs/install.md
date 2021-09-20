@@ -34,13 +34,13 @@ And more :-)
 
 ## Dependencies
 
-- macOS
+- macOS (Daemon)
 
   ```
   $ xcode-select --install
   ```
 
-- Linux
+- Linux (Daemon)
 
   ```
   $ sudo apt install -y git libx11-dev
@@ -71,7 +71,7 @@ Usage:
   mg [command]
 ```
 
-### Docker Distribution
+### Docker Distribution (Recommended)
 
 Docker build requires you to setup environment variable `SSH_KEY_PATH`
 that points to a private key file (e.g. RSA, ED25519, etc), for example:
