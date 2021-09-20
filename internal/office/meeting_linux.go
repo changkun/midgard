@@ -8,12 +8,33 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
 func IsInMeeting() (bool, error) {
-	// TODO:
-	return false, nil
+	// Do this command:
+	// $ lsmod | grep uvcvideo
+	// uvcvideo               98304  0 # if camera is off
+	// uvcvideo               98304  1 # if camera is on
+
+	cmd := exec.Command("lsmod")
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, err
+	}
+	re := regexp.MustCompile(`uvcvideo(.*)`)
+	match := re.FindStringSubmatch(string(b))
+
+	if len(match) < 1 {
+		return false, nil
+	}
+	matches := strings.Fields(match[1])
+	if len(matches) < 1 {
+		return false, nil
+	}
+
+	return matches[1] == "1", nil
 }
 
 func IsScreenLocked() (bool, error) {
