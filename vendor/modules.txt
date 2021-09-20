@@ -133,17 +133,17 @@ github.com/spf13/pflag
 # github.com/ugorji/go/codec v1.2.6
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# golang.design/x/clipboard v0.5.1
+# golang.design/x/clipboard v0.5.2
 ## explicit; go 1.17
 golang.design/x/clipboard
 # golang.design/x/code2img v0.1.4
 ## explicit; go 1.17
 golang.design/x/code2img
-# golang.design/x/hotkey v0.2.0
+# golang.design/x/hotkey v0.2.1
 ## explicit; go 1.17
 golang.design/x/hotkey
 golang.design/x/hotkey/internal/win
-# golang.design/x/mainthread v0.2.1
+# golang.design/x/mainthread v0.3.0
 ## explicit; go 1.16
 golang.design/x/mainthread
 # golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
