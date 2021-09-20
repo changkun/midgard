@@ -4,16 +4,9 @@
 
 package office
 
-import (
-	"bytes"
-	"fmt"
-	"os/exec"
-	"strings"
-)
-
-func IsInMeeting() bool {
+func IsInMeeting() (bool, error) {
 	// TODO:
-	return false
+	return false, nil
 }
 
 func IsScreenLocked() (bool, error) {
