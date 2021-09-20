@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 	"gopkg.in/yaml.v3"
@@ -109,7 +108,7 @@ func (uc *universal) log(t types.MIME, buf []byte) {
 		return
 	}
 
-	logdir := config.S().Store.Path + "/logs/clipboard"
+	logdir := "./data/logs/clipboard"
 	fpath := fmt.Sprintf("%s/%d/%d", logdir, date.Year(), date.Month())
 	err = os.MkdirAll(fpath, fs.ModeDir|fs.ModePerm)
 	if err != nil {

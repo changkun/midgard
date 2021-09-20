@@ -20,7 +20,7 @@ var (
 )
 
 // RepoPath points to the actual storage
-var RepoPath = S().Store.Path + "/repo"
+var RepoPath = "./data/repo"
 
 // Config is a combination of all possible midgard configuration.
 type Config struct {
@@ -36,7 +36,6 @@ type Server struct {
 	Mode  string `yaml:"mode"`
 	Store struct {
 		Prefix string `yaml:"prefix"`
-		Path   string `yaml:"path"`
 		Backup struct {
 			Enable   bool   `yaml:"enable"`
 			Interval int    `yaml:"interval"`

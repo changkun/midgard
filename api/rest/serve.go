@@ -150,7 +150,7 @@ func backup(ctx context.Context) {
 
 	// git clone https://github.com/changkun/midgard-data repo
 	log.Printf("git clone %s repo", config.S().Store.Backup.Repo)
-	out, err := execute(config.S().Store.Path, "git", "clone",
+	out, err := execute("./data", "git", "clone",
 		config.S().Store.Backup.Repo, "repo")
 	if err != nil {
 		log.Println(utils.BytesToString(out))
@@ -159,7 +159,7 @@ func backup(ctx context.Context) {
 
 	// move everything to the cloned folder
 	// cp -r data/template data/repo
-	repoTmpl := config.S().Store.Path + "/template"
+	repoTmpl := "./data/template"
 	log.Printf("cp -r %s %s", repoTmpl, config.RepoPath)
 	err = utils.Copy(repoTmpl, config.RepoPath)
 	if err != nil {

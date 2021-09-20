@@ -12,9 +12,8 @@ domain: changkun.de # domain that runs midgard server
 server:
   addr: 0.0.0.0:80
   mode: debug # or debug/release/test
-  store:
+  store: # data folder is in ./data
     prefix: /midgard # access via changkun.de/midgard/*
-    path: ./data     # data folder
     backup:
       enable: true # enable backup
       interval: 60 # every hour
