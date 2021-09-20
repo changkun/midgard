@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"changkun.de/x/midgard/internal/config"
 )
 
 type StatusType = int32
@@ -44,7 +46,7 @@ func NewStatus() *Status {
 
 var (
 	unknownMessage = "Sorry, I can't tell you at the moment."
-	htmlTmpl       = `<div id="office">Is Changkun in the office?
+	htmlTmpl       = `<div id="office">Is %s in the office?
 		<p id="office-status" style="color: %s;">%s</p>
 	</div>`
 )
@@ -55,23 +57,25 @@ func (s *Status) HTML() string {
 
 	var message string
 
+	title := config.Get().Title
+
 	// now update display message
 	switch s.Status {
 	case StatusUnknown:
-		message = fmt.Sprintf(htmlTmpl, "gray", unknownMessage)
+		message = fmt.Sprintf(htmlTmpl, title, "gray", unknownMessage)
 	case StatusOn:
 		if !s.Meeting {
-			message = fmt.Sprintf(htmlTmpl, "green", "Yes!")
+			message = fmt.Sprintf(htmlTmpl, title, "green", "Yes!")
 		} else {
-			message = fmt.Sprintf(htmlTmpl, "brown", "Yes! But current in a meeting.")
+			message = fmt.Sprintf(htmlTmpl, title, "brown", "Yes! But current in a meeting.")
 		}
 	case StatusOff:
-		message = fmt.Sprintf(htmlTmpl, "tomato",
+		message = fmt.Sprintf(htmlTmpl, title, "tomato",
 			fmt.Sprintf("No, he left %s ago.", time.Since(s.LastAvailable).Round(time.Second)))
 	case StatusVacation:
 		if time.Since(s.EstimateReturn) > 0 {
 			// date invalid
-			message = fmt.Sprintf(htmlTmpl, "tomato",
+			message = fmt.Sprintf(htmlTmpl, title, "tomato",
 				"No, he is on vacation and will return soon.")
 		} else {
 			var date string
@@ -80,7 +84,7 @@ func (s *Status) HTML() string {
 			} else {
 				date = s.EstimateReturn.Format("Jan 2, 2006")
 			}
-			message = fmt.Sprintf(htmlTmpl, "tomato",
+			message = fmt.Sprintf(htmlTmpl, title, "tomato",
 				fmt.Sprintf("No, he is on vacation and will return at %v", date))
 		}
 	}
