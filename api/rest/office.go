@@ -18,8 +18,12 @@ func (m *Midgard) Office(c *gin.Context) {
 	c.Header("Access-Control-Allow-Headers", "*")
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "GET")
-	c.Header("Content-Type", "text/html")
-	c.String(http.StatusOK, m.status.HTML())
+	if c.Query("format") == "plain" {
+		c.String(http.StatusOK, m.status.String())
+	} else {
+		c.Header("Content-Type", "text/html")
+		c.String(http.StatusOK, m.status.HTML())
+	}
 }
 
 func (m *Midgard) refreshStatus(ctx context.Context) {
