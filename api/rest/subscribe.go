@@ -148,6 +148,8 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		}
 
 		switch wsm.Action {
+		case types.ActionTerminate:
+			continue
 		case types.ActionClipboardPut:
 			log.Println("put clipboard request is received.")
 			err := m.handleActionClipboardPut(conn, u, wsm.Data)
@@ -164,10 +166,10 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			log.Println("update office status request is received.")
 			err := m.handleOfficeStatusUpdate(conn, u, wsm.Data)
 			if err != nil {
-				log.Println("failed to update office status.")
+				log.Printf("failed to update office status: %v", err)
 			}
 		default:
-			log.Println("unsupported message:", utils.BytesToString(msg))
+			log.Printf("unsupported message: action(%v), msg(%v)", wsm.Action, utils.BytesToString(msg))
 		}
 	}
 }

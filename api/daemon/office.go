@@ -15,7 +15,7 @@ import (
 	"changkun.de/x/midgard/internal/types"
 )
 
-var s office.LocalStatus
+var s office.Status
 
 func init() {
 	switch runtime.GOOS {
@@ -70,17 +70,34 @@ func (m *Daemon) watchOfficeStatus(ctx context.Context) {
 				log.Println("office status has no updates.")
 				continue
 			}
-			b, _ := json.Marshal(&s)
+			readerCh := make(chan *types.WebsocketMessage)
+			m.readChs.Store(m.ID, readerCh)
+
+			b, _ := json.Marshal(&types.OfficeStatusRequest{
+				Type:    types.OfficeStatusStandard,
+				Working: s.Working,
+				Meeting: s.Meeting,
+			})
 			m.writeCh <- &types.WebsocketMessage{
 				Action:  types.ActionUpdateOfficeStatusRequest,
 				UserID:  m.ID,
 				Message: "office status has changed",
 				Data:    b,
 			}
+
+			resp := <-readerCh
+			switch resp.Action {
+			case types.ActionUpdateOfficeStatusResponse:
+				var data types.OfficeStatusResponse
+				err := json.Unmarshal(resp.Data, &data)
+				if err != nil {
+					log.Printf("failed to parse office status response, there must be a server side error: %v", err)
+				}
+				log.Println(data.Message)
+				m.readChs.Delete(m.ID)
+			default:
+				// not interested, ingore.
+			}
 		}
 	}
 }
-
-// TODO: Do we need read message from server?
-// readerCh := make(chan *types.WebsocketMessage)
-// m.readChs.Store(m.ID, readerCh)

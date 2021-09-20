@@ -162,7 +162,7 @@ func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (o
 				m.readChs.Delete(m.ID)
 				return &proto.ListDaemonsOutput{Daemons: utils.BytesToString(resp.Data)}, nil
 			default:
-				log.Println(resp.Message)
+				// not interested, ignore.
 			}
 		}
 	}

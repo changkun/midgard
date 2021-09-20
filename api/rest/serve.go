@@ -21,13 +21,14 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/office"
 	"changkun.de/x/midgard/internal/utils"
 )
 
 // Midgard is the midgard server that serves all API endpoints.
 type Midgard struct {
 	s      *http.Server
-	status *myStatus
+	status *office.Status
 
 	mu    sync.Mutex
 	users *list.List
@@ -35,7 +36,7 @@ type Midgard struct {
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{status: newMyStatus(), users: list.New()}
+	return &Midgard{status: office.NewStatus(), users: list.New()}
 }
 
 // Serve serves Midgard RESTful APIs.
