@@ -15,6 +15,9 @@ import (
 
 // Office returns the reported office status
 func (m *Midgard) Office(c *gin.Context) {
+	c.Header("Access-Control-Allow-Headers", "*")
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "GET")
 	c.Header("Content-Type", "text/html")
 	c.String(http.StatusOK, m.status.HTML())
 }
