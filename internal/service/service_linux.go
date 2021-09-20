@@ -30,7 +30,11 @@ const (
 func getFlavor() (initFlavor, error) {
 	initCmd, err := os.ReadFile("/proc/1/cmdline")
 	if err != nil {
-		return initSystemV, err
+		log.Println("cannot locate /proc/1/cmdline, use /proc/cmdline")
+		// Try a different file:
+		if initCmd, err = os.ReadFile("/proc/cmdline"); err != nil {
+			return initSystemV, err
+		}
 	}
 	// Trim any nul bytes from the result, which are present with some
 	// kernels but not others
