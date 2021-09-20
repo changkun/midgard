@@ -95,7 +95,7 @@ bool isCameraOn() {
         CMIOObjectPropertyAddress propertyAddress = {
             kCMIOHardwarePropertyDevices,
             kCMIOObjectPropertyScopeGlobal,
-            kCMIOObjectPropertyElementMain
+            kCMIOObjectPropertyElementMaster // This should be kCMIOObjectPropertyElementMain after macOS 12.0
         };
         UInt32 dataSize = 0;
         OSStatus status = CMIOObjectGetPropertyDataSize(

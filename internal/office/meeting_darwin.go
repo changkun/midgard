@@ -5,7 +5,7 @@
 package office
 
 /*
-#cgo CFLAGS: -Werror -fmodules -fobjc-arc -x objective-c
+#cgo CFLAGS: -DGLES_SILENCE_DEPRECATION -Werror -Wno-deprecated-declarations -fmodules -fobjc-arc -x objective-c
 
 #include <stdbool.h>
 
