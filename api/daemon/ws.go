@@ -32,7 +32,7 @@ func (m *Daemon) wsConnect() error {
 	h := http.Header{"Authorization": {"Basic " + token}}
 
 	api := types.EndpointSubscribe
-	if strings.Contains(config.Get().Domain, "localhost") {
+	if strings.Contains(config.Get().Domain, "localhost") || strings.Contains(config.Get().Domain, "0.0.0.0") {
 		api = "ws://" + api
 	} else {
 		api = "wss://" + api
@@ -84,22 +84,28 @@ func (m *Daemon) wsClose() {
 
 // wsReconnect tries to reconnect to the midgard server and returns
 // until it connects to the server.
-func (m *Daemon) wsReconnect() {
+func (m *Daemon) wsReconnect(ctx context.Context) {
+	tk := time.NewTicker(10 * time.Second)
 	for {
-		time.Sleep(time.Second * 10)
-		err := m.wsConnect()
-		if err == nil {
-			log.Println("connected to midgard server.")
+		select {
+		case <-ctx.Done():
 			return
+		case <-tk.C:
+			err := m.wsConnect()
+			if err == nil {
+				log.Println("connected to midgard server.")
+				m.forceUpdate <- struct{}{}
+				return
+			}
+			log.Printf("%v\n", err)
+			log.Println("retry in 10 seconds..")
 		}
-		log.Printf("%v\n", err)
-		log.Println("retry in 10 seconds..")
 	}
 }
 
 func (m *Daemon) handleIO(ctx context.Context) {
 	if m.ws == nil {
-		m.wsReconnect()
+		m.wsReconnect(ctx)
 	}
 
 	log.Println("daemon id:", m.ID)
@@ -107,7 +113,7 @@ func (m *Daemon) handleIO(ctx context.Context) {
 	wg.Add(2)
 	go func() { // read from server
 		defer wg.Done()
-		m.readFromServer()
+		m.readFromServer(ctx)
 	}()
 	go func() { // write to server
 		defer wg.Done()
@@ -115,8 +121,8 @@ func (m *Daemon) handleIO(ctx context.Context) {
 			select {
 			case <-ctx.Done():
 				if m.ws == nil {
-					log.Println("connection is not ready yet")
-					continue
+					log.Println("connection was not ready")
+					return
 				}
 				_ = m.ws.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
 					Action: types.ActionTerminate,
@@ -139,56 +145,61 @@ func (m *Daemon) handleIO(ctx context.Context) {
 	wg.Wait()
 }
 
-func (m *Daemon) readFromServer() {
+func (m *Daemon) readFromServer(ctx context.Context) {
 	for {
-		_, msg, err := m.ws.ReadMessage()
-		if err != nil {
-			log.Printf("failed to read message from the clipboard channel: %v", err)
-
-			m.Lock()
-			m.ws = nil
-			m.Unlock()
-
-			m.wsReconnect() // block until connection is ready again
-			continue
-		}
-
-		wsm := &types.WebsocketMessage{}
-		err = wsm.Decode(msg)
-		if err != nil {
-			log.Printf("failed to read message: %v", err)
-			continue
-		}
-
-		// duplicate messages to all readers, readers should not edit the message
-		m.readChs.Range(func(k, v interface{}) bool {
-			// readerID := k.(string)
-			readerCh := v.(chan *types.WebsocketMessage)
-			readerCh <- wsm
-			return true
-		})
-		switch wsm.Action {
-		case types.ActionClipboardChanged:
-			var d types.ClipboardData
-			err = json.Unmarshal(wsm.Data, &d)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			_, msg, err := m.ws.ReadMessage()
 			if err != nil {
-				log.Printf("failed to parse clipboard data: %v", err)
+				log.Printf("failed to read message from the clipboard channel: %v", err)
+
+				m.Lock()
+				m.ws = nil
+				m.Unlock()
+
+				m.wsReconnect(ctx) // block until connection is ready again
 				continue
 			}
-			var raw []byte
-			if d.Type == types.MIMEImagePNG {
-				// We assume the server send us a base64 encoded image data,
-				// Let's decode it into bytes.
-				raw, err = base64.StdEncoding.DecodeString(d.Data)
-				if err != nil {
-					raw = []byte{}
-				}
-			} else {
-				raw = utils.StringToBytes(d.Data)
+
+			wsm := &types.WebsocketMessage{}
+			err = wsm.Decode(msg)
+			if err != nil {
+				log.Printf("failed to read message: %v", err)
+				continue
 			}
 
-			log.Printf("universal clipboard has changed from %s, type: %s, sync with local...", wsm.UserID, d.Type)
-			clipboard.Local.Write(d.Type, raw) // change local clipboard
+			// duplicate messages to all readers, readers should not edit the message
+			m.readChs.Range(func(k, v interface{}) bool {
+				// readerID := k.(string)
+				readerCh := v.(chan *types.WebsocketMessage)
+				readerCh <- wsm
+				return true
+			})
+			switch wsm.Action {
+			case types.ActionClipboardChanged:
+				var d types.ClipboardData
+				err = json.Unmarshal(wsm.Data, &d)
+				if err != nil {
+					log.Printf("failed to parse clipboard data: %v", err)
+					continue
+				}
+				var raw []byte
+				if d.Type == types.MIMEImagePNG {
+					// We assume the server send us a base64 encoded image data,
+					// Let's decode it into bytes.
+					raw, err = base64.StdEncoding.DecodeString(d.Data)
+					if err != nil {
+						raw = []byte{}
+					}
+				} else {
+					raw = utils.StringToBytes(d.Data)
+				}
+
+				log.Printf("universal clipboard has changed from %s, type: %s, sync with local...", wsm.UserID, d.Type)
+				clipboard.Local.Write(d.Type, raw) // change local clipboard
+			}
 		}
 	}
 }

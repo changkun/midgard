@@ -153,6 +153,11 @@ func Working(working bool) func(s *Status) {
 		oldStatus := s.Status
 		s.Status = newStatus
 		switch {
+		case oldStatus == StatusUnknown && newStatus == StatusOn:
+		case oldStatus == StatusUnknown && newStatus == StatusOff:
+			s.LastAvailable = time.Now()
+		case oldStatus == StatusUnknown && newStatus == StatusVacation:
+			s.LastAvailable = time.Now()
 		case oldStatus == StatusOn && newStatus == StatusOff:
 			s.LastAvailable = time.Now()
 		case oldStatus == StatusOn && newStatus == StatusVacation:

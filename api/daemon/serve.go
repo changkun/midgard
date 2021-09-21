@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/office"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
 	"changkun.de/x/midgard/internal/utils"
@@ -26,11 +27,13 @@ import (
 type Daemon struct {
 	sync.Mutex
 
-	ID      string
-	s       *grpc.Server
-	ws      *websocket.Conn
-	readChs sync.Map                     // {string: chan *types.WebsocketMessage}
-	writeCh chan *types.WebsocketMessage // writeCh is used for sending message along ws.
+	ID          string
+	status      office.Status
+	forceUpdate chan struct{}
+	s           *grpc.Server
+	ws          *websocket.Conn
+	readChs     sync.Map                     // {string: chan *types.WebsocketMessage}
+	writeCh     chan *types.WebsocketMessage // writeCh is used for sending message along ws.
 
 	proto.UnimplementedMidgardServer
 }
@@ -45,8 +48,9 @@ func NewDaemon() *Daemon {
 		}
 	}
 	return &Daemon{
-		ID:      id,
-		writeCh: make(chan *types.WebsocketMessage, 10),
+		ID:          id,
+		forceUpdate: make(chan struct{}, 1),
+		writeCh:     make(chan *types.WebsocketMessage, 10),
 	}
 }
 

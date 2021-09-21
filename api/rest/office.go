@@ -33,8 +33,9 @@ func (m *Midgard) refreshStatus(ctx context.Context) {
 		case <-tk.C:
 			m.mu.Lock()
 			// 1. No devices is connected to midgard, meaning offline
-			m.status.Update(office.Working(m.users.Len() != 0))
-
+			if m.users.Len() == 0 {
+				m.status.Update(office.Working(false))
+			}
 			// 2. If there are devices, waiting for them to report
 			// current status, midgard server don't do anything.
 			m.mu.Unlock()
