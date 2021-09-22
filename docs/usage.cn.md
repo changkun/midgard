@@ -64,9 +64,12 @@ https://changkun.de/midgard/random/fboVP8u4xNMHfvsv2EeLzL.txt
 
 _创建好的连接会自动写回到当前的剪贴板，可以立刻直接在其他位置进行粘贴。_
 
-### iOS 捷径 - Alloc
+### iOS, iPadOS, macOS 捷径 - Alloc
 
-请在 iOS 设备上访问这个链接 [midgard-alloc](https://www.icloud.com/shortcuts/0964c0a651544604bd995cf1e723c573)，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
+请在 iOS, iPadOS, macOS 设备上访问 midgard-alloc 的捷径链接，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
+
+- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/0964c0a651544604bd995cf1e723c573
+- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/a440412d0f12454cb4676e0ded72a9f1
 
 ## 跨设备剪贴板共享
 
@@ -81,9 +84,16 @@ midgard 守护进程将自动监控剪贴板并将内容与 midgard 服务器进
 
 此外，因为剪贴板内容将在服务端进行缓存，因此在任何连接的设备上（若接收到广播的剪贴板数据）也可以直接对剪贴板内容进行粘贴。
 
-### iOS 捷径 - Clipboard
+### iOS, iPadOS, macOS 捷径 - Clipboard
 
-请在 iOS 设备上访问这个链接 [midgard-getclipboard](https://www.icloud.com/shortcuts/66c475e013e94dbf9f3714365d6c3f95) 和这个链接 [midgard-putclipboard](https://www.icloud.com/shortcuts/c1b98b1ae59045e59c1f302a634e5633)，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
+请在 iOS, iPadOS, macOS 设备上访问 midgard-getclipboard 和 midgard-putclipboard 的捷径链接，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
+
+- midgard-getclipboard
+  + iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/66c475e013e94dbf9f3714365d6c3f95
+  + iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/c88e44b318e74eedb20201e4f513dabf
+- midgard-putclipboard
+  + iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/c1b98b1ae59045e59c1f302a634e5633
+  + iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/e875c142389e4fe6b45bbed4a517f8c8
 
 ## 代码转图片 code2img
 
@@ -113,9 +123,12 @@ https://changkun.de/midgard/code/201218-204010.png
 
 code2img 服务的所有内容可以在这个路由下找到合集：/midgard/code，例如 https://changkun.de/midgard/code
 
-### iOS 捷径 - code2img
+### iOS, iPadOS, macOS 捷径 - code2img
 
-请在 iOS 设备上访问这个链接 [midgard-code2img](https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31aba300b25a)，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
+请在 iOS, iPadOS, macOS 设备上访问 midgard-code2img 的捷径链接，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
+
+- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31aba300b25a
+- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/cec5afc61b01476e87b888163de6e39b
 
 ## 许可
 

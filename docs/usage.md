@@ -62,9 +62,10 @@ Keyboard hotkey:
 
 Hint: The allocated link will be write back to the clipboard and ready for paste.
 
-### iOS Shortcut Support
+### iOS, iPadOS, macOS Shortcut - Alloc
 
-See [midgard-alloc](https://www.icloud.com/shortcuts/0964c0a651544604bd995cf1e723c573)
+- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/0964c0a651544604bd995cf1e723c573
+- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/a440412d0f12454cb4676e0ded72a9f1
 
 ## Shared Clipboard
 
@@ -81,12 +82,15 @@ so that one can immediately paste to anywhere.
 Furthermore, with the built-in universal clipboard, one can even share
 clipboard cross platforms (e.g. between Mac and Linux).
 
-### iOS Shortcuts Support
+### iOS, iPadOS, macOS Shortcut - Clipboard
 
-See
-[midgard-getclipboard](https://www.icloud.com/shortcuts/66c475e013e94dbf9f3714365d6c3f95)
-and
-[midgard-putclipboard](https://www.icloud.com/shortcuts/c1b98b1ae59045e59c1f302a634e5633).
+- midgard-getclipboard
+  + iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/66c475e013e94dbf9f3714365d6c3f95
+  + iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/c88e44b318e74eedb20201e4f513dabf
+- midgard-putclipboard
+  + iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/c1b98b1ae59045e59c1f302a634e5633
+  + iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/e875c142389e4fe6b45bbed4a517f8c8
+
 
 ## Code2image
 
@@ -116,9 +120,10 @@ https://changkun.de/midgard/code/201218-204010.png
 
 Summary page at https://changkun.de/midgard/code.
 
-### iOS Shortcuts Support
+### iOS, iPadOS, macOS Shortcut - code2img
 
-See [midgard-code2img](https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31aba300b25a).
+- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31aba300b25a
+- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/cec5afc61b01476e87b888163de6e39b
 
 ## License
 
