@@ -7,6 +7,7 @@ package version
 import (
 	"fmt"
 	"runtime"
+	"strings"
 )
 
 // These strings will be overwritten at built time.
@@ -22,10 +23,11 @@ func String() string {
 	if GitVersion == "" {
 		GitVersion = "devel"
 	}
-	str := fmt.Sprintf("Vrsion:      %s\n", GitVersion)
-	str += fmt.Sprintf("Go version:  %s\n", GoVersion)
+	var B = new(strings.Builder)
+	fmt.Fprintf(B, "Version:     %s\n", GitVersion)
+	fmt.Fprintf(B, "Go version:  %s\n", GoVersion)
 	if BuildTime != "" {
-		str += fmt.Sprintf("Build time:  %s\n", BuildTime)
+		fmt.Fprintf(B, "Build time:  %s\n", BuildTime)
 	}
-	return str
+	return B.String()
 }
