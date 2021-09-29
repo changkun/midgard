@@ -10,9 +10,9 @@ import (
 	"strings"
 )
 
-// Version is a newline-terminated string describing the current
+// version is a newline-terminated string describing the current
 // version of the build.
-var Version string
+var version string
 
 // These strings will be overwritten at built time.
 var (
@@ -31,5 +31,11 @@ func init() {
 	if BuildTime != "" {
 		fmt.Fprintf(b, "Build time:  %s\n", BuildTime)
 	}
-	Version = b.String()
+	version = b.String()
+}
+
+// String returns a newline-terminated string describing the current
+// version of the build.
+func String() string {
+	return version
 }
