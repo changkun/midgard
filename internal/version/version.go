@@ -7,7 +7,12 @@ package version
 import (
 	"fmt"
 	"runtime"
+	"strings"
 )
+
+// version is a newline-terminated string describing the current
+// version of the build.
+var version string
 
 // These strings will be overwritten at built time.
 var (
@@ -16,16 +21,21 @@ var (
 	BuildTime  string
 )
 
-// String returns a newline-terminated string describing the current
-// version of the build.
-func String() string {
+func init() {
 	if GitVersion == "" {
 		GitVersion = "devel"
 	}
-	str := fmt.Sprintf("Vrsion:      %s\n", GitVersion)
-	str += fmt.Sprintf("Go version:  %s\n", GoVersion)
+	var b = new(strings.Builder)
+	fmt.Fprintf(b, "Version:     %s\n", GitVersion)
+	fmt.Fprintf(b, "Go version:  %s\n", GoVersion)
 	if BuildTime != "" {
-		str += fmt.Sprintf("Build time:  %s\n", BuildTime)
+		fmt.Fprintf(b, "Build time:  %s\n", BuildTime)
 	}
-	return str
+	version = b.String()
+}
+
+// String returns a newline-terminated string describing the current
+// version of the build.
+func String() string {
+	return version
 }
