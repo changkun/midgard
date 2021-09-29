@@ -23,11 +23,11 @@ func String() string {
 	if GitVersion == "" {
 		GitVersion = "devel"
 	}
-	var B = new(strings.Builder)
-	fmt.Fprintf(B, "Version:     %s\n", GitVersion)
-	fmt.Fprintf(B, "Go version:  %s\n", GoVersion)
+	var b = new(strings.Builder)
+	fmt.Fprintf(b, "Version:     %s\n", GitVersion)
+	fmt.Fprintf(b, "Go version:  %s\n", GoVersion)
 	if BuildTime != "" {
-		fmt.Fprintf(B, "Build time:  %s\n", BuildTime)
+		fmt.Fprintf(b, "Build time:  %s\n", BuildTime)
 	}
-	return B.String()
+	return b.String()
 }
