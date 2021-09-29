@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// Version is a newline-terminated string describing the current
+// version of the build.
+var Version string
+
 // These strings will be overwritten at built time.
 var (
 	GitVersion string
@@ -17,9 +21,7 @@ var (
 	BuildTime  string
 )
 
-// String returns a newline-terminated string describing the current
-// version of the build.
-func String() string {
+func init() {
 	if GitVersion == "" {
 		GitVersion = "devel"
 	}
@@ -29,5 +31,5 @@ func String() string {
 	if BuildTime != "" {
 		fmt.Fprintf(b, "Build time:  %s\n", BuildTime)
 	}
-	return b.String()
+	Version = b.String()
 }
