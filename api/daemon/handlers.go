@@ -143,8 +143,13 @@ func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (o
 
 // ListDaemons lists all active daemons.
 func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (out *proto.ListDaemonsOutput, err error) {
+	readerId, err := utils.NewUUIDShort()
+	if err != nil {
+		return nil, err
+	}
+
 	readerCh := make(chan *types.WebsocketMessage)
-	m.readChs.Store(m.ID, readerCh)
+	m.readChs.Store(readerId, readerCh)
 	m.writeCh <- &types.WebsocketMessage{
 		Action:  types.ActionListDaemonsRequest,
 		UserID:  m.ID,
@@ -159,7 +164,7 @@ func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (o
 		case resp := <-readerCh:
 			switch resp.Action {
 			case types.ActionListDaemonsResponse:
-				m.readChs.Delete(m.ID)
+				m.readChs.Delete(readerId)
 				return &proto.ListDaemonsOutput{Daemons: utils.BytesToString(resp.Data)}, nil
 			default:
 				// not interested, ignore.

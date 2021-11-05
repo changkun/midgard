@@ -172,7 +172,6 @@ func (m *Daemon) readFromServer(ctx context.Context) {
 
 			// duplicate messages to all readers, readers should not edit the message
 			m.readChs.Range(func(k, v interface{}) bool {
-				// readerID := k.(string)
 				readerCh := v.(chan *types.WebsocketMessage)
 				readerCh <- wsm
 				return true

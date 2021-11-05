@@ -12,6 +12,7 @@ import (
 
 	"changkun.de/x/midgard/internal/office"
 	"changkun.de/x/midgard/internal/types"
+	"changkun.de/x/midgard/internal/utils"
 )
 
 func (m *Daemon) watchOfficeStatus(ctx context.Context) {
@@ -22,8 +23,14 @@ func (m *Daemon) watchOfficeStatus(ctx context.Context) {
 			return
 		case <-m.forceUpdate:
 			log.Println("received force status updates")
+
+			readerId, err := utils.NewUUIDShort()
+			if err != nil {
+				log.Printf("failed to create readerID: %v", err)
+				continue
+			}
 			readerCh := make(chan *types.WebsocketMessage)
-			m.readChs.Store(m.ID, readerCh)
+			m.readChs.Store(readerId, readerCh)
 
 			b, _ := json.Marshal(&types.OfficeStatusRequest{
 				Type:    types.OfficeStatusStandard,
@@ -46,7 +53,7 @@ func (m *Daemon) watchOfficeStatus(ctx context.Context) {
 					log.Printf("failed to parse office status response, there must be a server side error: %v", err)
 				}
 				log.Println(data.Message)
-				m.readChs.Delete(m.ID)
+				m.readChs.Delete(readerId)
 			default:
 				// not interested, ingore.
 			}
@@ -85,8 +92,14 @@ func (m *Daemon) watchOfficeStatus(ctx context.Context) {
 				log.Println("office status has no updates.")
 				continue
 			}
+
+			readerId, err := utils.NewUUIDShort()
+			if err != nil {
+				log.Printf("failed to create readerID: %v", err)
+				continue
+			}
 			readerCh := make(chan *types.WebsocketMessage)
-			m.readChs.Store(m.ID, readerCh)
+			m.readChs.Store(readerId, readerCh)
 
 			b, _ := json.Marshal(&types.OfficeStatusRequest{
 				Type:    types.OfficeStatusStandard,
@@ -109,7 +122,7 @@ func (m *Daemon) watchOfficeStatus(ctx context.Context) {
 					log.Printf("failed to parse office status response, there must be a server side error: %v", err)
 				}
 				log.Println(data.Message)
-				m.readChs.Delete(m.ID)
+				m.readChs.Delete(readerId)
 			default:
 				// not interested, ingore.
 			}
