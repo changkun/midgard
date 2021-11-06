@@ -82,3 +82,18 @@ func (lc *local) Watch(ctx context.Context, dt types.MIME) <-chan []byte {
 	}
 	return nil
 }
+
+// WriteAndWaitChange writes the given buffer to the clipboard and wait util clipboard is updated.
+// The reason do so is that Writing clipboard doesn't work when exiting immediately after
+// golang.design/x/clipboard.Write return which cause URL can't be written into clipboard
+// after allocation on my Linux device(Manjaro 21.0.2 with GNOME 3.38.5)
+func WriteAndWaitChange(t types.MIME, buf []byte) {
+	var ch <-chan struct{}
+	switch t {
+	case types.MIMEPlainText:
+		ch = clipboard.Write(clipboard.FmtText, buf)
+	case types.MIMEImagePNG:
+		ch = clipboard.Write(clipboard.FmtImage, buf)
+	}
+	<-ch
+}

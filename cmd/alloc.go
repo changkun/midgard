@@ -54,7 +54,8 @@ func allocate(dstpath, srcpath string) {
 				status.Convert(err).Message())
 		}
 		if out.URL != "" {
-			clipboard.Local.Write(types.MIMEPlainText, utils.StringToBytes(out.URL))
+			//block util clipboard is updated
+			clipboard.WriteAndWaitChange(types.MIMEPlainText, utils.StringToBytes(out.URL))
 			fmt.Println(out.URL)
 		} else {
 			fmt.Printf("%v\n", out.Message)
