@@ -10,10 +10,7 @@ import (
 	"log"
 
 	"changkun.de/x/midgard/api/daemon"
-	"changkun.de/x/midgard/internal/clipboard"
-	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
-	"changkun.de/x/midgard/internal/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/status"
 )
@@ -54,7 +51,8 @@ func allocate(dstpath, srcpath string) {
 				status.Convert(err).Message())
 		}
 		if out.URL != "" {
-			clipboard.Local.Write(types.MIMEPlainText, utils.StringToBytes(out.URL))
+			// Clipboard is updated on the daemon side, we don't have to
+			// write clipboard in the allocate command again, see PR#16.
 			fmt.Println(out.URL)
 		} else {
 			fmt.Printf("%v\n", out.Message)
