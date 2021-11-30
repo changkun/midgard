@@ -57,7 +57,7 @@ func (m *Midgard) Serve() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		if err := m.s.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
-			log.Printf("failed to shudown api service: %v", err)
+			log.Printf("failed to shutdown api service: %v", err)
 		}
 	}()
 	wg.Add(1)
