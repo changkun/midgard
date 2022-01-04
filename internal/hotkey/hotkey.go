@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Changkun Ou. All rights reserved.
+// Copyright 2022 Changkun Ou. All rights reserved.
 // Use of this source code is governed by a GPL-3.0
 // license that can be found in the LICENSE file.
 
@@ -20,20 +20,19 @@ import (
 // macOS: Ctrl+Option+s
 // Windows: Unsupported
 func Handle(ctx context.Context, fn func()) {
-	hk, err := hotkey.Register(getModifiers(), getKey())
-	if err != nil {
+	hk := hotkey.New(getModifiers(), getKey())
+	if err := hk.Register(); err != nil {
 		log.Printf("Hotkey registration failed: %v", err)
 		return
 	}
 	log.Println("hotkey registration success.")
 
 	go func() {
-		trigger := hk.Listen(ctx)
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-trigger:
+			case <-hk.Keydown():
 				fn()
 				runtime.KeepAlive(hk)
 			}

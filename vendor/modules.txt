@@ -139,10 +139,11 @@ golang.design/x/clipboard
 # golang.design/x/code2img v0.1.4
 ## explicit; go 1.17
 golang.design/x/code2img
-# golang.design/x/hotkey v0.2.1
+# golang.design/x/hotkey v0.3.0
 ## explicit; go 1.17
 golang.design/x/hotkey
 golang.design/x/hotkey/internal/win
+golang.design/x/hotkey/mainthread
 # golang.design/x/mainthread v0.3.0
 ## explicit; go 1.16
 golang.design/x/mainthread

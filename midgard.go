@@ -6,7 +6,7 @@ package main
 
 import (
 	"changkun.de/x/midgard/cmd"
-	"golang.design/x/mainthread"
+	"golang.design/x/hotkey/mainthread"
 )
 
 func main() {

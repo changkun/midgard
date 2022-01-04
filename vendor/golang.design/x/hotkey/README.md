@@ -13,57 +13,57 @@ import "golang.design/x/hotkey"
 
 ## API Usage
 
-Package `hotkey` provides the basic facility to register a system-level
-hotkey so that the application can be notified if a user triggers the
-desired hotkey. By definition, a hotkey is a combination of modifiers
-and a single key, and thus register a hotkey that contains multiple
-keys is not supported at the moment. Furthermore, because of OS
-restriction, hotkey events must be handled on the main thread.
-
-Therefore, in order to use this package properly, here is a complete
-example that corporates the [mainthread](https://golang.design/s/mainthread)
-package:
+Package hotkey provides the basic facility to register a system-level
+global hotkey shortcut so that an application can be notified if a user
+triggers the desired hotkey. A hotkey must be a combination of modifiers
+and a single key.
 
 ```go
-package main
-
-import (
-	"context"
-
-	"golang.design/x/hotkey"
-	"golang.design/x/mainthread"
-)
-
-// initialize mainthread facility so that hotkey can be
-// properly registered to the system and handled by the
-// application.
-func main() { mainthread.Init(fn) }
-func fn() { // Use fn as the actual main function.
-	var (
-		mods = []hotkey.Modifier{hotkey.ModCtrl}
-		k    = hotkey.KeyS
-	)
-
-	// Register a desired hotkey.
-	hk, err := hotkey.Register(mods, k)
-	if err != nil {
-		panic("hotkey registration failed")
-	}
-
-	// Start listen hotkey event whenever you feel it is ready.
-	triggered := hk.Listen(context.Background())
-	for range triggered {
-		println("hotkey ctrl+s is triggered")
-	}
+func main() { mainthread.Init(fn) } // not necessary when use in Fyne, Ebiten or Gio.
+func fn() {
+    hk := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
+    err := hk.Register()
+    if err != nil {
+        return
+    }
+    fmt.Printf("hotkey: %v is registered\n", hk)
+    <-hk.Keydown()
+    fmt.Printf("hotkey: %v is down\n", hk)
+    <-hk.Keyup()
+    fmt.Printf("hotkey: %v is up\n", hk)
+    hk.Unregister()
+    fmt.Printf("hotkey: %v is unregistered\n", hk)
 }
 ```
 
+Note platform specific details:
+
+- On macOS, due to the OS restriction (other
+  platforms does not have this restriction), hotkey events must be handled
+  on the "main thread". Therefore, in order to use this package properly,
+  one must start an OS main event loop on the main thread, For self-contained
+  applications, using [golang.design/x/hotkey/mainthread](https://pkg.go.dev/golang.design/x/hotkey/mainthread) is possible.
+  For applications based on other GUI frameworks, such as fyne, ebiten, or Gio.
+  This is not necessary. See the "[./examples](./examples)" folder for more examples.
+- On Linux (X11), when AutoRepeat is enabled in the X server, the Keyup
+  is triggered automatically and continuously as Keydown continues.
+
+## Examples
+
+| Description | Folder |
+|:------------|:------:|
+| A minimum example | [minimum](./examples/minimum/main.go) |
+| Register multiple hotkeys | [multiple](./examples/multiple/main.go) |
+| A example to use in GLFW | [glfw](./examples/glfw/main.go) |
+| A example to use in Fyne | [fyne](./examples/fyne/main.go) |
+| A example to use in Ebiten | [ebiten](./examples/ebiten/main.go) |
+| A example to use in Gio | [gio](./examples/gio/main.go) |
 ## Who is using this package?
 
 The main purpose of building this package is to support the
 [midgard](https://changkun.de/s/midgard) project.
 
-To know more projects, check our [wiki](https://github.com/golang-design/clipboard/wiki) page.
+To know more projects, check our [wiki](https://github.com/golang-design/hotkey/wiki) page.
 
 ## License
 

@@ -5,53 +5,43 @@
 // Written by Changkun Ou <changkun.de>
 
 // Package hotkey provides the basic facility to register a system-level
-// hotkey so that the application can be notified if a user triggers the
-// desired hotkey. By definition, a hotkey is a combination of modifiers
-// and a single key, and thus register a hotkey that contains multiple
-// keys is not supported at the moment. Furthermore, because of OS
-// restriction, hotkey events must be handled on the main thread.
+// global hotkey shortcut so that an application can be notified if a user
+// triggers the desired hotkey. A hotkey must be a combination of modifiers
+// and a single key.
 //
-// Therefore, in order to use this package properly, here is a complete
-// example that corporates the golang.design/x/mainthread package:
+// Note platform specific details:
 //
-// 	package main
+// - On "macOS" due to the OS restriction (other
+//   platforms does not have this restriction), hotkey events must be handled
+//   on the "main thread". Therefore, in order to use this package properly,
+//   one must start an OS main event loop on the main thread, For self-contained
+//   applications, using golang.design/x/hotkey/mainthread is possible.
+//   For applications based on other GUI frameworks, such as fyne, ebiten, or Gio.
+//   This is not necessary. See the "./examples" folder for more examples.
 //
-// 	import (
-// 		"context"
+// - On Linux (X11), When AutoRepeat is enabled in the X server, the Keyup
+//   is triggered automatically and continuously as Keydown continues.
 //
-// 		"golang.design/x/hotkey"
-// 		"golang.design/x/mainthread"
-// 	)
-//
-// 	// initialize mainthread facility so that hotkey can be
-// 	// properly registered to the system and handled by the
-// 	// application.
-// 	func main() { mainthread.Init(fn) }
-// 	func fn() { // Use fn as the actual main function.
-// 		var (
-// 			mods = []hotkey.Modifier{hotkey.ModCtrl}
-// 			k    = hotkey.KeyS
-// 		)
-//
-// 		// Register a desired hotkey.
-// 		hk, err := hotkey.Register(mods, k)
+// 	func main() { mainthread.Init(fn) } // not necessary when use in Fyne, Ebiten or Gio.
+// 	func fn() {
+// 		hk := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
+// 		err := hk.Register()
 // 		if err != nil {
-// 			panic("hotkey registration failed")
+// 			return
 // 		}
-//
-// 		// Start listen hotkey event whenever you feel it is ready.
-// 		triggered := hk.Listen(context.Background())
-// 		for range triggered {
-// 			println("hotkey ctrl+s is triggered")
-// 		}
+// 		fmt.Printf("hotkey: %v is registered\n", hk)
+// 		<-hk.Keydown()
+// 		fmt.Printf("hotkey: %v is down\n", hk)
+// 		<-hk.Keyup()
+// 		fmt.Printf("hotkey: %v is up\n", hk)
+// 		hk.Unregister()
+// 		fmt.Printf("hotkey: %v is unregistered\n", hk)
 // 	}
 package hotkey
 
 import (
-	"context"
+	"fmt"
 	"runtime"
-
-	"golang.design/x/mainthread"
 )
 
 // Event represents a hotkey event
@@ -59,38 +49,74 @@ type Event struct{}
 
 // Hotkey is a combination of modifiers and key to trigger an event
 type Hotkey struct {
+	platformHotkey
+
 	mods []Modifier
 	key  Key
 
-	in  chan<- Event
-	out <-chan Event
+	keydownIn  chan<- Event
+	keydownOut <-chan Event
+	keyupIn    chan<- Event
+	keyupOut   <-chan Event
+}
+
+// New creates a new hotkey for the given modifiers and keycode.
+func New(mods []Modifier, key Key) *Hotkey {
+	keydownIn, keydownOut := newEventChan()
+	keyupIn, keyupOut := newEventChan()
+	hk := &Hotkey{
+		mods:       mods,
+		key:        key,
+		keydownIn:  keydownIn,
+		keydownOut: keydownOut,
+		keyupIn:    keyupIn,
+		keyupOut:   keyupOut,
+	}
+
+	// Make sure the hotkey is unregistered when the created
+	// hotkey is garbage collected.
+	runtime.SetFinalizer(hk, func(x interface{}) {
+		hk := x.(*Hotkey)
+		hk.unregister()
+		close(hk.keydownIn)
+		close(hk.keyupIn)
+	})
+	return hk
 }
 
 // Register registers a combination of hotkeys. If the hotkey has
 // registered. This function will invalidates the old registration
 // and overwrites its callback.
-func Register(mods []Modifier, key Key) (*Hotkey, error) {
-	in, out := newEventChan()
-	hk := &Hotkey{mods, key, in, out}
+func (hk *Hotkey) Register() error { return hk.register() }
 
-	var err error
-	mainthread.Call(func() { err = hk.register() })
+// Keydown returns a channel that receives a signal when the hotkey is triggered.
+func (hk *Hotkey) Keydown() <-chan Event { return hk.keydownOut }
+
+// Keyup returns a channel that receives a signal when the hotkey is released.
+func (hk *Hotkey) Keyup() <-chan Event { return hk.keyupOut }
+
+// Unregister unregisters the hotkey.
+func (hk *Hotkey) Unregister() error {
+	err := hk.unregister()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	runtime.SetFinalizer(hk, func(hk *Hotkey) {
-		hk.unregister()
-	})
-
-	return hk, nil
+	// Reset a new event channel.
+	close(hk.keydownIn)
+	close(hk.keyupIn)
+	hk.keydownIn, hk.keydownOut = newEventChan()
+	hk.keyupIn, hk.keyupOut = newEventChan()
+	return nil
 }
 
-// Listen handles a hotkey event and triggers a call to fn.
-// The hotkey listen hook terminates when the context is canceled.
-func (hk *Hotkey) Listen(ctx context.Context) <-chan Event {
-	mainthread.Go(func() { hk.handle(ctx) })
-	return hk.out
+// String returns a string representation of the hotkey.
+func (hk *Hotkey) String() string {
+	s := fmt.Sprintf("%v", hk.key)
+	for _, mod := range hk.mods {
+		s += fmt.Sprintf("+%v", mod)
+	}
+	return s
 }
 
 // newEventChan returns a sender and a receiver of a buffered channel
