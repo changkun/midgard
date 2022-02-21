@@ -11,7 +11,7 @@ TARGET = -o $(BINARY)
 MIDGARD_HOME = changkun.de/x/midgard
 BUILD_SETTINGS = -ldflags="-X $(MIDGARD_HOME)/internal/version.GitVersion=$(VERSION) -X $(MIDGARD_HOME)/internal/version.BuildTime=$(BUILDTIME)"
 BUILD_FLAGS = $(BUILD_SETTINGS) -mod=vendor -x -work
-GOVERSION = $(shell curl -s 'https://golang.org/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $$2}' | tr -d ',"') # get latest go version
+GOVERSION = $(shell curl -s 'https://go.dev/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $$2}' | tr -d ',"') # get latest go version
 
 all:
 	go build $(TARGET) $(BUILD_FLAGS)
