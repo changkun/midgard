@@ -43,6 +43,7 @@ require (
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
 	golang.org/x/mobile v0.0.0-20210716004757-34ab1303b554 // indirect
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
+	golang.org/x/sync v0.0.0-20220907140024-f12130a52804
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/genproto v0.0.0-20210821163610-241b8fcbd6c8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
