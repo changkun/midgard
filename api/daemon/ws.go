@@ -86,6 +86,7 @@ func (m *Daemon) wsClose() {
 // until it connects to the server.
 func (m *Daemon) wsReconnect(ctx context.Context) {
 	tk := time.NewTicker(10 * time.Second)
+	defer tk.Stop()
 	for {
 		select {
 		case <-ctx.Done():
