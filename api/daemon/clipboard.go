@@ -23,7 +23,7 @@ import (
 func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 	last := time.Now()
 	hotkey.Handle(ctx, func() {
-		if time.Now().Sub(last) < time.Second*5 {
+		if time.Since(last) < time.Second*5 {
 			log.Println("pressing hotkey too fast, ignoring")
 			return
 		}
@@ -31,7 +31,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 
 		var msg string
 		defer func() {
-			log.Printf(msg)
+			log.Print(msg)
 			clipboard.Local.Write(
 				types.MIMEPlainText, utils.StringToBytes(msg))
 		}()

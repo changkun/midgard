@@ -62,7 +62,7 @@ func (m *Daemon) wsConnect() error {
 	wsm := &types.WebsocketMessage{}
 	err = wsm.Decode(msg)
 	if err != nil {
-		return fmt.Errorf("failed to handhsake with midgard server: %w", err)
+		return fmt.Errorf("failed to handshake with midgard server: %w", err)
 	}
 
 	switch wsm.Action {
@@ -73,7 +73,7 @@ func (m *Daemon) wsConnect() error {
 		}
 	default:
 		conn.Close() // close the connection if handshake is not ready
-		return fmt.Errorf("failed to handhsake with midgard server: %w", err)
+		return fmt.Errorf("failed to handshake with midgard server: %w", err)
 	}
 	return nil
 }
