@@ -13,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/office"
 	"changkun.de/x/midgard/internal/types"
@@ -45,7 +43,7 @@ func NewDaemon() *Daemon {
 	if err != nil {
 		id, err = utils.NewUUIDShort()
 		if err != nil {
-			panic(fmt.Errorf("failed to initialize deamon: %v", err))
+			panic(fmt.Errorf("failed to initialize daemon: %v", err))
 		}
 	}
 	return &Daemon{
@@ -59,13 +57,22 @@ func NewDaemon() *Daemon {
 // 1. maintaining midgard daemon rpc;
 // 2. maintaining midgard daemon to server websocket.
 func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
+	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
+
+	run := func() {
+		defer wg.Done()
+		m.Serve(ctx)
+	}
+	
 	onStart = func() error {
-		go m.Serve(ctx)
+		wg.Add(1)
+		go run()
 		return nil
 	}
 	onStop = func() error {
 		cancel()
+		wg.Wait()
 		return nil
 	}
 	return
@@ -75,36 +82,40 @@ func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
 // 1. maintaining midgard daemon rpc;
 // 2. maintaining midgard daemon to server websocket.
 func (m *Daemon) Serve(ctx context.Context) {
-	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		defer log.Println("graceful shutdown assistant is terminated.")
 		<-ctx.Done()
 		m.s.GracefulStop()
-		return nil
-	})
-	eg.Go(func() error {
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		defer log.Println("websocket is terminated.")
 		m.wsConnect()
 		m.handleIO(ctx)
-		m.wsClose()
-		return nil
-	})
-	eg.Go(func() error {
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		defer log.Println("clipboard watcher is terminated.")
 		m.watchLocalClipboard(ctx)
-		return nil
-	})
-	eg.Go(func() error {
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		defer log.Println("office watcher is terminated.")
 		m.watchOfficeStatus(ctx)
-		return nil
-	})
-	eg.Go(func() error {
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		defer log.Println("rpc server is terminated.")
 		m.serveRPC()
-		return nil
-	})
-	eg.Wait()
+	}()
+	wg.Wait()
 
 	log.Printf("daemon is down, good bye!")
 }

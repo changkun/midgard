@@ -77,7 +77,7 @@ var code2imgCmd = &cobra.Command{
 			}
 
 			if len(out.CodeURL) == 0 && len(out.ImageURL) == 0 {
-				log.Println("nothing was convereted to image.")
+				log.Println("nothing was converted to image.")
 				return
 			}
 

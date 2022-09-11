@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"changkun.de/x/midgard/internal/clipboard"
@@ -78,10 +77,6 @@ func (m *Daemon) wsConnect() error {
 	return nil
 }
 
-func (m *Daemon) wsClose() {
-	m.ws.Close()
-}
-
 // wsReconnect tries to reconnect to the midgard server and returns
 // until it connects to the server.
 func (m *Daemon) wsReconnect(ctx context.Context) {
@@ -110,40 +105,9 @@ func (m *Daemon) handleIO(ctx context.Context) {
 	}
 
 	log.Println("daemon id:", m.ID)
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	go func() { // read from server
-		defer wg.Done()
-		m.readFromServer(ctx)
-	}()
-	go func() { // write to server
-		defer wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				if m.ws == nil {
-					log.Println("connection was not ready")
-					return
-				}
-				_ = m.ws.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
-					Action: types.ActionTerminate,
-					UserID: m.ID,
-				}).Encode())
-				return
-			case msg := <-m.writeCh:
-				if m.ws == nil {
-					log.Println("connection is not ready yet")
-					continue
-				}
-				err := m.ws.WriteMessage(websocket.BinaryMessage, msg.Encode())
-				if err != nil {
-					log.Printf("failed to write message to server: %v", err)
-					return
-				}
-			}
-		}
-	}()
-	wg.Wait()
+	go m.readFromServer(ctx)
+	m.writeToServer(ctx)
+	m.wsClose()
 }
 
 func (m *Daemon) readFromServer(ctx context.Context) {
@@ -202,4 +166,38 @@ func (m *Daemon) readFromServer(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (m *Daemon) writeToServer(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			if m.ws == nil {
+				log.Println("connection was not ready")
+			}
+			return
+		case msg := <-m.writeCh:
+			if m.ws == nil {
+				log.Println("connection is not ready yet")
+				continue
+			}
+			err := m.ws.WriteMessage(websocket.BinaryMessage, msg.Encode())
+			if err != nil {
+				log.Printf("failed to write message to server: %v", err)
+				return
+			}
+		}
+	}
+}
+
+func (m *Daemon) wsClose() {
+	_ = m.ws.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+		Action: types.ActionTerminate,
+		UserID: m.ID,
+	}).Encode())
+
+	h := m.ws.CloseHandler()
+	h(websocket.CloseNormalClosure, "")
+
+	m.ws.Close()
 }

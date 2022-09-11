@@ -53,7 +53,9 @@ func main() {
 	case "stop":
 		err = s.Stop()
 	case "run":
-		err = s.Run(new(work).run(context.Background()))
+		m := new(work)
+		onStart, onStop := m.run(context.Background())
+		err = s.Run(onStart, onStop)
 	default:
 		err = fmt.Errorf("%s is not a valid action", verb)
 	}

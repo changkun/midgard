@@ -126,20 +126,18 @@ func (ws *windowsService) Run(onStart, onStop func() error) error {
 
 	ws.logger = elog
 
-	ok, err := svc.IsWindowsService()
+	// only service can use windows api.
+	isService, err := svc.IsWindowsService()
 	if err != nil {
 		return err
 	}
-	if !ok {
-		return ws.runNotSerVice(onStart, onStop)
+	if isService {
+		return ws.runIsService(onStart, onStop)
 	}
-
-	ws.onStart = onStart
-	ws.onStop = onStop
-	return svc.Run(ws.name, ws)
+	return ws.runNotService(onStart, onStop)
 }
 
-func (ws *windowsService) runNotSerVice(onStart, onStop func() error) error {
+func (ws *windowsService) runNotService(onStart, onStop func() error) error {
 	err := onStart()
 	if err != nil {
 		return err
@@ -150,6 +148,12 @@ func (ws *windowsService) runNotSerVice(onStart, onStop func() error) error {
 	<-sigChan
 
 	return onStop()
+}
+
+func (ws *windowsService) runIsService(onStart, onStop func() error) error {
+	ws.onStart = onStart
+	ws.onStop = onStop
+	return svc.Run(ws.name, ws)
 }
 
 func (ws *windowsService) Start() error {
