@@ -56,7 +56,8 @@ func NewDaemon() *Daemon {
 }
 
 // Run runs Daemon daemon:
-//
+// 1. maintaining midgard daemon rpc;
+// 2. maintaining midgard daemon to server websocket.
 func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
 	ctx, cancel := context.WithCancel(ctx)
 	onStart = func() error {
@@ -113,7 +114,7 @@ const maxMessageSize = 10 << 20 // 10 MB
 func (m *Daemon) serveRPC() {
 	l, err := net.Listen("tcp", config.D().Addr)
 	if err != nil {
-		log.Fatalf("fail to initalize midgard daemon, err: %v", err)
+		log.Fatalf("fail to initialize midgard daemon, err: %v", err)
 	}
 
 	m.s = grpc.NewServer(

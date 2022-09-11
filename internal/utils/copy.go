@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-// this implemnetation is derived from https://github.com/otiai10/copy.
+// this implementation is derived from https://github.com/otiai10/copy.
 
 // Copy copies src to dest, doesn't matter if src is a directory or a file.
 func Copy(src, dest string) error {

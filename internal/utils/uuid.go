@@ -16,7 +16,7 @@ import (
 )
 
 // random function
-var rander = rand.Reader
+var reader = rand.Reader
 
 var nilUUID uuid // empty UUID, all zeros
 
@@ -36,7 +36,7 @@ func (u uuid) String() string {
 // NewUUID creates a new uuid.
 func NewUUID() (uuid, error) {
 	var u uuid
-	_, err := io.ReadFull(rander, u[:])
+	_, err := io.ReadFull(reader, u[:])
 	if err != nil {
 		return nilUUID, err
 	}
@@ -141,7 +141,7 @@ func (b base57) Encode(u uuid) string {
 	return b.numToString(&num, int(length))
 }
 
-// numToString converts a number a string using the given alpabet.
+// numToString converts a number to string using the given alphabet.
 func (b *base57) numToString(number *big.Int, padToLen int) string {
 	var (
 		out   string
