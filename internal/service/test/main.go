@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -20,82 +21,72 @@ func main() {
 	var name = "test"
 	var displayName = "test is test service"
 	var desc = "test service tests description"
-	var args = []string{"daemon"}
+	var args = []string{"run"}
 
 	var s, err = service.NewService(name, displayName, desc, args)
 	log = s
 
 	if err != nil {
-		fmt.Printf("%s unable to start: %s", displayName, err)
+		fmt.Printf("%s unable to start: %s", name, err)
+		return
+	}
+	if len(os.Args) < 2 {
+		fmt.Printf("%s unable to start: args not enough", name)
 		return
 	}
 
-	if len(os.Args) > 1 {
-		var err error
-		verb := os.Args[1]
-		switch verb {
-		case "install":
-			err = s.Install()
-			if err != nil {
-				fmt.Printf("Failed to install: %s\n", err)
-				return
-			}
-			fmt.Printf("Service \"%s\" installed.\n", displayName)
-		case "remove":
-			err = s.Remove()
-			if err != nil {
-				fmt.Printf("Failed to remove: %s\n", err)
-				return
-			}
-			fmt.Printf("Service \"%s\" removed.\n", displayName)
-		case "run", "daemon":
-			log.Info("verb: ", verb)
-			work()
-		case "start":
-			err = s.Start()
-			if err != nil {
-				fmt.Printf("Failed to start: %s\n", err)
-				return
-			}
-			fmt.Printf("Service \"%s\" started.\n", displayName)
-		case "stop":
-			err = s.Stop()
-			if err != nil {
-				fmt.Printf("Failed to stop: %s\n", err)
-				return
-			}
-			fmt.Printf("Service \"%s\" stopped.\n", displayName)
+	defer func() {
+		if err != nil {
+			fmt.Printf("failed to %s, err: %v", os.Args[1], err)
+			return
 		}
-		return
-	}
-	err = s.Run(doWork, stopWork)
-	if err != nil {
-		s.Error(err.Error())
+		fmt.Printf("%s action is done.", os.Args[1])
+	}()
+	verb := os.Args[1]
+	switch verb {
+	case "install":
+		err = s.Install()
+	case "uninstall":
+		err = s.Remove()
+	case "start":
+		err = s.Start()
+	case "stop":
+		err = s.Stop()
+	case "run":
+		m := new(work)
+		onStart, onStop := m.run(context.Background())
+		err = s.Run(onStart, onStop)
+	default:
+		err = fmt.Errorf("%s is not a valid action", verb)
 	}
 }
 
-var exit = make(chan struct{})
+type work struct{}
 
-func doWork() error {
-	go work()
-	return nil
-
+func (w *work) run(ctx context.Context) (onStart, onStop func() error) {
+	ctx, cancel := context.WithCancel(ctx)
+	onStart = func() error {
+		go w.work(ctx)
+		return nil
+	}
+	onStop = func() error {
+		log.Info("Stopping!")
+		cancel()
+		return nil
+	}
+	return
 }
-func work() {
+
+func (w *work) work(ctx context.Context) {
 	log.Info("Running!")
 	ticker := time.NewTicker(time.Second * 10)
 	for {
 		select {
 		case <-ticker.C:
 			log.Info("Still running...")
-		case <-exit:
+		case <-ctx.Done():
 			ticker.Stop()
 			return
 		}
 	}
-}
-func stopWork() error {
-	log.Info("Stopping!")
-	exit <- struct{}{}
-	return nil
 }

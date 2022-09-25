@@ -55,8 +55,12 @@ var daemonCmd = &cobra.Command{
 			err = s.Stop()
 		case "run":
 			m := daemon.NewDaemon()
-			m.Serve()
-			os.Exit(0) // this closes clipboard NSApplication on darwin
+			onStart, onStop := m.Run(context.Background())
+
+			err = s.Run(onStart, onStop)
+			if err == nil {
+				os.Exit(0) // this closes clipboard NSApplication on darwin
+			}
 		case "ls":
 			daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
 				out, err := c.ListDaemons(ctx, &proto.ListDaemonsInput{})

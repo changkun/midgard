@@ -6,6 +6,8 @@ package service
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 
 	"changkun.de/x/midgard/internal/osext"
 	"golang.org/x/sys/windows/svc"
@@ -124,6 +126,31 @@ func (ws *windowsService) Run(onStart, onStop func() error) error {
 
 	ws.logger = elog
 
+	// only service can use windows api.
+	isService, err := svc.IsWindowsService()
+	if err != nil {
+		return err
+	}
+	if isService {
+		return ws.runIsService(onStart, onStop)
+	}
+	return ws.runNotService(onStart, onStop)
+}
+
+func (ws *windowsService) runNotService(onStart, onStop func() error) error {
+	err := onStart()
+	if err != nil {
+		return err
+	}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+	<-sigChan
+
+	return onStop()
+}
+
+func (ws *windowsService) runIsService(onStart, onStop func() error) error {
 	ws.onStart = onStart
 	ws.onStop = onStop
 	return svc.Run(ws.name, ws)

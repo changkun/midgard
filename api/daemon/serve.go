@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/signal"
 	"sync"
 	"time"
 
@@ -44,7 +43,7 @@ func NewDaemon() *Daemon {
 	if err != nil {
 		id, err = utils.NewUUIDShort()
 		if err != nil {
-			panic(fmt.Errorf("failed to initialize deamon: %v", err))
+			panic(fmt.Errorf("failed to initialize daemon: %v", err))
 		}
 	}
 	return &Daemon{
@@ -54,32 +53,49 @@ func NewDaemon() *Daemon {
 	}
 }
 
+// Run runs Daemon daemon:
+// 1. maintaining midgard daemon rpc;
+// 2. maintaining midgard daemon to server websocket.
+func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(ctx)
+
+	run := func() {
+		defer wg.Done()
+		m.Serve(ctx)
+	}
+	
+	onStart = func() error {
+		wg.Add(1)
+		go run()
+		return nil
+	}
+	onStop = func() error {
+		cancel()
+		wg.Wait()
+		return nil
+	}
+	return
+}
+
 // Serve serves Daemon daemon:
 // 1. maintaining midgard daemon rpc;
 // 2. maintaining midgard daemon to server websocket.
-func (m *Daemon) Serve() {
-	ctx, cancel := context.WithCancel(context.Background())
-
+func (m *Daemon) Serve(ctx context.Context) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer func() {
-			log.Println("graceful shutdown assistant is terminated.")
-		}()
-		q := make(chan os.Signal, 1)
-		signal.Notify(q, os.Interrupt)
-		sig := <-q
-		log.Printf("%v", sig)
-		log.Printf("shutting down midgard daemon ...")
+		defer log.Println("graceful shutdown assistant is terminated.")
+		<-ctx.Done()
 		m.s.GracefulStop()
-		cancel()
 	}()
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		defer log.Println("websocket is terminated.")
 		m.wsConnect()
 		m.handleIO(ctx)
-		m.wsClose()
 	}()
 	wg.Add(1)
 	go func() {
@@ -109,7 +125,7 @@ const maxMessageSize = 10 << 20 // 10 MB
 func (m *Daemon) serveRPC() {
 	l, err := net.Listen("tcp", config.D().Addr)
 	if err != nil {
-		log.Fatalf("fail to initalize midgard daemon, err: %v", err)
+		log.Fatalf("fail to initialize midgard daemon, err: %v", err)
 	}
 
 	m.s = grpc.NewServer(
