@@ -5,18 +5,16 @@
 // Written by Changkun Ou <changkun.de>
 
 //go:build linux && !android
+// +build linux,!android
 
 package clipboard
 
 /*
-#cgo LDFLAGS: -lX11
+#cgo LDFLAGS: -ldl
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-#include <stdatomic.h>
 
 int clipboard_test();
 int clipboard_write(
@@ -34,12 +32,13 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"runtime/cgo"
 	"time"
 	"unsafe"
+
+	"golang.design/x/clipboard/internal/cgo"
 )
 
-const errmsg = `Failed to initialize the X11 display, and the clipboard package
+var helpmsg = `%w: Failed to initialize the X11 display, and the clipboard package
 will not work properly. Install the following dependency may help:
 
 	apt install -y libx11-dev
@@ -57,11 +56,12 @@ and initialize a virtual frame buffer:
 Then this package should be ready to use.
 `
 
-func init() {
+func initialize() error {
 	ok := C.clipboard_test()
-	if ok < 0 {
-		panic(errmsg)
+	if ok != 0 {
+		return fmt.Errorf(helpmsg, errUnavailable)
 	}
+	return nil
 }
 
 func read(t Format) (buf []byte, err error) {
@@ -95,7 +95,6 @@ func readc(t string) ([]byte, error) {
 // write writes the given data to clipboard and
 // returns true if success or false if failed.
 func write(t Format, buf []byte) (<-chan struct{}, error) {
-
 	var s string
 	switch t {
 	case FmtText:
@@ -130,7 +129,7 @@ func write(t Format, buf []byte) (<-chan struct{}, error) {
 
 	status := <-start
 	if status < 0 {
-		return nil, errInvalidOperation
+		return nil, errUnavailable
 	}
 	// wait until enter event loop
 	return done, nil

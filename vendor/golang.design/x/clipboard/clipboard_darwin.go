@@ -5,6 +5,7 @@
 // Written by Changkun Ou <changkun.de>
 
 //go:build darwin && !ios
+// +build darwin,!ios
 
 package clipboard
 
@@ -26,6 +27,8 @@ import (
 	"time"
 	"unsafe"
 )
+
+func initialize() error { return nil }
 
 func read(t Format) (buf []byte, err error) {
 	var (
@@ -67,9 +70,11 @@ func write(t Format, buf []byte) (<-chan struct{}, error) {
 			ok = C.clipboard_write_image(unsafe.Pointer(&buf[0]),
 				C.NSInteger(len(buf)))
 		}
+	default:
+		return nil, errUnsupported
 	}
 	if ok != 0 {
-		return nil, errInvalidOperation
+		return nil, errUnavailable
 	}
 
 	// use unbuffered data to prevent goroutine leak

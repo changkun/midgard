@@ -5,6 +5,7 @@
 // Written by Changkun Ou <changkun.de>
 
 //go:build ios
+// +build ios
 
 package clipboard
 
@@ -20,19 +21,20 @@ import "C"
 import (
 	"bytes"
 	"context"
-	"errors"
 	"time"
 	"unsafe"
 )
+
+func initialize() error { return nil }
 
 func read(t Format) (buf []byte, err error) {
 	switch t {
 	case FmtText:
 		return []byte(C.GoString(C.clipboard_read_string())), nil
 	case FmtImage:
-		return nil, errors.New("unimplemented")
+		return nil, errUnsupported
 	default:
-		return nil, errors.New("unimplemented")
+		return nil, errUnsupported
 	}
 }
 
@@ -47,9 +49,9 @@ func write(t Format, buf []byte) (<-chan struct{}, error) {
 		C.clipboard_write_string(cs)
 		return done, nil
 	case FmtImage:
-		return nil, errors.New("unimplemented")
+		return nil, errUnsupported
 	default:
-		return nil, errors.New("unimplemented")
+		return nil, errUnsupported
 	}
 }
 

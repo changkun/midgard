@@ -12,6 +12,6 @@ import (
 func main() {
 	// midgard cli involves graphical APIs that require midgard daemon to
 	// running on the main thread. Instead of executing the command center,
-	// initialize it from the golang.design/x/mainthread package.
+	// initialize it from the golang.design/x/hotkey/mainthread package.
 	mainthread.Init(cmd.Execute)
 }
