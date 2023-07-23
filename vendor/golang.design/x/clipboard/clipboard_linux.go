@@ -32,10 +32,9 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"runtime/cgo"
 	"time"
 	"unsafe"
-
-	"golang.design/x/clipboard/internal/cgo"
 )
 
 var helpmsg = `%w: Failed to initialize the X11 display, and the clipboard package
@@ -106,7 +105,7 @@ func write(t Format, buf []byte) (<-chan struct{}, error) {
 	start := make(chan int)
 	done := make(chan struct{}, 1)
 
-	go func() { // surve as a daemon until the ownership is terminated.
+	go func() { // serve as a daemon until the ownership is terminated.
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
