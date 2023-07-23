@@ -48,8 +48,10 @@ func TestLocalClipboardImage(t *testing.T) {
 			want := img1.At(i, j)
 			got := img2.At(i, j)
 
-			if !reflect.DeepEqual(want, got) {
-				t.Logf("read data from clipbaord is inconsistent with previous written data, pix: (%d,%d), got: %+v, want: %+v", i, j, got, want)
+			wantR, wantG, wantB, wantA := want.RGBA()
+			gotR, gotG, gotB, gotA := got.RGBA()
+			if wantR != gotR || wantG != gotG || wantB != gotB || wantA != gotA {
+				t.Logf("read data from clipbaord is inconsistent with previous written data, pix: (%d,%d), got: %+v,%+v,%+v,%+v, want: %+v,%+v,%+v,%+v", i, j, gotR, gotG, gotB, gotA, wantR, wantG, wantB, wantA)
 				incorrect++
 			}
 		}
