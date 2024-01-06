@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
-	"changkun.de/x/midgard/internal/office"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
 	"changkun.de/x/midgard/internal/utils"
@@ -27,7 +26,6 @@ type Daemon struct {
 	sync.Mutex
 
 	ID          string
-	status      office.Status
 	forceUpdate chan struct{}
 	s           *grpc.Server
 	ws          *websocket.Conn
@@ -64,7 +62,7 @@ func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
 		defer wg.Done()
 		m.Serve(ctx)
 	}
-	
+
 	onStart = func() error {
 		wg.Add(1)
 		go run()
@@ -102,12 +100,6 @@ func (m *Daemon) Serve(ctx context.Context) {
 		defer wg.Done()
 		defer log.Println("clipboard watcher is terminated.")
 		m.watchLocalClipboard(ctx)
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer log.Println("office watcher is terminated.")
-		m.watchOfficeStatus(ctx)
 	}()
 	wg.Add(1)
 	go func() {

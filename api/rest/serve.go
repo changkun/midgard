@@ -21,14 +21,12 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
-	"changkun.de/x/midgard/internal/office"
 	"changkun.de/x/midgard/internal/utils"
 )
 
 // Midgard is the midgard server that serves all API endpoints.
 type Midgard struct {
-	s      *http.Server
-	status *office.Status
+	s *http.Server
 
 	mu    sync.Mutex
 	users *list.List
@@ -36,7 +34,7 @@ type Midgard struct {
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{status: office.NewStatus(), users: list.New()}
+	return &Midgard{users: list.New()}
 }
 
 // Serve serves Midgard RESTful APIs.
@@ -59,11 +57,6 @@ func (m *Midgard) Serve() {
 		if err := m.s.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
 			log.Printf("failed to shutdown api service: %v", err)
 		}
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		m.refreshStatus(ctx)
 	}()
 	wg.Add(1)
 	go func() {

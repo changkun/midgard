@@ -26,7 +26,6 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
 	mg.GET("/code", m.Code)
-	mg.GET("/office", m.Office)
 
 	v1auth := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
 		config.S().Auth.User: config.S().Auth.Pass,
@@ -75,15 +74,14 @@ func FixPath(p string) string {
 //
 // Basic Usage:
 //
-// - use the pprof tool to look at the heap profile:
-//   go tool pprof localhost:8080/midgard/api/v1/debug/pprof/heap
-// - look at a 30-second CPU profile:
-//   go tool pprof localhost:8080/midgard/api/v1/debug/pprof/profile
-// - look at the goroutine blocking profile, after calling runtime.SetBlockProfileRate:
-//   go tool pprof localhost:8080/midgard/api/v1/debug/pprof/block
-// - collect a 5-second execution trace:
-//   go tool pprof localhost:8080/midgard/api/v1/debug/pprof/trace?seconds=5
-//
+//   - use the pprof tool to look at the heap profile:
+//     go tool pprof localhost:8080/midgard/api/v1/debug/pprof/heap
+//   - look at a 30-second CPU profile:
+//     go tool pprof localhost:8080/midgard/api/v1/debug/pprof/profile
+//   - look at the goroutine blocking profile, after calling runtime.SetBlockProfileRate:
+//     go tool pprof localhost:8080/midgard/api/v1/debug/pprof/block
+//   - collect a 5-second execution trace:
+//     go tool pprof localhost:8080/midgard/api/v1/debug/pprof/trace?seconds=5
 func profile(r *gin.RouterGroup) {
 	pprofHandler := func(h http.HandlerFunc) gin.HandlerFunc {
 		handler := http.HandlerFunc(h)

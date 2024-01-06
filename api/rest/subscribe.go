@@ -162,12 +162,6 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			if err != nil {
 				log.Println("failed to list daemons:", err)
 			}
-		case types.ActionUpdateOfficeStatusRequest:
-			log.Println("update office status request is received.")
-			err := m.handleOfficeStatusUpdate(conn, u, wsm.Data)
-			if err != nil {
-				log.Printf("failed to update office status: %v", err)
-			}
 		default:
 			log.Printf("unsupported message: action(%v), msg(%v)", wsm.Action, utils.BytesToString(msg))
 		}
