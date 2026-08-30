@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -21,7 +22,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var uid uint64 // atomic, incremental
+var uid atomic.Uint64 // atomic, incremental
 
 // user represents a daemon subscriber
 type user struct {
@@ -96,7 +97,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		}
 
 		// register to the subscribers
-		idx := atomic.AddUint64(&uid, 1)
+		idx := uid.Add(1)
 		u = &user{index: idx, id: wsm.UserID, conn: conn}
 		e = m.users.PushBack(u)
 		log.Printf("current daemon subscribers: %d", m.users.Len())
@@ -185,16 +186,17 @@ func (m *Midgard) handleListDaemons(conn *websocket.Conn, u *user, data []byte) 
 		}
 	}()
 
-	resp := "id\tname\n"
+	var resp strings.Builder
+	resp.WriteString("id\tname\n")
 
 	for e := m.users.Front(); e != nil; e = e.Next() {
 		u := e.Value.(*user)
-		resp += fmt.Sprintf("%d\t%s\n", u.index, u.id)
+		fmt.Fprintf(&resp, "%d\t%s\n", u.index, u.id)
 	}
 
 	return conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
 		Action: types.ActionListDaemonsResponse,
-		Data:   utils.StringToBytes(resp),
+		Data:   utils.StringToBytes(resp.String()),
 	}).Encode())
 }
 

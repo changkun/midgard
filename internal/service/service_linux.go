@@ -247,13 +247,13 @@ func (s *linuxService) Stop() error {
 	}
 }
 
-func (s *linuxService) Error(format string, a ...interface{}) error {
+func (s *linuxService) Error(format string, a ...any) error {
 	return s.logger.Err(fmt.Sprintf(format, a...))
 }
-func (s *linuxService) Warning(format string, a ...interface{}) error {
+func (s *linuxService) Warning(format string, a ...any) error {
 	return s.logger.Warning(fmt.Sprintf(format, a...))
 }
-func (s *linuxService) Info(format string, a ...interface{}) error {
+func (s *linuxService) Info(format string, a ...any) error {
 	return s.logger.Info(fmt.Sprintf(format, a...))
 }
 

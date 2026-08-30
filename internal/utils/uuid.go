@@ -11,7 +11,7 @@ import (
 	"io"
 	"math"
 	"math/big"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -97,7 +97,7 @@ func newAlphabet(s string) alphabet {
 		panic("encoding alphabet is not 57-bytes long")
 	}
 
-	sort.Strings(abc)
+	slices.Sort(abc)
 	a := alphabet{
 		len: int64(len(abc)),
 	}

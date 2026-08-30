@@ -4,20 +4,23 @@
 
 package utils
 
-import (
-	"reflect"
-	"unsafe"
-)
+import "unsafe"
 
 // StringToBytes converts string to byte slice without a memory allocation.
-func StringToBytes(s string) (b []byte) {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	bh.Data, bh.Len, bh.Cap = sh.Data, sh.Len, sh.Len
-	return b
+//
+// The returned slice aliases the string's backing array. Writing to it is
+// undefined behavior.
+func StringToBytes(s string) []byte {
+	if len(s) == 0 {
+		return nil
+	}
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
 // BytesToString converts byte slice to string without a memory allocation.
+//
+// The returned string aliases b. Mutating b after the conversion changes
+// the string's contents, which is undefined behavior.
 func BytesToString(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
+	return unsafe.String(unsafe.SliceData(b), len(b))
 }

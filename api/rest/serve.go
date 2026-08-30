@@ -41,10 +41,8 @@ func NewMidgard() *Midgard {
 func (m *Midgard) Serve() {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	var wg sync.WaitGroup
+	wg.Go(func() {
 		q := make(chan os.Signal, 1)
 		signal.Notify(q, os.Interrupt)
 		sig := <-q
@@ -54,20 +52,16 @@ func (m *Midgard) Serve() {
 		log.Printf("shutting down api service ...")
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		if err := m.s.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
+		if err := m.s.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("failed to shutdown api service: %v", err)
 		}
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	})
+	wg.Go(func() {
 		m.serveHTTP()
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	})
+	wg.Go(func() {
 		backup(ctx)
-	}()
+	})
 	wg.Wait()
 
 	log.Printf("api server is down, good bye!")
@@ -82,7 +76,7 @@ func (m *Midgard) serveHTTP() {
 	m.s = &http.Server{Handler: m.routers(), Addr: addr}
 	log.Printf("server starting at http://%s", addr)
 	err := m.s.ListenAndServe()
-	if err != http.ErrServerClosed {
+	if !errors.Is(err, http.ErrServerClosed) {
 		log.Printf("close with error: %v", err)
 	}
 }

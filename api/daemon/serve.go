@@ -55,7 +55,7 @@ func NewDaemon() *Daemon {
 // 1. maintaining midgard daemon rpc;
 // 2. maintaining midgard daemon to server websocket.
 func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(ctx)
 
 	run := func() {
@@ -80,33 +80,25 @@ func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
 // 1. maintaining midgard daemon rpc;
 // 2. maintaining midgard daemon to server websocket.
 func (m *Daemon) Serve(ctx context.Context) {
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	var wg sync.WaitGroup
+	wg.Go(func() {
 		defer log.Println("graceful shutdown assistant is terminated.")
 		<-ctx.Done()
 		m.s.GracefulStop()
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	})
+	wg.Go(func() {
 		defer log.Println("websocket is terminated.")
 		m.wsConnect()
 		m.handleIO(ctx)
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	})
+	wg.Go(func() {
 		defer log.Println("clipboard watcher is terminated.")
 		m.watchLocalClipboard(ctx)
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	})
+	wg.Go(func() {
 		defer log.Println("rpc server is terminated.")
 		m.serveRPC()
-	}()
+	})
 	wg.Wait()
 
 	log.Printf("daemon is down, good bye!")

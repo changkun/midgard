@@ -18,7 +18,7 @@ func TestParseConfig(t *testing.T) {
 
 	// Test if all fields are filled.
 	v := reflect.ValueOf(*conf)
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		if v.Field(i).Kind() == reflect.Struct {
 			continue
 		}

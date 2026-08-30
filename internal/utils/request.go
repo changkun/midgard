@@ -16,7 +16,7 @@ import (
 
 // Request conducts a http request for a given method, api endpoint, and
 // data attached as application/json Content-Type.
-func Request(method, api string, data interface{}) ([]byte, error) {
+func Request(method, api string, data any) ([]byte, error) {
 	var (
 		body []byte
 		err  error

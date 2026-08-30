@@ -16,7 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -47,18 +47,19 @@ const codeTmpl = `{{ range .Codes }}
 
 // Code lists all code2img codes
 func (m *Midgard) Code(c *gin.Context) {
+	type code struct {
+		Time     time.Time
+		TimeFmt  string
+		Code     string
+		ImageURL string
+		TextURL  string
+	}
 	type codeInfo struct {
-		Codes []struct {
-			Time     time.Time
-			TimeFmt  string
-			Code     string
-			ImageURL string
-			TextURL  string
-		}
+		Codes []code
 	}
 	ci := codeInfo{}
 	codedir := filepath.Clean(config.RepoPath + "/code")
-	filepath.WalkDir(codedir, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(codedir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || err != nil {
 			return nil
 		}
@@ -82,13 +83,7 @@ func (m *Midgard) Code(c *gin.Context) {
 			return nil // Ignore errors from this file
 		}
 
-		ci.Codes = append(ci.Codes, struct {
-			Time     time.Time
-			TimeFmt  string
-			Code     string
-			ImageURL string
-			TextURL  string
-		}{
+		ci.Codes = append(ci.Codes, code{
 			Time:     t,
 			TimeFmt:  t.Format(time.RFC1123),
 			Code:     utils.BytesToString(b),
@@ -97,15 +92,18 @@ func (m *Midgard) Code(c *gin.Context) {
 		})
 		return nil
 	})
+	if err != nil {
+		log.Println(err)
+	}
 
-	sort.Slice(ci.Codes, func(i, j int) bool {
-		return ci.Codes[i].Time.Sub(ci.Codes[j].Time) > 0
+	// newest first
+	slices.SortFunc(ci.Codes, func(a, b code) int {
+		return b.Time.Compare(a.Time)
 	})
 
 	tt := template.Must(template.New("codes").Parse(codeTmpl))
 	var buf bytes.Buffer
-	err := tt.Execute(&buf, ci)
-	if err != nil {
+	if err := tt.Execute(&buf, ci); err != nil {
 		c.Writer.WriteHeader(http.StatusBadRequest)
 		log.Println(err)
 		return

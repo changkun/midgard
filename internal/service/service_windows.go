@@ -186,19 +186,19 @@ func (ws *windowsService) Stop() error {
 	return err
 }
 
-func (ws *windowsService) Error(format string, a ...interface{}) error {
+func (ws *windowsService) Error(format string, a ...any) error {
 	if ws.logger == nil {
 		return nil
 	}
 	return ws.logger.Error(3, fmt.Sprintf(format, a...))
 }
-func (ws *windowsService) Warning(format string, a ...interface{}) error {
+func (ws *windowsService) Warning(format string, a ...any) error {
 	if ws.logger == nil {
 		return nil
 	}
 	return ws.logger.Warning(2, fmt.Sprintf(format, a...))
 }
-func (ws *windowsService) Info(format string, a ...interface{}) error {
+func (ws *windowsService) Info(format string, a ...any) error {
 	if ws.logger == nil {
 		return nil
 	}

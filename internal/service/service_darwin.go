@@ -122,13 +122,13 @@ func (s *darwinLaunchdService) Run(onStart, onStop func() error) error {
 	return onStop()
 }
 
-func (s *darwinLaunchdService) Error(format string, a ...interface{}) error {
+func (s *darwinLaunchdService) Error(format string, a ...any) error {
 	return s.logger.Err(fmt.Sprintf(format, a...))
 }
-func (s *darwinLaunchdService) Warning(format string, a ...interface{}) error {
+func (s *darwinLaunchdService) Warning(format string, a ...any) error {
 	return s.logger.Warning(fmt.Sprintf(format, a...))
 }
-func (s *darwinLaunchdService) Info(format string, a ...interface{}) error {
+func (s *darwinLaunchdService) Info(format string, a ...any) error {
 	// On Darwin syslog.log defaults to loggint >= Notice (see /etc/asl.conf).
 	return s.logger.Notice(fmt.Sprintf(format, a...))
 }

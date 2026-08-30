@@ -51,9 +51,9 @@ type Runner interface {
 // system logging.
 type Logger interface {
 	// Basic log functions in the context of the service.
-	Error(format string, a ...interface{}) error
-	Warning(format string, a ...interface{}) error
-	Info(format string, a ...interface{}) error
+	Error(format string, a ...any) error
+	Warning(format string, a ...any) error
+	Info(format string, a ...any) error
 }
 
 // NewService creates a new service. name is the internal name
@@ -80,7 +80,7 @@ type config struct {
 }
 
 // KeyValue is a key value mapping that offers a few handy utilities.
-type KeyValue map[string]interface{}
+type KeyValue map[string]any
 
 // bool returns the value of the given name, assuming the value is a boolean.
 // If the value isn't found or is not of the type, the defaultValue is returned.

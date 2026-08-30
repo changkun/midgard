@@ -43,8 +43,8 @@ func TestLocalClipboardImage(t *testing.T) {
 	h := img2.Bounds().Dy()
 
 	incorrect := 0
-	for i := 0; i < w; i++ {
-		for j := 0; j < h; j++ {
+	for i := range w {
+		for j := range h {
 			want := img1.At(i, j)
 			got := img2.At(i, j)
 
