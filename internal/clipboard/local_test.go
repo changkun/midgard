@@ -118,3 +118,36 @@ func TestLocalClipboardWatch(t *testing.T) {
 		}
 	}
 }
+
+// TestLocalClipboardUnsupportedMIME pins the contract of the v0.9.0 port:
+// a MIME type the OS clipboard does not carry must report a failed write
+// rather than claim success, and must not hand back a watch channel.
+func TestLocalClipboardUnsupportedMIME(t *testing.T) {
+	if clipboard.Local.Write("application/octet-stream", []byte("data")) {
+		t.Fatal("write of an unsupported MIME type reported success")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if ch := clipboard.Local.Watch(ctx, "application/octet-stream"); ch != nil {
+		t.Fatal("watch of an unsupported MIME type returned a channel")
+	}
+}
+
+// A repeated write of the same bytes is reported as a success without
+// touching the OS clipboard, so that a sync loop does not fight itself.
+func TestLocalClipboardWriteIsIdempotent(t *testing.T) {
+	data := utils.StringToBytes("changkun.de/x/midgard/idempotent")
+	if !clipboard.Local.Write(types.MIMEPlainText, data) {
+		t.Fatal("first write failed")
+	}
+	if !clipboard.Local.Write(types.MIMEPlainText, data) {
+		t.Fatal("second write of identical data failed")
+	}
+
+	tp, got := clipboard.Local.Read()
+	if tp != types.MIMEPlainText || !bytes.Equal(got, data) {
+		t.Fatalf("read back (%v, %q), want (%v, %q)",
+			tp, got, types.MIMEPlainText, data)
+	}
+}
