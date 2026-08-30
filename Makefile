@@ -16,8 +16,8 @@ GOVERSION = $(shell curl -s 'https://go.dev/dl/?mode=json' | grep '"version"' | 
 all:
 	go build $(TARGET) $(BUILD_FLAGS)
 install:
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 gen:
 	go generate ./...
 dep:
