@@ -14,8 +14,6 @@ import (
 	"os/user"
 	"strings"
 	"text/template"
-
-	"changkun.de/x/midgard/internal/osext"
 )
 
 func newService(c *config) (s *darwinLaunchdService, err error) {
@@ -58,7 +56,7 @@ func (s *darwinLaunchdService) Install() error {
 	}
 	defer f.Close()
 
-	path, err := osext.Executable()
+	path, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("%s executable does not exists, err: %w", s.Name, err)
 	}

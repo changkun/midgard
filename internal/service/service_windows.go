@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 
-	"changkun.de/x/midgard/internal/osext"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
@@ -64,7 +63,7 @@ loop:
 }
 
 func (ws *windowsService) Install() error {
-	exepath, err := osext.Executable()
+	exepath, err := os.Executable()
 	if err != nil {
 		return err
 	}
