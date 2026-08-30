@@ -13,7 +13,7 @@ RUN cd /root/goes && tar xvf $GOVERSION.linux-amd64.tar.gz && rm $GOVERSION.linu
 RUN cd /root/goes && mv /root/goes/go /root/goes/$GOVERSION
 RUN cd /root/goes && ln -s /root/goes/$GOVERSION /root/goes/go
 RUN cd /root/goes && export GOROOT=~/goes/go
-RUN CGO_ENABLED=0 /root/goes/go/bin/go build -mod=vendor
+RUN CGO_ENABLED=0 /root/goes/go/bin/go build
 
 FROM chromedp/headless-shell:latest
 RUN apt update && apt install -y dumb-init git

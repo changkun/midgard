@@ -22,7 +22,6 @@ gen:
 	go generate ./...
 dep:
 	go mod tidy
-	go mod vendor
 build:
 	cp -f $(SSH_KEY_PATH) id_rsa
 	docker build --build-arg GOVERSION=$(GOVERSION) -t $(IMAGE):latest .
