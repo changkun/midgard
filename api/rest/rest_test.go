@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -58,9 +59,16 @@ func TestPing(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
+	// blocklist is package state that outlives a single run; start from
+	// a clean one so the failure counter cannot carry over.
+	blocklist.Range(func(k, _ any) bool {
+		blocklist.Delete(k)
+		return true
+	})
+
 	m := NewMidgard()
 
-	for _, tt := range []struct {
+	for i, tt := range []struct {
 		name   string
 		header string
 		want   int
@@ -76,8 +84,9 @@ func TestAuth(t *testing.T) {
 				req.Header.Set("Authorization", tt.header)
 			}
 			// a fresh IP per case: the middleware blocks an IP after
-			// maxFailureAttempts, which would mask the status we assert.
-			req.RemoteAddr = "10.0.0." + tt.name[:1] + ":1234"
+			// maxFailureAttempts failures, which would mask the status
+			// asserted here once the cases share a counter.
+			req.RemoteAddr = fmt.Sprintf("10.0.0.%d:1234", i+1)
 
 			w := httptest.NewRecorder()
 			m.routers().ServeHTTP(w, req)
@@ -94,6 +103,10 @@ func TestAuth(t *testing.T) {
 }
 
 func TestUniversalClipboardText(t *testing.T) {
+	// Universal.Write logs to ./data relative to the working
+	// directory; keep that out of the source tree.
+	t.Chdir(t.TempDir())
+
 	m := NewMidgard()
 	const want = "changkun.de/x/midgard"
 
@@ -125,6 +138,10 @@ func TestUniversalClipboardText(t *testing.T) {
 }
 
 func TestUniversalClipboardImage(t *testing.T) {
+	// Universal.Write logs to ./data relative to the working
+	// directory; keep that out of the source tree.
+	t.Chdir(t.TempDir())
+
 	m := NewMidgard()
 
 	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
