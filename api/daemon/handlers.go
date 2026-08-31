@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -85,7 +85,7 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 
 // CodeToImage tries to create an image for the given code.
 func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (out *proto.CodeToImageOutput, err error) {
-	log.Println("received a code2img request:", in.CodePath)
+	slog.Info("received a code2img request", "path", in.CodePath)
 	var code string
 
 	// the user presented a file, so we read it.
@@ -159,7 +159,7 @@ func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (o
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("list daemons timeout!")
+			slog.Error("the list daemons request timed out")
 			return nil, errors.New("list daemons timeout")
 		case resp := <-readerCh:
 			switch resp.Action {

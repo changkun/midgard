@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -43,23 +42,23 @@ var code2imgCmd = &cobra.Command{
 				var err error
 				codepath, err = filepath.Abs(args[0])
 				if err != nil {
-					log.Println("cannot find your file:", err)
+					errorf("cannot find your file: %v", err)
 					return
 				}
 				if lineno != "" {
 					nos := strings.Split(lineno, ":")
 					if len(nos) != 2 {
-						log.Println("invalid line number format, e.g. 10:20")
+						errorf("invalid line number format, e.g. 10:20")
 						return
 					}
 					start, err = strconv.ParseInt(nos[0], 10, 64)
 					if err != nil {
-						log.Println("invalid line number")
+						errorf("invalid line number")
 						return
 					}
 					end, err = strconv.ParseInt(nos[1], 10, 64)
 					if err != nil {
-						log.Println("invalid line number")
+						errorf("invalid line number")
 						return
 					}
 				}
@@ -71,20 +70,20 @@ var code2imgCmd = &cobra.Command{
 				End:      end,
 			})
 			if err != nil {
-				log.Println("cannot convert your code to image:",
+				errorf("cannot convert your code to an image: %v",
 					status.Convert(err).Message())
 				return
 			}
 
 			if len(out.CodeURL) == 0 && len(out.ImageURL) == 0 {
-				log.Println("nothing was converted to image.")
+				errorf("nothing was converted to an image.")
 				return
 			}
 
-			log.Println("your code and image urls are ready:")
+			errorf("your code and image urls are ready:")
 			fmt.Println(config.Get().Domain + out.CodeURL)
 			fmt.Println(config.Get().Domain + out.ImageURL)
-			log.Println("and the image url is already for pasting.")
+			errorf("the image url is ready for pasting.")
 		})
 	},
 }

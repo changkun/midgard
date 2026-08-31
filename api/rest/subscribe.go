@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -48,14 +48,14 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 	upgrader := websocket.Upgrader{}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Printf("failed to upgrade the connection: %v", err)
+		slog.Error("cannot upgrade the connection", "err", err)
 		return
 	}
 
 	// read messages from socket
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
-		log.Printf("failed to read message from connection: %v", err)
+		slog.Error("cannot read a message from the connection", "err", err)
 		return
 	}
 	wsm := &types.WebsocketMessage{}
@@ -67,7 +67,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			Message: "invalid message format",
 		}).Encode())
 		conn.Close()
-		log.Printf("failed to parse handshake information: %v", err)
+		slog.Error("cannot parse the handshake information", "err", err)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		idx := uid.Add(1)
 		u = &user{index: idx, id: wsm.UserID, conn: conn}
 		e = m.users.PushBack(u)
-		log.Printf("current daemon subscribers: %d", m.users.Len())
+		slog.Info("a daemon subscribed", "subscribers", m.users.Len())
 		m.mu.Unlock()
 
 		// send confirmation
@@ -109,7 +109,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 				Action: types.ActionHandshakeReady, UserID: u.id,
 			}).Encode())
 		if err != nil {
-			log.Printf("failed in register handshake: %v", err)
+			slog.Error("cannot complete the register handshake", "err", err)
 			return
 		}
 	default:
@@ -130,7 +130,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			m.users.Remove(e)
 			n := m.users.Len()
 			m.mu.Unlock()
-			log.Printf("remaining daemon subscribers: %d", n)
+			slog.Info("a daemon unsubscribed", "subscribers", n)
 			conn.Close()
 			return
 		}
@@ -152,19 +152,20 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		case types.ActionTerminate:
 			continue
 		case types.ActionClipboardPut:
-			log.Println("put clipboard request is received.")
+			slog.Info("received a put clipboard request", "user", u.id)
 			err := m.handleActionClipboardPut(conn, u, wsm.Data)
 			if err != nil {
-				log.Println("failed to put clipboard:", err)
+				slog.Error("cannot put the clipboard", "user", u.id, "err", err)
 			}
 		case types.ActionListDaemonsRequest:
-			log.Println("list active daemons request is received.")
+			slog.Info("received a list active daemons request", "user", u.id)
 			err := m.handleListDaemons(conn, u, wsm.Data)
 			if err != nil {
-				log.Println("failed to list daemons:", err)
+				slog.Error("cannot list the daemons", "user", u.id, "err", err)
 			}
 		default:
-			log.Printf("unsupported message: action(%v), msg(%v)", wsm.Action, utils.BytesToString(msg))
+			slog.Warn("unsupported message",
+				"action", wsm.Action, "msg", utils.BytesToString(msg))
 		}
 	}
 }
@@ -223,7 +224,7 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 	}
 
 	updated := clipboard.Universal.Write(b.Type, raw)
-	log.Println("universal clipboard has updated, synced from:", u.id)
+	slog.Info("the universal clipboard is updated", "from", u.id)
 	if updated {
 		// Include MIME type information so that the clipboard is
 		// consistent after sync propagation.
@@ -239,19 +240,19 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 }
 
 func (m *Midgard) boardcastMessage(msg *types.WebsocketMessage) {
-	log.Println("broadcast message from:", msg.UserID)
+	slog.Info("broadcasting a message", "from", msg.UserID)
 	m.mu.Lock()
 	for e := m.users.Front(); e != nil; e = e.Next() {
 		d, ok := e.Value.(*user)
 		if !ok || d.id == msg.UserID {
 			continue
 		}
-		log.Println("send message to:", d.id)
+		slog.Info("sending a message", "to", d.id)
 		err := d.send(msg)
 		if err != nil {
-			log.Printf("failed to send to %s, err: %v\n", d.id, err)
+			slog.Error("cannot send the message", "to", d.id, "err", err)
 		}
 	}
 	m.mu.Unlock()
-	log.Println("broadcast message is finished.")
+	slog.Info("the broadcast is finished")
 }

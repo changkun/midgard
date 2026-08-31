@@ -6,7 +6,6 @@ package daemon
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
@@ -20,7 +19,7 @@ func Connect(callback func(ctx context.Context, c proto.MidgardClient)) {
 	// on a local machine.
 	conn, err := grpc.Dial(config.D().Addr, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("did not connect: \n\t%v", err)
+		fatal("cannot connect to the midgard daemon", "err", err)
 	}
 	defer conn.Close()
 	client := proto.NewMidgardClient(conn)

@@ -7,7 +7,7 @@ package clipboard
 import (
 	"bytes"
 	"context"
-	"log"
+	"log/slog"
 	"sync"
 
 	"changkun.de/x/midgard/internal/types"
@@ -39,7 +39,7 @@ type local struct {
 // the local clipboard, and a headless host has none to initialize.
 var ready = sync.OnceValue(func() bool {
 	if err := clipboard.Init(); err != nil {
-		log.Printf("local clipboard is unavailable: %v", err)
+		slog.Warn("the local clipboard is unavailable", "err", err)
 		return false
 	}
 	return true
@@ -72,7 +72,7 @@ func (lc *local) Read() (t types.MIME, buf []byte) {
 	ctx := context.Background()
 	buf, err := clipboard.Read(ctx, clipboard.FmtText)
 	if err != nil {
-		log.Printf("failed to read text from local clipboard: %v", err)
+		slog.Error("cannot read text from the local clipboard", "err", err)
 	}
 	if buf != nil {
 		return types.MIMEPlainText, buf
@@ -80,7 +80,7 @@ func (lc *local) Read() (t types.MIME, buf []byte) {
 
 	buf, err = clipboard.Read(ctx, clipboard.FmtImage)
 	if err != nil {
-		log.Printf("failed to read image from local clipboard: %v", err)
+		slog.Error("cannot read an image from the local clipboard", "err", err)
 	}
 	return types.MIMEImagePNG, buf
 }
@@ -101,7 +101,7 @@ func (lc *local) Write(t types.MIME, buf []byte) bool {
 	}
 
 	if _, err := clipboard.Write(context.Background(), f, buf); err != nil {
-		log.Printf("failed to write to local clipboard: %v", err)
+		slog.Error("cannot write to the local clipboard", "mime", t, "err", err)
 		return false
 	}
 	lc.buf = buf

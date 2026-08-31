@@ -6,7 +6,6 @@ package rest
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/pprof"
 	"path"
@@ -63,7 +62,7 @@ func staticHandler(prefix, root string) gin.HandlerFunc {
 func FixPath(p string) string {
 	_, filename, _, ok := runtime.Caller(1)
 	if !ok {
-		log.Fatalf("cannot get runtime caller")
+		fatal("cannot get the runtime caller")
 	}
 	return path.Join(path.Dir(filename), p)
 }

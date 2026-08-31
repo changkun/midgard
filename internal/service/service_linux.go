@@ -7,7 +7,7 @@ package service
 import (
 	"bytes"
 	"fmt"
-	"log"
+	"log/slog"
 	"log/syslog"
 	"os"
 	"os/exec"
@@ -28,7 +28,7 @@ const (
 func getFlavor() (initFlavor, error) {
 	initCmd, err := os.ReadFile("/proc/1/cmdline")
 	if err != nil {
-		log.Println("cannot locate /proc/1/cmdline, use /proc/cmdline")
+		slog.Info("cannot locate /proc/1/cmdline, using /proc/cmdline")
 		// Try a different file:
 		if initCmd, err = os.ReadFile("/proc/cmdline"); err != nil {
 			return initSystemV, err
@@ -136,7 +136,7 @@ func (s *linuxService) Install() error {
 		return fmt.Errorf("service already exists: %s", confPath)
 	}
 
-	log.Println("creating: ", confPath)
+	slog.Info("creating", "path", confPath)
 	f, err := os.Create(confPath)
 	if err != nil {
 		return err
@@ -196,7 +196,7 @@ func (s *linuxService) Remove() error {
 	if s.flavor == initSystemd {
 		exec.Command("systemctl", "disable", s.name+".service").Run()
 	}
-	log.Println("removing: ", s.flavor.ConfigPath(s.name))
+	slog.Info("removing", "path", s.flavor.ConfigPath(s.name))
 	if err := os.Remove(s.flavor.ConfigPath(s.name)); err != nil {
 		return err
 	}
@@ -222,13 +222,13 @@ func (s *linuxService) Run(onStart, onStop func() error) (err error) {
 func (s *linuxService) Start() error {
 	switch s.flavor {
 	case initSystemd:
-		log.Println("exec: systemctl start " + s.name + ".service")
+		slog.Info("exec", "cmd", "systemctl start "+s.name+".service")
 		return exec.Command("systemctl", "start", s.name+".service").Run()
 	case initUpstart:
-		log.Println("exec: initctl start " + s.name)
+		slog.Info("exec", "cmd", "initctl start "+s.name)
 		return exec.Command("initctl", "start", s.name).Run()
 	default:
-		log.Println("exec: service " + s.name + " start")
+		slog.Info("exec", "cmd", "service "+s.name+" start")
 		return exec.Command("service", s.name, "start").Run()
 	}
 }
@@ -236,13 +236,13 @@ func (s *linuxService) Start() error {
 func (s *linuxService) Stop() error {
 	switch s.flavor {
 	case initSystemd:
-		log.Println("exec: systemctl stop " + s.name + ".service")
+		slog.Info("exec", "cmd", "systemctl stop "+s.name+".service")
 		return exec.Command("systemctl", "stop", s.name+".service").Start()
 	case initUpstart:
-		log.Println("exec: initctl stop " + s.name)
+		slog.Info("exec", "cmd", "initctl stop "+s.name)
 		return exec.Command("initctl", "stop", s.name).Start()
 	default:
-		log.Println("exec: service " + s.name + " stop")
+		slog.Info("exec", "cmd", "service "+s.name+" stop")
 		return exec.Command("service", s.name, "stop").Start()
 	}
 }

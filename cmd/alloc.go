@@ -7,7 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
+	"os"
 
 	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/types/proto"
@@ -47,8 +47,9 @@ func allocate(dstpath, srcpath string) {
 			SourcePath:  srcpath,
 		})
 		if err != nil {
-			log.Fatalf("cannot interact with midgard daemon, err:\n%v",
+			errorf("cannot interact with the midgard daemon: %v",
 				status.Convert(err).Message())
+			os.Exit(1)
 		}
 		if out.URL != "" {
 			// Clipboard is updated on the daemon side, we don't have to

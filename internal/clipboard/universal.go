@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
@@ -104,7 +104,7 @@ func (uc *universal) log(t types.MIME, buf []byte) {
 	}
 	data, err := yaml.Marshal(r)
 	if err != nil {
-		log.Println("cannot persist the given clipboard data:", err)
+		slog.Error("cannot persist the given clipboard data", "err", err)
 		return
 	}
 
@@ -112,14 +112,14 @@ func (uc *universal) log(t types.MIME, buf []byte) {
 	fpath := fmt.Sprintf("%s/%d/%d", logdir, date.Year(), date.Month())
 	err = os.MkdirAll(fpath, fs.ModeDir|fs.ModePerm)
 	if err != nil {
-		log.Println("cannot create log folder:", err)
+		slog.Error("cannot create the clipboard log folder", "path", fpath, "err", err)
 		return
 	}
 
 	f, err := os.OpenFile(fmt.Sprintf("%s/%d.log", fpath, date.Day()),
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, fs.ModePerm)
 	if err != nil {
-		log.Println("cannot open or create clipboard log file:", err)
+		slog.Error("cannot open the clipboard log file", "path", fpath, "err", err)
 		return
 	}
 	defer f.Close()
@@ -127,7 +127,7 @@ func (uc *universal) log(t types.MIME, buf []byte) {
 	all := utils.StringToBytes("---\n")
 	all = append(all, data...)
 	if _, err := f.Write(all); err != nil {
-		log.Println("cannot write clipboard data to log:", err)
+		slog.Error("cannot write the clipboard data to the log", "err", err)
 		return
 	}
 

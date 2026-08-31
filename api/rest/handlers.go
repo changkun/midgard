@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -93,7 +93,7 @@ func (m *Midgard) Code(c *gin.Context) {
 		return nil
 	})
 	if err != nil {
-		log.Println(err)
+		slog.Error("cannot walk the code directory", "path", codedir, "err", err)
 	}
 
 	// newest first
@@ -105,7 +105,7 @@ func (m *Midgard) Code(c *gin.Context) {
 	var buf bytes.Buffer
 	if err := tt.Execute(&buf, ci); err != nil {
 		c.Writer.WriteHeader(http.StatusBadRequest)
-		log.Println(err)
+		slog.Error("cannot render the code listing", "err", err)
 		return
 	}
 	c.Header("Cache-Control", "public, max-age=300")

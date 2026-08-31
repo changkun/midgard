@@ -6,7 +6,7 @@ package hotkey
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"runtime"
 
 	"golang.design/x/hotkey"
@@ -22,10 +22,10 @@ import (
 func Handle(ctx context.Context, fn func()) {
 	hk := hotkey.New(getModifiers(), getKey())
 	if err := hk.Register(); err != nil {
-		log.Printf("Hotkey registration failed: %v", err)
+		slog.Error("cannot register the hotkey", "err", err)
 		return
 	}
-	log.Println("hotkey registration success.")
+	slog.Info("hotkey registered")
 
 	go func() {
 		for {

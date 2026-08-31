@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"changkun.de/x/midgard/api/daemon"
@@ -31,17 +30,17 @@ var daemonCmd = &cobra.Command{
 			[]string{"daemon", "run"},
 		)
 		if err != nil {
-			log.Printf("failed to start daemon, err: %v", err)
+			errorf("cannot start the daemon: %v", err)
 			return
 		}
 
 		defer func() {
 			if err != nil {
-				log.Printf("failed to %s, err: %v", args[0], err)
+				errorf("cannot %s: %v", args[0], err)
 				return
 			}
 			if args[0] != "ls" {
-				log.Printf("%s action is done.", args[0])
+				errorf("the %s action is done.", args[0])
 			}
 		}()
 		switch args[0] {
@@ -65,10 +64,10 @@ var daemonCmd = &cobra.Command{
 			daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
 				out, err := c.ListDaemons(ctx, &proto.ListDaemonsInput{})
 				if err != nil {
-					log.Println("cannot list daemons:", status.Convert(err).Message())
+					errorf("cannot list the daemons: %v", status.Convert(err).Message())
 					return
 				}
-				log.Println("active daemons:")
+				errorf("active daemons:")
 				fmt.Println(out.Daemons)
 			})
 		default:

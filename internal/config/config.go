@@ -5,7 +5,7 @@
 package config
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"path"
 	"runtime"
@@ -86,7 +86,8 @@ func (c *Config) parse() {
 		fix := func(p string) string { // fixes a relative path
 			_, filename, _, ok := runtime.Caller(1)
 			if !ok {
-				log.Fatalf("cannot get runtime caller")
+				slog.Error("cannot get the runtime caller")
+				os.Exit(1)
 			}
 			return path.Join(path.Dir(filename), p)
 		}
@@ -94,11 +95,13 @@ func (c *Config) parse() {
 		p := fix("../../config.yml")
 		d, err = os.ReadFile(p)
 		if err != nil {
-			log.Fatalf("cannot read configuration, err: %v\n", err)
+			slog.Error("cannot read the configuration", "path", p, "err", err)
+			os.Exit(1)
 		}
 	}
 	err = yaml.Unmarshal(d, c)
 	if err != nil {
-		log.Fatalf("cannot parse configuration, err: %v\n", err)
+		slog.Error("cannot parse the configuration", "err", err)
+		os.Exit(1)
 	}
 }

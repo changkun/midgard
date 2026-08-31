@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -36,7 +36,7 @@ func (m *Daemon) wsConnect() error {
 	} else {
 		api = "wss://" + api
 	}
-	log.Println("connecting to:", api)
+	slog.Info("connecting to the midgard server", "api", api)
 	conn, _, err := websocket.DefaultDialer.Dial(api, h)
 	if err != nil {
 		return fmt.Errorf("failed to connect midgard server: %w", err)
@@ -68,7 +68,7 @@ func (m *Daemon) wsConnect() error {
 	case types.ActionHandshakeReady:
 		if wsm.UserID != m.ID {
 			m.ID = wsm.UserID // update local id if user id is updated
-			log.Println("conflict hostname, updated daemon id: ", m.ID)
+			slog.Info("the hostname conflicts, the daemon id is updated", "id", m.ID)
 		}
 	default:
 		conn.Close() // close the connection if handshake is not ready
@@ -89,12 +89,12 @@ func (m *Daemon) wsReconnect(ctx context.Context) {
 		case <-tk.C:
 			err := m.wsConnect()
 			if err == nil {
-				log.Println("connected to midgard server.")
+				slog.Info("connected to the midgard server")
 				m.forceUpdate <- struct{}{}
 				return
 			}
-			log.Printf("%v\n", err)
-			log.Println("retry in 10 seconds..")
+			slog.Error("cannot connect to the midgard server",
+				"err", err, "retry_in", 10*time.Second)
 		}
 	}
 }
@@ -104,7 +104,7 @@ func (m *Daemon) handleIO(ctx context.Context) {
 		m.wsReconnect(ctx)
 	}
 
-	log.Println("daemon id:", m.ID)
+	slog.Info("daemon is ready", "id", m.ID)
 	go m.readFromServer(ctx)
 	m.writeToServer(ctx)
 	m.wsClose()
@@ -118,7 +118,7 @@ func (m *Daemon) readFromServer(ctx context.Context) {
 		default:
 			_, msg, err := m.ws.ReadMessage()
 			if err != nil {
-				log.Printf("failed to read message from the clipboard channel: %v", err)
+				slog.Error("cannot read a message from the clipboard channel", "err", err)
 
 				m.Lock()
 				m.ws = nil
@@ -131,7 +131,7 @@ func (m *Daemon) readFromServer(ctx context.Context) {
 			wsm := &types.WebsocketMessage{}
 			err = wsm.Decode(msg)
 			if err != nil {
-				log.Printf("failed to read message: %v", err)
+				slog.Error("cannot decode the message", "err", err)
 				continue
 			}
 
@@ -146,7 +146,7 @@ func (m *Daemon) readFromServer(ctx context.Context) {
 				var d types.ClipboardData
 				err = json.Unmarshal(wsm.Data, &d)
 				if err != nil {
-					log.Printf("failed to parse clipboard data: %v", err)
+					slog.Error("cannot parse the clipboard data", "err", err)
 					continue
 				}
 				var raw []byte
@@ -161,7 +161,8 @@ func (m *Daemon) readFromServer(ctx context.Context) {
 					raw = utils.StringToBytes(d.Data)
 				}
 
-				log.Printf("universal clipboard has changed from %s, type: %s, sync with local...", wsm.UserID, d.Type)
+				slog.Info("the universal clipboard changed, syncing with the local one",
+					"from", wsm.UserID, "mime", d.Type)
 				clipboard.Local.Write(d.Type, raw) // change local clipboard
 			}
 		}
@@ -173,17 +174,17 @@ func (m *Daemon) writeToServer(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			if m.ws == nil {
-				log.Println("connection was not ready")
+				slog.Warn("the connection was not ready")
 			}
 			return
 		case msg := <-m.writeCh:
 			if m.ws == nil {
-				log.Println("connection is not ready yet")
+				slog.Warn("the connection is not ready yet")
 				continue
 			}
 			err := m.ws.WriteMessage(websocket.BinaryMessage, msg.Encode())
 			if err != nil {
-				log.Printf("failed to write message to server: %v", err)
+				slog.Error("cannot write the message to the server", "err", err)
 				return
 			}
 		}

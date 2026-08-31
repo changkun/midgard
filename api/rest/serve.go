@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -46,14 +46,14 @@ func (m *Midgard) Serve() {
 		q := make(chan os.Signal, 1)
 		signal.Notify(q, os.Interrupt)
 		sig := <-q
-		log.Printf("%v", sig)
+		slog.Info("received a signal", "signal", sig)
 		cancel()
 
-		log.Printf("shutting down api service ...")
+		slog.Info("shutting down the api service")
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		if err := m.s.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("failed to shutdown api service: %v", err)
+			slog.Error("cannot shut down the api service", "err", err)
 		}
 	})
 	wg.Go(func() {
@@ -64,7 +64,7 @@ func (m *Midgard) Serve() {
 	})
 	wg.Wait()
 
-	log.Printf("api server is down, good bye!")
+	slog.Info("api server is down, good bye")
 }
 
 func (m *Midgard) serveHTTP() {
@@ -74,10 +74,10 @@ func (m *Midgard) serveHTTP() {
 	}
 
 	m.s = &http.Server{Handler: m.routers(), Addr: addr}
-	log.Printf("server starting at http://%s", addr)
+	slog.Info("api server is starting", "addr", "http://"+addr)
 	err := m.s.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
-		log.Printf("close with error: %v", err)
+		slog.Error("api server closed with an error", "err", err)
 	}
 }
 
@@ -104,7 +104,7 @@ const backupMsgTimeFmt = "2006-01-02 15:04"
 // backup backups the data folder to a configured github repository
 func backup(ctx context.Context) {
 	if !config.S().Store.Backup.Enable {
-		log.Println("backup feature is disabled.")
+		slog.Info("the backup feature is disabled")
 		return
 	}
 
@@ -115,56 +115,56 @@ func backup(ctx context.Context) {
 	_, err := os.Stat(config.RepoPath)
 	if !errors.Is(err, os.ErrNotExist) { // repo folder exists
 		// mkdir data/repo-old
-		log.Printf("mkdir %s", config.RepoPath+old)
+		slog.Info("exec", "cmd", "mkdir "+config.RepoPath+old)
 		err = os.MkdirAll(config.RepoPath+old, fs.ModeDir|fs.ModePerm)
 		if err != nil {
-			log.Fatalf("cannot rename your folder: %v", err)
+			fatal("cannot rename your folder", "err", err)
 		}
 		// cp -r data/repo data/repo-old
-		log.Printf("cp -r %s %s", config.RepoPath, config.RepoPath+old)
+		slog.Info("exec", "cmd", "cp -r "+config.RepoPath+" "+config.RepoPath+old)
 		err = utils.Copy(config.RepoPath, config.RepoPath+old)
 		if err != nil {
-			log.Fatalf("cannot rename your folder: %v", err)
+			fatal("cannot rename your folder", "err", err)
 		}
 		haveOld = true
 		// rm -rf data/repo
-		log.Printf("rm -rf %s", config.RepoPath)
+		slog.Info("exec", "cmd", "rm -rf "+config.RepoPath)
 		err = os.RemoveAll(config.RepoPath)
 		if err != nil {
-			log.Fatalf("cannot remove all your old files: %v", err)
+			fatal("cannot remove all your old files", "err", err)
 		}
 	}
 
 	// git clone https://github.com/changkun/midgard-data repo
-	log.Printf("git clone %s repo", config.S().Store.Backup.Repo)
+	slog.Info("exec", "cmd", "git clone "+config.S().Store.Backup.Repo+" repo")
 	out, err := execute("./data", "git", "clone",
 		config.S().Store.Backup.Repo, "repo")
 	if err != nil {
-		log.Println(utils.BytesToString(out))
-		log.Fatalf("cannot clone your data repo: %v", err)
+		fatal("cannot clone your data repo",
+			"err", err, "out", utils.BytesToString(out))
 	}
 
 	// move everything to the cloned folder
 	// cp -r data/template data/repo
 	repoTmpl := "./data/template"
-	log.Printf("cp -r %s %s", repoTmpl, config.RepoPath)
+	slog.Info("exec", "cmd", "cp -r "+repoTmpl+" "+config.RepoPath)
 	err = utils.Copy(repoTmpl, config.RepoPath)
 	if err != nil {
-		log.Fatalf("failed to merge old data into repo folder: %v", err)
+		fatal("cannot merge the old data into the repo folder", "err", err)
 	}
 	if haveOld {
 		// .git folder may fail to operate(permission denied),
 		// set everything to 755.
 		err := exec.Command("chmod", "-R", "0755", config.RepoPath).Run()
 		if err != nil {
-			log.Fatalf("failed to change permission: %v", err)
+			fatal("cannot change the repo folder permission", "err", err)
 		}
 
 		// cp -r data/repo-old data/repo
-		log.Printf("cp -r %s %s", config.RepoPath+old, config.RepoPath)
+		slog.Info("exec", "cmd", "cp -r "+config.RepoPath+old+" "+config.RepoPath)
 		err = utils.Copy(config.RepoPath+old, config.RepoPath)
 		if err != nil {
-			log.Fatalf("failed to merge old data into repo folder: %v", err)
+			fatal("cannot merge the old data into the repo folder", "err", err)
 		}
 	}
 
@@ -181,19 +181,19 @@ func backup(ctx context.Context) {
 		if err != nil {
 			if strings.Contains(utils.BytesToString(out), "nothing to commit") ||
 				strings.Contains(utils.BytesToString(out), "no changes added") {
-				log.Println(utils.BytesToString(out))
+				slog.Info("nothing to back up", "out", utils.BytesToString(out))
 				continue
 			}
-			log.Printf("cannot initialize your data folder: %v, details:", err)
-			log.Fatalf("%s: %s\n", strings.Join(cc, " "), utils.BytesToString(out))
+			fatal("cannot initialize your data folder", "err", err,
+				"cmd", strings.Join(cc, " "), "out", utils.BytesToString(out))
 		}
 	}
 
 	err = os.RemoveAll(config.RepoPath + old)
 	if err != nil {
-		log.Fatalf("failed to remove your old data folder: %v", err)
+		fatal("cannot remove your old data folder", "err", err)
 	}
-	log.Println("backup is enabled.")
+	slog.Info("the backup feature is enabled")
 
 	t := time.NewTicker(time.Duration(config.S().Store.Backup.Interval) * time.Minute)
 	for {
@@ -215,8 +215,8 @@ func backup(ctx context.Context) {
 					if strings.Contains(utils.BytesToString(out), "No stash entries") {
 						continue
 					}
-					log.Printf("failed to resolve conflict: %v, details:", err)
-					log.Printf("%s: %s\n", strings.Join(cc, " "), utils.BytesToString(out))
+					slog.Error("cannot resolve the backup conflict", "err", err,
+						"cmd", strings.Join(cc, " "), "out", utils.BytesToString(out))
 					// FIXME: email notification: ask manual action (very rare?)
 					goto start
 				}
@@ -235,13 +235,20 @@ func backup(ctx context.Context) {
 					if strings.Contains(utils.BytesToString(out), "nothing to commit") {
 						continue
 					}
-					log.Printf("cannot backup your data: %v, details:\n", err)
-					log.Printf("%s: %s\n", strings.Join(cc, " "), utils.BytesToString(out))
+					slog.Error("cannot back up your data", "err", err,
+						"cmd", strings.Join(cc, " "), "out", utils.BytesToString(out))
 					// FIXME: email notification: ask manual action (very rare?)
 					goto start
 				}
 			}
-			log.Println(msg)
+			slog.Info(msg)
 		}
 	}
+}
+
+// fatal logs at the error level and exits. log/slog has no Fatal, and the
+// backup bootstrap must not continue past a failed step.
+func fatal(msg string, args ...any) {
+	slog.Error(msg, args...)
+	os.Exit(1)
 }

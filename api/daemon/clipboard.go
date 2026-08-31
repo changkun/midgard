@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -24,19 +24,19 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 	last := time.Now()
 	hotkey.Handle(ctx, func() {
 		if time.Since(last) < time.Second*5 {
-			log.Println("pressing hotkey too fast, ignoring")
+			slog.Warn("the hotkey was pressed too fast, ignoring it")
 			return
 		}
 		last = time.Now()
 
 		var msg string
 		defer func() {
-			log.Print(msg)
+			slog.Info(msg)
 			clipboard.Local.Write(
 				types.MIMEPlainText, utils.StringToBytes(msg))
 		}()
 
-		log.Println("hotkey triggered")
+		slog.Info("the hotkey is triggered")
 		res, err := utils.Request(
 			http.MethodPut,
 			types.EndpointAllocateURL,
@@ -81,7 +81,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 			d.Data = utils.BytesToString(text)
 			d.DaemonID = m.ID
 			b, _ := json.Marshal(d)
-			log.Println("local clipboard has changed as text, sync to server...")
+			slog.Info("the local clipboard changed, syncing to the server", "mime", types.MIMEPlainText)
 			m.writeCh <- &types.WebsocketMessage{
 				Action:  types.ActionClipboardPut,
 				UserID:  m.ID,
@@ -97,7 +97,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 			d.Data = base64.StdEncoding.EncodeToString(img)
 			d.DaemonID = m.ID
 			b, _ := json.Marshal(d)
-			log.Println("local clipboard has changed as image, sync to server...")
+			slog.Info("the local clipboard changed, syncing to the server", "mime", types.MIMEImagePNG)
 			m.writeCh <- &types.WebsocketMessage{
 				Action:  types.ActionClipboardPut,
 				UserID:  m.ID,

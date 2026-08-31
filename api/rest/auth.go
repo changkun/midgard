@@ -6,7 +6,7 @@ package rest
 
 import (
 	"encoding/base64"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"sync"
@@ -74,8 +74,8 @@ func BasicAuthWithAttemptsControl(creds Credentials) gin.HandlerFunc {
 				bloc := info.blockTime.Load().(time.Duration)
 
 				if time.Now().UTC().Sub(last.Add(bloc)) < 0 {
-					log.Printf("block ip %v, block time: %v, release until: %v\n",
-						ip, bloc, last.Add(bloc))
+					slog.Warn("blocking an ip",
+						"ip", ip, "duration", bloc, "until", last.Add(bloc))
 					c.AbortWithStatus(http.StatusForbidden)
 					return
 				}
