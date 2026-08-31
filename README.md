@@ -1,4 +1,4 @@
-# midgard ![midgard](https://github.com/changkun/midgard/workflows/midgard/badge.svg?branch=main) ![](https://changkun.de/urlstat?mode=github&repo=changkun/midgard)
+# midgard [![midgard](https://github.com/changkun/midgard/actions/workflows/midgard.yml/badge.svg)](https://github.com/changkun/midgard/actions/workflows/midgard.yml) [![Go Reference](https://pkg.go.dev/badge/changkun.de/x/midgard.svg)](https://pkg.go.dev/changkun.de/x/midgard) ![visitors](https://changkun.de/urlstat?mode=github&repo=changkun/midgard)
 
 English | [中文](./README.cn.md)
 
