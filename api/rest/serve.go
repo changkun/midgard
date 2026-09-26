@@ -28,7 +28,8 @@ type Midgard struct {
 	mu    sync.Mutex
 	users *list.List
 
-	keepalive keepalive // how dead daemons are noticed
+	keepalive keepalive   // how dead daemons are noticed
+	latere    *latereAuth // sign-in through auth.latere.ai; nil when not set up
 }
 
 // appTokens is what the login checks app tokens against: the store, when
@@ -42,7 +43,7 @@ func (m *Midgard) appTokens() appTokens {
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{users: list.New(), keepalive: defaultKeepalive}
+	return &Midgard{users: list.New(), keepalive: defaultKeepalive, latere: newLatereAuth()}
 }
 
 // Serve serves Midgard RESTful APIs.

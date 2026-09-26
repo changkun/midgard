@@ -79,6 +79,8 @@ var migrations = []string{
 		created INTEGER NOT NULL,
 		PRIMARY KEY (owner, name)
 	)`,
+	// 2: the owner's email, since an allowlist may name people by it.
+	`ALTER TABLE app_tokens ADD COLUMN email TEXT NOT NULL DEFAULT ''`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {

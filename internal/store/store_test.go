@@ -30,7 +30,7 @@ func TestAppTokens(t *testing.T) {
 	s, path := open(t)
 	ctx := context.Background()
 
-	phone, err := s.IssueAppToken(ctx, "alice", "phone")
+	phone, err := s.IssueAppToken(ctx, "alice", "", "phone")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,22 +45,22 @@ func TestAppTokens(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer server.Close()
-	if owner, name, ok := server.CheckAppToken(ctx, phone); !ok || owner != "alice" || name != "phone" {
-		t.Fatalf("CheckAppToken = %q, %q, %v; want alice's phone", owner, name, ok)
+	if h, ok := server.CheckAppToken(ctx, phone); !ok || h.Owner != "alice" || h.Name != "phone" {
+		t.Fatalf("CheckAppToken = %+v, %v; want alice's phone", h, ok)
 	}
 	for _, bad := range []string{"", TokenPrefix, TokenPrefix + "nope", phone + "x", strings.TrimPrefix(phone, TokenPrefix)} {
-		if owner, _, ok := server.CheckAppToken(ctx, bad); ok {
-			t.Errorf("CheckAppToken(%q) accepted it for %q", bad, owner)
+		if h, ok := server.CheckAppToken(ctx, bad); ok {
+			t.Errorf("CheckAppToken(%q) accepted it for %q", bad, h.Owner)
 		}
 	}
 
-	if _, err := s.IssueAppToken(ctx, "alice", "phone"); err == nil {
+	if _, err := s.IssueAppToken(ctx, "alice", "", "phone"); err == nil {
 		t.Error("a second token under the same name was issued")
 	}
 	if err := s.RevokeAppToken(ctx, "alice", "phone"); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, ok := server.CheckAppToken(ctx, phone); ok {
+	if _, ok := server.CheckAppToken(ctx, phone); ok {
 		t.Error("a revoked token still works")
 	}
 	if err := s.RevokeAppToken(ctx, "alice", "phone"); !errors.Is(err, ErrNotFound) {
@@ -110,11 +110,11 @@ func TestAppTokensKeepOwnersApart(t *testing.T) {
 	s, _ := open(t)
 	ctx := context.Background()
 
-	alice, err := s.IssueAppToken(ctx, "alice", "phone")
+	alice, err := s.IssueAppToken(ctx, "alice", "", "phone")
 	if err != nil {
 		t.Fatal(err)
 	}
-	bob, err := s.IssueAppToken(ctx, "bob", "phone")
+	bob, err := s.IssueAppToken(ctx, "bob", "", "phone")
 	if err != nil {
 		t.Fatalf("bob cannot have a token named like alice's: %v", err)
 	}
@@ -122,8 +122,8 @@ func TestAppTokensKeepOwnersApart(t *testing.T) {
 	if tokens, _ := s.AppTokens(ctx, "bob"); len(tokens) != 1 || tokens[0].Name != "phone" {
 		t.Errorf("bob's tokens = %+v, want only his phone", tokens)
 	}
-	if owner, _, _ := s.CheckAppToken(ctx, bob); owner != "bob" {
-		t.Errorf("bob's token acts for %q", owner)
+	if h, _ := s.CheckAppToken(ctx, bob); h.Owner != "bob" {
+		t.Errorf("bob's token acts for %q", h.Owner)
 	}
 	if err := s.RevokeAppToken(ctx, "mallory", "phone"); !errors.Is(err, ErrNotFound) {
 		t.Errorf("mallory revoking a phone: %v, want ErrNotFound", err)
@@ -131,18 +131,29 @@ func TestAppTokensKeepOwnersApart(t *testing.T) {
 	if err := s.RevokeAppToken(ctx, "bob", "phone"); err != nil {
 		t.Fatal(err)
 	}
-	if owner, _, ok := s.CheckAppToken(ctx, alice); !ok || owner != "alice" {
+	if h, ok := s.CheckAppToken(ctx, alice); !ok || h.Owner != "alice" {
 		t.Error("bob revoking his phone revoked alice's")
 	}
-	if _, err := s.IssueAppToken(ctx, "", "phone"); err == nil {
+	if _, err := s.IssueAppToken(ctx, "", "", "phone"); err == nil {
 		t.Error("a token was issued with no owner")
+	}
+}
+
+func TestAppTokenEmail(t *testing.T) {
+	s, _ := open(t)
+	tok, err := s.IssueAppToken(context.Background(), "sub-alice", "alice@example.com", "phone")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if h, ok := s.CheckAppToken(context.Background(), tok); !ok || h.Email != "alice@example.com" {
+		t.Fatalf("CheckAppToken = %+v, %v; want alice's email kept", h, ok)
 	}
 }
 
 func TestInvalidTokenNames(t *testing.T) {
 	s, _ := open(t)
 	for _, name := range []string{"", "has space", "tab\there", "new\nline", strings.Repeat("x", 65), "ümlaut"} {
-		if _, err := s.IssueAppToken(context.Background(), "alice", name); err == nil {
+		if _, err := s.IssueAppToken(context.Background(), "alice", "", name); err == nil {
 			t.Errorf("IssueAppToken(%q) accepted an invalid name", name)
 		}
 	}
@@ -152,7 +163,7 @@ func TestInvalidTokenNames(t *testing.T) {
 // by a newer server is refused rather than misread.
 func TestMigrate(t *testing.T) {
 	s, path := open(t)
-	if _, err := s.IssueAppToken(context.Background(), "alice", "phone"); err != nil {
+	if _, err := s.IssueAppToken(context.Background(), "alice", "", "phone"); err != nil {
 		t.Fatal(err)
 	}
 	s.Close()

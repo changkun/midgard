@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var tokenOwner string
+var tokenOwner, tokenEmail string
 
 // tokenCmd manages app tokens, for the clients that cannot sign in on their
 // own, such as an iOS Shortcut. It runs on the server's machine, in the
@@ -56,7 +56,7 @@ prints as "Authorization: Bearer <token>".`,
 
 		switch {
 		case args[0] == "add" && name != "":
-			tok, err := s.IssueAppToken(ctx, tokenOwner, name)
+			tok, err := s.IssueAppToken(ctx, tokenOwner, tokenEmail, name)
 			if err != nil {
 				errorf("cannot issue a token: %v", err)
 				os.Exit(1)
@@ -94,6 +94,7 @@ prints as "Authorization: Bearer <token>".`,
 }
 
 func init() {
-	tokenCmd.Flags().StringVar(&tokenOwner, "owner", "", "whose token it is: the principal it acts for")
+	tokenCmd.Flags().StringVar(&tokenOwner, "owner", "", "whose token it is: the principal id it acts for")
+	tokenCmd.Flags().StringVar(&tokenEmail, "email", "", "the owner's email, for an allowlist that lists people by email")
 	serverCmd.AddCommand(tokenCmd)
 }

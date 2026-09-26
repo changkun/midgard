@@ -21,3 +21,6 @@ data/
 
 # The real configuration holds the server password; see config.example.yml.
 /config.yml
+
+# The server environment holds who may sign in; see .env.template.
+/.env
