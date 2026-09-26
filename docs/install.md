@@ -73,17 +73,17 @@ Usage:
 
 ### Docker Distribution (Recommended)
 
-Docker build requires you to setup environment variable `SSH_KEY_PATH`
-that points to a private key file (e.g. RSA, ED25519, etc), for example:
+Build the server image with `make build`; each release also publishes it as
+`ghcr.io/changkun/midgard`. The image holds no configuration and no keys.
+[docker-compose.yml](../docker-compose.yml) mounts them when the container
+starts:
 
-```
-$ echo $SSH_KEY_PATH
-~/.ssh/id_ed25519
-```
-
-```
-$ make build
-```
+- `./config.yml` is your configuration, read-only;
+- `./data` is where published files and backups live;
+- for backups over ssh, uncomment the key mount and `GIT_SSH_COMMAND`, and
+  use an ssh URL for `server.store.backup.repo`, such as
+  `git@github.com:you/midgard-data.git`. Set `GIT_AUTHOR_NAME` and friends to
+  sign the backup commits as yourself.
 
 ## Configuration
 

@@ -1,0 +1,8 @@
+# Keep secrets and state out of the build context, and so out of the image.
+.git
+config.yml
+id_rsa
+data/*
+!data/template
+mg
+*.test

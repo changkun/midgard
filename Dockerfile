@@ -2,32 +2,31 @@
 # Use of this source code is governed by a GPL-3.0
 # license that can be found in the LICENSE file.
 
-FROM chromedp/headless-shell:latest AS builder-env
-WORKDIR /app
+# The server needs no Cgo, so it is built static. Nothing secret goes into
+# the image: the configuration and, for backups over ssh, a key are mounted
+# when the container runs (see docker-compose.yml).
+FROM golang:1.27 AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN apt update && apt install -y wget gcc
-RUN mkdir -p /root/goes
-ARG GOVERSION
-RUN cd /root/goes && wget https://dl.google.com/go/$GOVERSION.linux-amd64.tar.gz
-RUN cd /root/goes && tar xvf $GOVERSION.linux-amd64.tar.gz && rm $GOVERSION.linux-amd64.tar.gz
-RUN cd /root/goes && mv /root/goes/go /root/goes/$GOVERSION
-RUN cd /root/goes && ln -s /root/goes/$GOVERSION /root/goes/go
-RUN cd /root/goes && export GOROOT=~/goes/go
-RUN CGO_ENABLED=0 /root/goes/go/bin/go build
+ARG VERSION=devel
+RUN CGO_ENABLED=0 go build -trimpath \
+  -ldflags "-s -w -X changkun.de/x/midgard/internal/version.GitVersion=${VERSION}" \
+  -o /out/mg .
 
+# headless-shell is the Chrome that code2img renders with; git is for backups.
 FROM chromedp/headless-shell:latest
-RUN apt update && apt install -y dumb-init git
-ENTRYPOINT ["dumb-init", "--"]
-
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends dumb-init git openssh-client ca-certificates && \
+  rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY . .
-COPY --from=builder-env /app/midgard /app/mg
-RUN mkdir -p /root/.ssh && \
-  mv id_rsa /root/.ssh/id_rsa && \
-  chmod 400 /root/.ssh/id_rsa && \
-  echo "StrictHostKeyChecking no" > /root/.ssh/config && \
-  git config --global url."git@github.com:".insteadOf "https://github.com/" && \
-  git config --global user.name "Changkun Ou" && \
-  git config --global user.email "hi@changkun.de"
+COPY --from=build /out/mg /app/mg
+COPY data/template /app/data/template
+# Backup commits need an author; set your own in docker-compose.yml.
+ENV MIDGARD_CONF=/app/config.yml \
+  GIT_AUTHOR_NAME=midgard GIT_AUTHOR_EMAIL=midgard@localhost \
+  GIT_COMMITTER_NAME=midgard GIT_COMMITTER_EMAIL=midgard@localhost
 EXPOSE 80
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["/app/mg", "server"]
