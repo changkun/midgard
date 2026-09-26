@@ -325,3 +325,27 @@ func TestWebSignIn(t *testing.T) {
 		t.Errorf("login without web sign-in: %d, want 404", w.Code)
 	}
 }
+
+// TestShortcuts: the iPhone Shortcuts are handed out to anyone, as files a
+// phone saves under their names; nothing else is.
+func TestShortcuts(t *testing.T) {
+	m := testMidgard(t)
+	for file, name := range shortcutNames {
+		w := do(t, m, http.MethodGet, "/midgard/shortcuts/"+file, "", false)
+		if w.Code != http.StatusOK || w.Body.Len() < 1000 || !strings.HasPrefix(w.Body.String(), "AEA1") {
+			t.Fatalf("%s: %d, %d bytes", file, w.Code, w.Body.Len())
+		}
+		if got := w.Header().Get("Content-Disposition"); !strings.Contains(got, name) {
+			t.Errorf("%s: Content-Disposition %q", file, got)
+		}
+	}
+	for _, path := range []string{"/midgard/shortcuts/nope.shortcut", "/midgard/shortcuts/..%2findex.html"} {
+		if w := do(t, m, http.MethodGet, path, "", false); w.Code != http.StatusNotFound {
+			t.Errorf("GET %s: %d, want 404", path, w.Code)
+		}
+	}
+	// and no share can take their place
+	if code, _ := share(t, m, types.ShareInput{Data: b64("x"), Name: "shortcuts/get-from-midgard.shortcut"}); code != http.StatusBadRequest {
+		t.Errorf("a share named like a Shortcut: %d, want 400", code)
+	}
+}

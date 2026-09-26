@@ -7,7 +7,7 @@ package rest
 import (
 	"cmp"
 	"crypto/rand"
-	_ "embed"
+	"embed"
 	"encoding/base64"
 	"html/template"
 	"log/slog"
@@ -159,6 +159,36 @@ func (w *underPrefix) WriteHeader(code int) {
 
 //go:embed web/index.html
 var indexHTML string
+
+// The iPhone Shortcuts, built and signed by shortcuts/make.py: signed for
+// anyone, so a phone adds one from a link.
+//
+//go:embed web/shortcuts/*.shortcut
+var shortcutFiles embed.FS
+
+// shortcutNames are the files the page offers, by the names a phone saves
+// them under.
+var shortcutNames = map[string]string{
+	"get-from-midgard.shortcut": "Get from Midgard.shortcut",
+	"send-to-midgard.shortcut":  "Send to Midgard.shortcut",
+}
+
+// Shortcut hands out one of the Shortcuts, to anyone: it holds no one's
+// token, and asks for one when it is added.
+func (m *Midgard) Shortcut(c *gin.Context) {
+	name, ok := shortcutNames[c.Param("name")]
+	if !ok {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	b, err := shortcutFiles.ReadFile("web/shortcuts/" + c.Param("name"))
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	c.Header("Content-Disposition", `attachment; filename="`+name+`"`)
+	c.Data(http.StatusOK, "application/octet-stream", b)
+}
 
 var indexTmpl = template.Must(template.New("index").Parse(indexHTML))
 

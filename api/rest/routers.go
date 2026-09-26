@@ -33,6 +33,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
 	mg.GET("/", m.WebPage)
+	mg.GET("/shortcuts/:name", m.Shortcut)
 	if m.web != nil {
 		mg.GET("/.auth/login", m.web.login)
 		mg.GET("/.auth/callback", m.web.callback)
