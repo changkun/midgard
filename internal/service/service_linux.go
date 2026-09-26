@@ -4,206 +4,290 @@
 
 package service
 
+// On Linux the daemon is installed for the user who runs mg daemon install,
+// not for the system. A clipboard belongs to a desktop session, and a system
+// service — started by root at boot, before anyone logs in — has no session
+// and so no clipboard to reach; that is why the daemon used to work only
+// while a terminal ran it.
+//
+// With a systemd user manager, the daemon is a user unit bound to the
+// graphical session, so it starts with the desktop and sees its DISPLAY or
+// WAYLAND_DISPLAY. Without one, it is an XDG autostart entry, which desktops
+// run at login.
+
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
-	"log/syslog"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"text/template"
 )
 
-const (
-	initSystemV = initFlavor(iota)
-	initUpstart
-	initSystemd
-)
-
-// the default flavor is initSystemV. we lookup the command line of
-// process 1 to detect systemd or upstart
-func getFlavor() (initFlavor, error) {
-	initCmd, err := os.ReadFile("/proc/1/cmdline")
+// systemctl runs systemctl --user; a variable so the tests need no systemd.
+var systemctl = func(args ...string) error {
+	out, err := exec.Command("systemctl", append([]string{"--user"}, args...)...).CombinedOutput()
 	if err != nil {
-		slog.Info("cannot locate /proc/1/cmdline, using /proc/cmdline")
-		// Try a different file:
-		if initCmd, err = os.ReadFile("/proc/cmdline"); err != nil {
-			return initSystemV, err
-		}
+		return fmt.Errorf("systemctl --user %s: %w: %s", strings.Join(args, " "), err, bytes.TrimSpace(out))
 	}
-	// Trim any nul bytes from the result, which are present with some
-	// kernels but not others
-	init := string(bytes.TrimRight(initCmd, "\x00"))
-	if strings.Contains(init, "init [") {
-		return initSystemV, nil
+	return nil
+}
+
+// hasSystemdUser reports whether a systemd user manager is running for this
+// user; a variable so the tests can choose.
+var hasSystemdUser = func() bool {
+	if _, err := exec.LookPath("systemctl"); err != nil {
+		return false
 	}
-	if strings.Contains(init, "systemd") {
-		return initSystemd, nil
-	}
-	if strings.Contains(init, "init") {
-		// not so fast! you may think this is upstart, but it may be
-		// a symlink to systemd... yeah, debian does that... ( x )
-		var target string
-		if len(init) > 9 && init[0:10] == "/sbin/init" {
-			target, err = filepath.EvalSymlinks("/sbin/init")
-		} else {
-			target, err = filepath.EvalSymlinks(init)
-		}
-		if err == nil && strings.Contains(target, "systemd") {
-			return initSystemd, nil
-		}
-		return initUpstart, nil
-	}
-	// failed to detect init system, falling back to sysvinit
-	return initSystemV, nil
+	return systemctl("show-environment") == nil
+}
+
+// legacyUnits are where mg daemon install used to put a system-wide service.
+var legacyUnits = []string{
+	"/etc/systemd/system/%s.service",
+	"/etc/init.d/%s",
+	"/etc/init/%s.conf",
+}
+
+type linuxService struct {
+	name, displayName, description string
+	args                           []string
 }
 
 func newService(c *config) (Service, error) {
-	var err error
-	flavor, err := getFlavor()
-	if err != nil {
-		return nil, err
-	}
-	s := &linuxService{
-		flavor:      flavor,
+	return &linuxService{
 		name:        c.Name,
 		displayName: c.DisplayName,
 		description: c.Description,
 		args:        c.Args,
-	}
-	s.logger, err = syslog.New(syslog.LOG_INFO, s.name)
+	}, nil
+}
+
+func (s *linuxService) unitPath() (string, error) {
+	dir, err := os.UserConfigDir()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return s, nil
+	return filepath.Join(dir, "systemd", "user", s.name+".service"), nil
 }
 
-type linuxService struct {
-	flavor                         initFlavor
-	name, displayName, description string
-	args                           []string
-	logger                         *syslog.Writer
+func (s *linuxService) autostartPath() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "autostart", s.name+".desktop"), nil
 }
 
-type initFlavor uint8
-
-func (f initFlavor) String() string {
-	switch f {
-	case initSystemV:
-		return "sysvinit"
-	case initUpstart:
-		return "upstart"
-	case initSystemd:
-		return "systemd"
-	default:
-		return "unknown"
+// pidPath is where Run records the daemon's process, so Stop can find one
+// started from an autostart entry.
+func (s *linuxService) pidPath() (string, error) {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
 	}
+	return filepath.Join(dir, "midgard", s.name+".pid"), nil
 }
 
-func (f initFlavor) ConfigPath(name string) string {
-	switch f {
-	case initSystemd:
-		return "/etc/systemd/system/" + name + ".service"
-	case initSystemV:
-		return "/etc/init.d/" + name
-	case initUpstart:
-		return "/etc/init/" + name + ".conf"
-	default:
-		return ""
+// command is the daemon's command line, quoted for a unit's ExecStart and a
+// desktop entry's Exec, which quote the same way.
+func (s *linuxService) command() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("cannot locate the %s executable: %w", s.name, err)
 	}
+	words := []string{quote(exe)}
+	for _, a := range s.args {
+		words = append(words, quote(a))
+	}
+	return strings.Join(words, " "), nil
 }
 
-func (f initFlavor) GetTemplate() *template.Template {
-	var templ string
-	switch f {
-	case initSystemd:
-		templ = systemdScript
-	case initSystemV:
-		templ = systemVScript
-	case initUpstart:
-		templ = upstartScript
+// quote wraps a word in double quotes if it needs them.
+func quote(w string) string {
+	if w != "" && !strings.ContainsAny(w, " \t\n\"'\\$`;&|<>()*?[]#~%") {
+		return w
 	}
-	return template.Must(template.New(f.String() + "Script").Parse(templ))
+	return strconv.Quote(w)
 }
 
 func (s *linuxService) Install() error {
-	confPath := s.flavor.ConfigPath(s.name)
-	_, err := os.Stat(confPath)
-	if err == nil {
-		return fmt.Errorf("service already exists: %s", confPath)
+	if os.Geteuid() == 0 {
+		return errors.New("install the daemon as the user whose clipboard it syncs, without sudo: " +
+			"a service run by root has no desktop session, so no clipboard to reach")
 	}
+	s.warnLegacy()
 
-	slog.Info("creating", "path", confPath)
-	f, err := os.Create(confPath)
+	cmd, err := s.command()
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	data := struct{ Display, Description, Command string }{s.displayName, s.description, cmd}
 
-	path, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("%s executable does not exists, err: %w", s.name, err)
-	}
-
-	var to = &struct {
-		Display     string
-		Description string
-		Path        string
-		Args        string
-	}{
-		s.displayName,
-		s.description,
-		path,
-		strings.Join(s.args, " "),
-	}
-
-	err = s.flavor.GetTemplate().Execute(f, to)
-	if err != nil {
-		return err
-	}
-
-	if s.flavor == initSystemV {
-		if err = os.Chmod(confPath, 0755); err != nil {
-			return err
-		}
-		for _, i := range [...]string{"2", "3", "4", "5"} {
-			if err = os.Symlink(confPath, "/etc/rc"+i+".d/S50"+s.name); err != nil {
-				continue
-			}
-		}
-		for _, i := range [...]string{"0", "1", "6"} {
-			if err = os.Symlink(confPath, "/etc/rc"+i+".d/K02"+s.name); err != nil {
-				continue
-			}
-		}
-	}
-
-	if s.flavor == initSystemd {
-		err = exec.Command("systemctl", "enable", s.name+".service").Run()
+	if !hasSystemdUser() {
+		path, err := s.autostartPath()
 		if err != nil {
 			return err
 		}
-		return exec.Command("systemctl", "daemon-reload").Run()
+		if err := writeNew(path, autostartEntry, data); err != nil {
+			return err
+		}
+		slog.Info("installed an autostart entry; the daemon starts when you next log in", "path", path)
+		return nil
 	}
 
-	return nil
+	path, err := s.unitPath()
+	if err != nil {
+		return err
+	}
+	if err := writeNew(path, userUnit, data); err != nil {
+		return err
+	}
+	if err := systemctl("daemon-reload"); err != nil {
+		return err
+	}
+	return systemctl("enable", s.name+".service")
+}
+
+// writeNew renders tmpl into a file at path that must not exist yet.
+func writeNew(path, tmpl string, data any) error {
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("already installed: %s", path)
+	}
+	var b bytes.Buffer
+	if err := template.Must(template.New("").Parse(tmpl)).Execute(&b, data); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	slog.Info("creating", "path", path)
+	return os.WriteFile(path, b.Bytes(), 0o644)
 }
 
 func (s *linuxService) Remove() error {
-	if s.flavor == initSystemd {
-		exec.Command("systemctl", "disable", s.name+".service").Run()
+	removed := false
+	if path, err := s.unitPath(); err == nil && fileExists(path) {
+		systemctl("disable", "--now", s.name+".service") // may already be stopped
+		if err := os.Remove(path); err != nil {
+			return err
+		}
+		systemctl("daemon-reload")
+		removed = true
 	}
-	slog.Info("removing", "path", s.flavor.ConfigPath(s.name))
-	if err := os.Remove(s.flavor.ConfigPath(s.name)); err != nil {
-		return err
+	if path, err := s.autostartPath(); err == nil {
+		if err := os.Remove(path); err == nil {
+			removed = true
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+	}
+	if s.removeLegacy() {
+		removed = true
+	}
+	if !removed {
+		return fmt.Errorf("%s is not installed", s.name)
 	}
 	return nil
 }
 
+// warnLegacy points out a system-wide service left by an older mg daemon
+// install. It still starts at boot, as root, syncing no one's clipboard.
+func (s *linuxService) warnLegacy() {
+	for _, p := range legacyUnits {
+		if p := fmt.Sprintf(p, s.name); fileExists(p) {
+			slog.Warn("an older, system-wide daemon is installed and cannot reach your clipboard; "+
+				"remove it with: sudo mg daemon uninstall", "path", p)
+		}
+	}
+}
+
+// removeLegacy removes the system-wide service an older mg daemon install
+// left, which takes root. It reports whether there was one to remove.
+func (s *linuxService) removeLegacy() bool {
+	found := false
+	for _, p := range legacyUnits {
+		p = fmt.Sprintf(p, s.name)
+		if !fileExists(p) {
+			continue
+		}
+		found = true
+		if os.Geteuid() != 0 {
+			slog.Warn("an older, system-wide daemon is installed; remove it with: sudo mg daemon uninstall", "path", p)
+			continue
+		}
+		if strings.HasPrefix(p, "/etc/systemd/") {
+			exec.Command("systemctl", "disable", "--now", s.name+".service").Run()
+		}
+		if err := os.Remove(p); err != nil {
+			slog.Error("cannot remove the old daemon", "path", p, "err", err)
+			continue
+		}
+		slog.Info("removed the old system-wide daemon", "path", p)
+	}
+	if found && os.Geteuid() == 0 {
+		exec.Command("systemctl", "daemon-reload").Run()
+	}
+	return found
+}
+
+func fileExists(p string) bool {
+	_, err := os.Stat(p)
+	return err == nil
+}
+
+func (s *linuxService) Start() error {
+	if path, err := s.unitPath(); err == nil && fileExists(path) {
+		return systemctl("start", s.name+".service")
+	}
+	path, err := s.autostartPath()
+	if err != nil || !fileExists(path) {
+		return fmt.Errorf("%s is not installed; run mg daemon install first", s.name)
+	}
+	// An autostart entry starts at login only; start this session's now.
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(exe, s.args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // outlive this terminal
+	return cmd.Start()
+}
+
+func (s *linuxService) Stop() error {
+	if path, err := s.unitPath(); err == nil && fileExists(path) {
+		return systemctl("stop", s.name+".service")
+	}
+	path, err := s.pidPath()
+	if err != nil {
+		return err
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("%s does not seem to be running: %w", s.name, err)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	return syscall.Kill(pid, syscall.SIGTERM)
+}
+
 func (s *linuxService) Run(onStart, onStop func() error) (err error) {
+	if path, err := s.pidPath(); err == nil {
+		if os.MkdirAll(filepath.Dir(path), 0o700) == nil {
+			os.WriteFile(path, []byte(strconv.Itoa(os.Getpid())), 0o600)
+			defer os.Remove(path)
+		}
+	}
+
 	err = onStart()
 	if err != nil {
 		return err
@@ -212,181 +296,51 @@ func (s *linuxService) Run(onStart, onStop func() error) (err error) {
 		err = onStop()
 	}()
 
-	sig := make(chan os.Signal, 3)
-	signal.Notify(sig, os.Interrupt, os.Kill)
+	// SIGTERM is how systemd, and Stop, ask the daemon to stop; os.Kill
+	// was listed here before, but a process cannot catch it.
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 	<-sig
-
 	return nil
 }
 
-func (s *linuxService) Start() error {
-	switch s.flavor {
-	case initSystemd:
-		slog.Info("exec", "cmd", "systemctl start "+s.name+".service")
-		return exec.Command("systemctl", "start", s.name+".service").Run()
-	case initUpstart:
-		slog.Info("exec", "cmd", "initctl start "+s.name)
-		return exec.Command("initctl", "start", s.name).Run()
-	default:
-		slog.Info("exec", "cmd", "service "+s.name+" start")
-		return exec.Command("service", s.name, "start").Run()
-	}
-}
-
-func (s *linuxService) Stop() error {
-	switch s.flavor {
-	case initSystemd:
-		slog.Info("exec", "cmd", "systemctl stop "+s.name+".service")
-		return exec.Command("systemctl", "stop", s.name+".service").Start()
-	case initUpstart:
-		slog.Info("exec", "cmd", "initctl stop "+s.name)
-		return exec.Command("initctl", "stop", s.name).Start()
-	default:
-		slog.Info("exec", "cmd", "service "+s.name+" stop")
-		return exec.Command("service", s.name, "stop").Start()
-	}
-}
-
 func (s *linuxService) Error(format string, a ...any) error {
-	return s.logger.Err(fmt.Sprintf(format, a...))
+	slog.Error(fmt.Sprintf(format, a...))
+	return nil
 }
+
 func (s *linuxService) Warning(format string, a ...any) error {
-	return s.logger.Warning(fmt.Sprintf(format, a...))
+	slog.Warn(fmt.Sprintf(format, a...))
+	return nil
 }
+
 func (s *linuxService) Info(format string, a ...any) error {
-	return s.logger.Info(fmt.Sprintf(format, a...))
+	slog.Info(fmt.Sprintf(format, a...))
+	return nil
 }
 
-const systemVScript = `#!/bin/sh
-# For RedHat and cousins:
-# chkconfig: - 99 01
-# description: {{.Description}}
-# processname: {{.Path}}
-
-### BEGIN INIT INFO
-# Provides:          {{.Path}}
-# Required-Start:
-# Required-Stop:
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: {{.Display}}
-# Description:       {{.Description}}
-### END INIT INFO
-
-cmd="{{.Path}} {{.Args}}"
-
-name=$(basename $0)
-pid_file="/var/run/$name.pid"
-stdout_log="/var/log/$name.log"
-stderr_log="/var/log/$name.err"
-
-get_pid() {
-    cat "$pid_file"
-}
-
-is_running() {
-    [ -f "$pid_file" ] && ps $(get_pid) > /dev/null 2>&1
-}
-
-case "$1" in
-    start)
-        if is_running; then
-            echo "Already started"
-        else
-            echo "Starting $name"
-            $cmd >> "$stdout_log" 2>> "$stderr_log" &
-            echo $! > "$pid_file"
-            if ! is_running; then
-                echo "Unable to start, see $stdout_log and $stderr_log"
-                exit 1
-            fi
-        fi
-    ;;
-    stop)
-        if is_running; then
-            echo -n "Stopping $name.."
-            kill $(get_pid)
-            for i in {1..10}
-            do
-                if ! is_running; then
-                    break
-                fi
-                echo -n "."
-                sleep 1
-            done
-            echo
-            if is_running; then
-                echo "Not stopped; may still be shutting down or shutdown may have failed"
-                exit 1
-            else
-                echo "Stopped"
-                if [ -f "$pid_file" ]; then
-                    rm "$pid_file"
-                fi
-            fi
-        else
-            echo "Not running"
-        fi
-    ;;
-    restart)
-        $0 stop
-        if is_running; then
-            echo "Unable to stop, will not attempt to start"
-            exit 1
-        fi
-        $0 start
-    ;;
-    status)
-        if is_running; then
-            echo "Running"
-        else
-            echo "Stopped"
-            exit 1
-        fi
-    ;;
-    *)
-    echo "Usage: $0 {start|stop|restart|status}"
-    exit 1
-    ;;
-esac
-exit 0`
-
-const upstartScript = `# {{.Description}}
-
-description     "{{.Display}}"
-
-start on filesystem or runlevel [2345]
-stop on runlevel [!2345]
-
-# stop the respawn is process fails to start 5 times within 5 minutes
-respawn
-respawn limit 5 300
-umask 022
-
-console none
-
-pre-start script
-    test -x {{.Path}} {{.Args}} || { stop; exit 0; }
-end script
-
-# Start
-exec {{.Path}} {{.Args}}
-`
-
-const systemdScript = `[Unit]
+// userUnit starts with the graphical session, which is when a clipboard
+// exists. GNOME and KDE start graphical-session.target; under a compositor
+// that does not, such as a bare sway, start the unit from its configuration.
+const userUnit = `[Unit]
 Description={{.Description}}
-ConditionFileIsExecutable={{.Path}}
-After=network.target
+PartOf=graphical-session.target
+After=graphical-session.target
 
 [Service]
-ExecStart={{.Path}} {{.Args}}
-# respawn process on crash after a 3s wait
-# if fails to start 5 times within 5 minutes, stop trying
+ExecStart={{.Command}}
 Restart=on-failure
-RestartSec=3s
-StartLimitInterval=300
-StartLimitBurst=5
+RestartSec=5
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=graphical-session.target
+`
+
+const autostartEntry = `[Desktop Entry]
+Type=Application
+Name={{.Display}}
+Comment={{.Description}}
+Exec={{.Command}}
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
 `
