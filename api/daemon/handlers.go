@@ -75,7 +75,7 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 		return nil, fmt.Errorf("%s", out.Message)
 	}
 
-	url := config.Get().Domain + out.URL
+	url := config.ServerURL() + out.URL
 	clipboard.Local.Write(types.MIMEPlainText, utils.StringToBytes(url))
 	return &proto.AllocateURLOutput{URL: url, Message: "Done."}, nil
 }
@@ -98,7 +98,7 @@ func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (o
 
 	// write to local clipboard.
 	clipboard.Local.Write(types.MIMEPlainText,
-		utils.StringToBytes(config.Get().Domain+o.Image))
+		utils.StringToBytes(config.ServerURL()+o.Image))
 
 	return &proto.CodeToImageOutput{
 		CodeURL:  o.Code,

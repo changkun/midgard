@@ -84,6 +84,24 @@ func Get() *Config {
 	return conf
 }
 
+// ServerURL is the midgard server's base URL, such as https://example.com or
+// http://mg.local:8456, with no trailing slash. It is the domain setting, which
+// may carry its scheme and port. Without a scheme, http is assumed for
+// localhost and 0.0.0.0 and https otherwise, which is how the domain was
+// always read; a server on plain http elsewhere, such as a Raspberry Pi on the
+// home network, needs the scheme spelled out.
+func ServerURL() string {
+	d := strings.TrimRight(Get().Domain, "/")
+	switch {
+	case strings.HasPrefix(d, "http://"), strings.HasPrefix(d, "https://"):
+		return d
+	case strings.Contains(d, "localhost"), strings.Contains(d, "0.0.0.0"):
+		return "http://" + d
+	default:
+		return "https://" + d
+	}
+}
+
 // load reads the configuration the first time it is asked for, not when the
 // program starts, so a command that needs none — mg version, mg help — runs
 // without one.

@@ -9,7 +9,10 @@
 ---
 # midgard common settings
 title: "midgard"
-domain: example.com # domain that runs midgard server
+# where the midgard server runs. Without a scheme, https is assumed (http for
+# localhost); spell it out otherwise, with the port if it is not the default,
+# for example http://mg.local:8456.
+domain: example.com
 
 # midgard server settings
 # these settings are only used in server mode (run under `mg server`)
