@@ -6,9 +6,12 @@
 # archives on the GitHub release for that tag. On a pull request that touches
 # this workflow it only builds, so a change here is proven before it is used.
 #
-# macOS and Linux are built with Cgo on their own runners, because the global
-# hotkey needs it there (golang.design/x/hotkey); without Cgo mg still works,
-# but without the hotkey. Windows needs no Cgo and is cross-compiled.
+# macOS is built with Cgo, because the global hotkey needs it there
+# (golang.design/x/hotkey). Linux is not: with Cgo, that package panics at
+# startup wherever no X display is available, so mg could not even print its
+# version on a headless server or a Wayland-only desktop. The Linux binaries
+# therefore work everywhere but have no hotkey; build from source with Cgo
+# for it, under X11. Windows needs no Cgo either way.
 
 name: release
 
@@ -31,8 +34,8 @@ jobs:
         include:
         - { goos: darwin,  goarch: arm64, runner: macos-latest,     cgo: 1 }
         - { goos: darwin,  goarch: amd64, runner: macos-latest,     cgo: 1 }
-        - { goos: linux,   goarch: amd64, runner: ubuntu-latest,    cgo: 1 }
-        - { goos: linux,   goarch: arm64, runner: ubuntu-24.04-arm, cgo: 1 }
+        - { goos: linux,   goarch: amd64, runner: ubuntu-latest,    cgo: 0 }
+        - { goos: linux,   goarch: arm64, runner: ubuntu-24.04-arm, cgo: 0 }
         - { goos: windows, goarch: amd64, runner: ubuntu-latest,    cgo: 0 }
         - { goos: windows, goarch: arm64, runner: ubuntu-latest,    cgo: 0 }
     runs-on: ${{ matrix.runner }}
@@ -44,9 +47,6 @@ jobs:
       with:
         go-version-file: go.mod
         check-latest: true
-    - name: Install X11 headers for the hotkey
-      if: ${{ matrix.goos == 'linux' }}
-      run: sudo apt-get update && sudo apt-get install -y libx11-dev
     - name: Build
       env:
         GOOS: ${{ matrix.goos }}
