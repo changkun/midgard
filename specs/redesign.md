@@ -187,10 +187,13 @@ allowlist, and `./data` as the volume. Without Chrome the image is a static
 binary on a minimal base; it fits the 2 GB host.
 
 At changkun.de/midgard the page shares its origin with the site's other
-services: a script injected into any page of changkun.de could call midgard's
-API with a visitor's session and its CSRF token. Shares cannot, being
-sandboxed. A host of its own, such as midgard.changkun.de, would close that;
-it is a change of domain and redirect URI, not of code.
+services, all changkun's own: a script injected into any page of changkun.de
+could call midgard's API with a visitor's session and its CSRF token. Shares
+cannot, being sandboxed. A host of its own, such as midgard.changkun.de,
+would close that, but not for free: every share link already out there is on
+changkun.de/midgard, and moving the host moves them too, unless shares stay
+on one host and the page moves to another, which is a change of code. midgard
+stays at changkun.de/midgard.
 
 Migration: import the shares; the plaintext clipboard history in
 `data/logs` (44 MB, 2020–2025) is deleted, not imported — it may hold
