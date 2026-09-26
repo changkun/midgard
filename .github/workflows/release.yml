@@ -61,9 +61,11 @@ jobs:
         go build -trimpath -ldflags "$ldflags" -o "dist/pkg/$exe" .
         cp LICENSE README.md config.example.yml dist/pkg/
         name="mg_${version}_${GOOS}_${GOARCH}"
-        cd dist/pkg
-        if [ "$GOOS" = windows ]; then zip -q "../${name}.zip" *; else tar czf "../${name}.tar.gz" *; fi
-        echo "ARCHIVE=$(ls ../${name}.*)" >> "$GITHUB_ENV"
+        # upload-artifact takes no "..", so record the archive's path
+        # relative to the workspace.
+        if [ "$GOOS" = windows ]; then archive="dist/${name}.zip"; else archive="dist/${name}.tar.gz"; fi
+        (cd dist/pkg && if [ "$GOOS" = windows ]; then zip -q "../${name}.zip" *; else tar czf "../${name}.tar.gz" *; fi)
+        echo "ARCHIVE=${archive}" >> "$GITHUB_ENV"
     - name: Smoke test
       # A binary for this runner must at least start without a configuration.
       if: ${{ matrix.goos != 'windows' && (matrix.goos != 'darwin' || matrix.goarch == 'arm64') }}
