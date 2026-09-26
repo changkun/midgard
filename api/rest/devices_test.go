@@ -17,7 +17,7 @@ import (
 // connected, with a plain request instead of a round trip through a daemon.
 func TestDevices(t *testing.T) {
 	resetBlocklist(t)
-	m := NewMidgard()
+	m := testMidgard(t)
 	srv := httptest.NewServer(m.routers())
 	t.Cleanup(srv.Close)
 	subscribe(t, srv, "laptop")

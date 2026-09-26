@@ -85,7 +85,7 @@ func TestClipboardsAreApart(t *testing.T) {
 	resetBlocklist(t)
 	t.Chdir(t.TempDir())
 	t.Setenv("AUTH_ALLOWED_PRINCIPALS", "alice@example.com, bob@example.com")
-	m := NewMidgard()
+	m := testMidgard(t)
 	withStore(t, m)
 	srv := httptest.NewServer(m.routers())
 	t.Cleanup(srv.Close)

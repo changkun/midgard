@@ -14,6 +14,16 @@ import (
 	"golang.design/x/clipboard"
 )
 
+// Clipboard is an interface that defines the operations of a clipboard
+type Clipboard interface {
+	// Read reads the clipboard and returns the MIME type and
+	// the raw bytes data in the clipboard
+	Read() (types.MIME, []byte)
+	// Write write the given data as the given MIME type and
+	// returns true if success or false if failed.
+	Write(types.MIME, []byte) bool
+}
+
 // LocalClipboard is an extension to the Clipboard interface
 // for local purpose
 type LocalClipboard interface {

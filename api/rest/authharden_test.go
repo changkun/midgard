@@ -43,7 +43,7 @@ func login(m *Midgard, remote, xff string, good bool) int {
 // it, so a new header per guess meant never being blocked.
 func TestForwardedForCannotEvadeBlock(t *testing.T) {
 	resetBlocklist(t)
-	m := NewMidgard()
+	m := testMidgard(t)
 	const attacker = "203.0.113.9:4000" // public, so not a trusted proxy
 
 	for i := range maxFailureAttempts + 1 {
@@ -59,7 +59,7 @@ func TestForwardedForCannotEvadeBlock(t *testing.T) {
 // one client's failures do not block everyone behind the same proxy.
 func TestForwardedForFromProxy(t *testing.T) {
 	resetBlocklist(t)
-	m := NewMidgard()
+	m := testMidgard(t)
 	const proxy = "10.0.0.5:4000"
 
 	for range maxFailureAttempts + 1 {
@@ -77,7 +77,7 @@ func TestForwardedForFromProxy(t *testing.T) {
 // which the client chooses, and a heap profile holds the clipboard.
 func TestProfilesNeedLogin(t *testing.T) {
 	resetBlocklist(t)
-	m := NewMidgard()
+	m := testMidgard(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/debug/pprof/cmdline", nil)
 	req.Host = "localhost"

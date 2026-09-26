@@ -45,10 +45,6 @@ type Server struct {
 	Mode  string `yaml:"mode"`
 	Store struct {
 		Prefix string `yaml:"prefix"`
-		// LogClipboard keeps every text copied on any device, in plain
-		// text, under data/logs/clipboard. It is off unless asked for:
-		// what people copy includes passwords.
-		LogClipboard bool `yaml:"log_clipboard"`
 	} `yaml:"store"`
 	// TrustedProxies lists the networks whose X-Forwarded-For header is
 	// believed when working out a client's address, which the login

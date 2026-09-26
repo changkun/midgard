@@ -81,6 +81,16 @@ var migrations = []string{
 	)`,
 	// 2: the owner's email, since an allowlist may name people by it.
 	`ALTER TABLE app_tokens ADD COLUMN email TEXT NOT NULL DEFAULT ''`,
+	// 3: each person's clipboard history; the newest is their clipboard.
+	`CREATE TABLE clips (
+		id      INTEGER PRIMARY KEY AUTOINCREMENT,
+		owner   TEXT    NOT NULL,
+		device  TEXT    NOT NULL,
+		created INTEGER NOT NULL,
+		mime    TEXT    NOT NULL,
+		data    BLOB    NOT NULL
+	);
+	CREATE INDEX clips_by_owner ON clips (owner, id)`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {

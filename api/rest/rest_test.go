@@ -43,7 +43,7 @@ func do(t *testing.T, m *Midgard, method, path, body string, auth bool) *httptes
 }
 
 func TestPing(t *testing.T) {
-	w := do(t, NewMidgard(), http.MethodGet, "/midgard/ping", "", false)
+	w := do(t, testMidgard(t), http.MethodGet, "/midgard/ping", "", false)
 	if w.Code != http.StatusOK {
 		t.Fatalf("ping: got %d, want %d", w.Code, http.StatusOK)
 	}
@@ -65,7 +65,7 @@ func TestAuth(t *testing.T) {
 		return true
 	})
 
-	m := NewMidgard()
+	m := testMidgard(t)
 
 	for i, tt := range []struct {
 		name   string
@@ -102,11 +102,11 @@ func TestAuth(t *testing.T) {
 }
 
 func TestUniversalClipboardText(t *testing.T) {
-	// Universal.Write logs to ./data relative to the working
-	// directory; keep that out of the source tree.
+	// The store lives under ./data relative to the working directory;
+	// keep that out of the source tree.
 	t.Chdir(t.TempDir())
 
-	m := NewMidgard()
+	m := testMidgard(t)
 	const want = "changkun.de/x/midgard"
 
 	in, err := json.Marshal(types.PutToUniversalClipboardInput{
@@ -137,11 +137,11 @@ func TestUniversalClipboardText(t *testing.T) {
 }
 
 func TestUniversalClipboardImage(t *testing.T) {
-	// Universal.Write logs to ./data relative to the working
-	// directory; keep that out of the source tree.
+	// The store lives under ./data relative to the working directory;
+	// keep that out of the source tree.
 	t.Chdir(t.TempDir())
 
-	m := NewMidgard()
+	m := testMidgard(t)
 
 	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
 	img.Set(0, 0, color.RGBA{R: 255, A: 255})
@@ -175,7 +175,7 @@ func TestUniversalClipboardImage(t *testing.T) {
 }
 
 func TestBindError(t *testing.T) {
-	m := NewMidgard()
+	m := testMidgard(t)
 
 	for _, tt := range []struct {
 		name, method, path, body string
