@@ -53,3 +53,20 @@ jobs:
     - name: Run Tests
       run: |
         go test -v -covermode=atomic ./...
+  # The Mac app (specs/redesign.md §3): the Go engine as a C library, the
+  # Swift app linking it, and the app's tests, which use a pasteboard of
+  # their own.
+  mac_app:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+        check-latest: true
+    - name: Build the app
+      run: ./apple/build.sh
+    - name: Test the app
+      run: |
+        cd apple/Midgard
+        swift test

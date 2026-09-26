@@ -1,0 +1,6 @@
+// The engine's C API, as go build -buildmode=c-archive writes it.
+module CMidgard [system] {
+    header "../../../build/libmidgard.h"
+    link "midgard"
+    export *
+}

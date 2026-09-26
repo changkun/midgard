@@ -22,6 +22,8 @@ up:
 	docker-compose up -d
 down:
 	docker-compose down
+mac: # the Mac app, into apple/build/midgard.app
+	./apple/build.sh
 clean: down
 	rm -rf $(BINARY)
 	docker rmi -f $(shell docker images -f "dangling=true" -q) 2> /dev/null; true

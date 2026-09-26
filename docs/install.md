@@ -138,6 +138,36 @@ runs in. The owner is a principal id, as for app tokens. Hidden files, such as
 the old git backup's `.git`, stay behind. Running it again imports only what
 is new. Once the old links work, `data/repo` can go.
 
+## The Mac App
+
+On a Mac, midgard is an app in the menu bar. It keeps the Mac's clipboard in
+sync and its history, as `mg daemon` does elsewhere, and runs the same sync
+engine: the app is Swift, for the menu, the window, the clipboard and the
+hotkey, and links midgard's Go engine as a library.
+
+```sh
+$ make mac                   # needs Go and Xcode's command line tools
+$ open apple/build/midgard.app
+```
+
+The first time, it asks for your server and signs you in, in the browser. It
+then offers, in its menu:
+
+- your recent copies, to put one back on the clipboard;
+- the history, in a window, to search, look at, copy back and delete;
+- **Share Clipboard at a Link**, also on **Ctrl+Option+S**, which needs no
+  Accessibility permission;
+- **Pause Syncing**, which stops it reading or writing the Mac's clipboard;
+- **Start at Login**.
+
+Copies a password manager marks as secret are not synced, nor kept. The app
+and `mg daemon` are the same device to the server, and one of them runs at a
+time: stop the daemon first (`mg daemon stop`, then `mg daemon uninstall`).
+`mg` commands work beside the app.
+
+The build is signed for your Mac only; to give the app to others, sign it
+with a Developer ID and notarize it.
+
 ## Midgard Daemon
 
 The `midgard` daemon **runs on each of your machines** and starts when you log

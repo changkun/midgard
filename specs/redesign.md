@@ -329,7 +329,10 @@ Each step is its own PR, with its tests, merged when green.
 9. The tray app: first a trial of Wails v3 and Fyne on macOS, Windows and
    Linux (tray, window, clipboard watching, the hotkey on macOS's main
    thread), then the app: tray menu, history window, sign-in, start at login.
-   `mg daemon` stays for machines without a desktop.
+   `mg daemon` stays for machines without a desktop. *The Mac: done, as a
+   native Swift app linking the Go engine as a C library (apple/, built by
+   `go build -buildmode=c-archive`, as tailscale/libtailscale is), decided
+   with changkun over Wails. Windows and Linux keep `mg daemon` for now.*
 10. `mg` for agents: `--json` output, copy from stdin and paste to stdout,
     stable exit codes. *Done: `mg copy`, `mg paste`, `mg history show`,
     `--json`, exit codes 0–5 (docs/usage.md).*
