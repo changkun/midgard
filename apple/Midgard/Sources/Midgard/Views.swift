@@ -190,7 +190,9 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420)
+        // A grouped form scrolls, and so has no height of its own: a window
+        // sized to it had none either, and showed nothing but its title.
+        .frame(width: 440, height: 380)
         .onAppear { server = model.status.server ?? "" }
     }
 }

@@ -29,15 +29,20 @@ struct MidgardApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = Model()
+    private var welcome: NSWindow? // kept, or it goes as soon as it opens
 
     func applicationDidFinishLaunching(_: Notification) {
         model.start()
         // The first time, ask for the server.
         if !model.status.configured {
-            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: model)))
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
+                                  styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            window.contentView = NSHostingView(rootView: SettingsView(model: model))
             window.title = "Welcome to midgard"
+            window.isReleasedWhenClosed = false
             window.center()
             window.makeKeyAndOrderFront(nil)
+            welcome = window
             NSApp.activate(ignoringOtherApps: true)
         }
     }
