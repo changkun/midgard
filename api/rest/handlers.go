@@ -186,7 +186,8 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 // storeName turns a requested URI into a slash-separated name inside the
 // store, or reports why it cannot be one. The URI comes from the client, so
 // it must not climb out of the store ("../"), and it must not name a hidden
-// file: the store is a git clone, and .git is not something to write into.
+// file: a store from before the backup was dropped is a git clone, and .git is
+// not something to write into.
 func storeName(uri string) (string, error) {
 	name := path.Clean(strings.TrimPrefix(uri, "/"))
 	if name == "." || !filepath.IsLocal(filepath.FromSlash(name)) {

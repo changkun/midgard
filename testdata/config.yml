@@ -10,10 +10,6 @@ server:
   mode: test
   store:
     prefix: /midgard
-    backup:
-      enable: false
-      interval: 60
-      repo: ""
   auth:
     user: midgard-test
     pass: midgard-test-password

@@ -25,7 +25,7 @@ daemon ◀──────── secure websocket ─────────�
 
 Since midgard serves as a personal service, which does not need to address trust/privacy issue for other customers, it is designed and implemented in a centralized way: everything communicates to a central proxy. This brings several benefits:
 
-1. Central backup (midgard server backups clipboard history, and currently backups link history to a GitHub repository)
+1. One place to back up: everything the server keeps is in its `data` folder
 2. Single connection broadcasting (a device only need a single connection, server broadcasts all messages)
 3. Distributed synchronization consistency (server is the lead)
 
@@ -84,11 +84,8 @@ Build the server image with `make build`; each release also publishes it as
 starts:
 
 - `./config.yml` is your configuration, read-only;
-- `./data` is where published files and backups live;
-- for backups over ssh, uncomment the key mount and `GIT_SSH_COMMAND`, and
-  use an ssh URL for `server.store.backup.repo`, such as
-  `git@github.com:you/midgard-data.git`. Set `GIT_AUTHOR_NAME` and friends to
-  sign the backup commits as yourself.
+- `./data` is everything the server keeps. Back it up with the rest of the
+  host; there is nothing else to back up.
 
 ## Configuration
 

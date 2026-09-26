@@ -27,10 +27,6 @@ server:
     # keep every copied text in data/logs/clipboard, in plain text. Off by
     # default: what people copy includes passwords.
     log_clipboard: false
-    backup:
-      enable: false # enable backup to a git repository
-      interval: 60 # in minutes
-      repo: https://github.com/you/midgard-data.git
   auth:
     # the following two configure your midgard credentials. The server refuses
     # to start while the password is empty or still this placeholder.

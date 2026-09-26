@@ -50,11 +50,6 @@ type Server struct {
 		// text, under data/logs/clipboard. It is off unless asked for:
 		// what people copy includes passwords.
 		LogClipboard bool `yaml:"log_clipboard"`
-		Backup       struct {
-			Enable   bool   `yaml:"enable"`
-			Interval int    `yaml:"interval"`
-			Repo     string `yaml:"repo"`
-		} `yaml:"backup"`
 	} `yaml:"store"`
 	Auth struct {
 		User string `yaml:"user"`

@@ -12,16 +12,8 @@ services:
       - ./data:/app/data
       # the configuration, with the server password, stays out of the image
       - ./config.yml:/app/config.yml:ro
-      # for backups over ssh: a key that may push to server.store.backup.repo,
-      # which must then be an ssh URL such as git@github.com:you/midgard-data.git
-      # - ${SSH_KEY_PATH}:/run/secrets/midgard_ssh_key:ro
     environment:
       MIDGARD_SERVER_ADDR: midgard:80
-      # GIT_SSH_COMMAND: ssh -i /run/secrets/midgard_ssh_key -o StrictHostKeyChecking=accept-new
-      # GIT_AUTHOR_NAME: your name
-      # GIT_AUTHOR_EMAIL: you@example.com
-      # GIT_COMMITTER_NAME: your name
-      # GIT_COMMITTER_EMAIL: you@example.com
     cap_add:
       - SYS_PTRACE # for debugging
     networks:
