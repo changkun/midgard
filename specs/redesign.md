@@ -2,8 +2,9 @@
 
 | | |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12) |
 | **Decided** | 2026-09-26, with changkun: clipboards belong to individuals, behind a hard barrier; history is shared across one's own devices; login through auth.latere.ai; code2img and the GitHub backup go; the API stays `/v1` and changes in place |
+| **Revised** | 2026-09-26, with changkun: the server keeps no copy of anyone's clipboard, only relays and orders them; history lives on the devices, in one order on all of them; a tray app is what people use, `mg` stays for agents and scripts; end-to-end encryption is a must, after this |
 | **Builds on** | #35–#53 (Phase 0 and 1: safe, and easy to run) |
 
 ## 1. What midgard is for
@@ -13,13 +14,17 @@ yesterday from any of them. Turn a copy into a link to share. It runs on your
 own server, at `changkun.de/midgard`, for the people you let sign in, and no
 one sees anyone else's clipboard.
 
+Your copies live on your devices. The server passes them between your devices
+and puts them in order, and keeps none of them.
+
 ## 2. What stays and what goes
 
 | | Today | After |
 |---|---|---|
 | Sign-in | one user name and password in `config.yml`, on every device | auth.latere.ai, plus an allowlist |
 | Whose clipboard | one, shared by everyone who can log in | one per person, isolated |
-| History | every text ever copied, plaintext YAML on disk, never read back | per person, bounded, shown on every device; sensitive copies never stored |
+| History | every text ever copied, plaintext YAML on disk, never read back | on each of your devices, the same list in the same order; none on the server; sensitive copies never kept |
+| On a device | `mg daemon`, a service, and `mg` commands | a tray app; `mg` for agents and scripts |
 | Local RPC | `mg` → gRPC → daemon → HTTP → server | `mg` → HTTP → server |
 | Backup | the store is a git clone, pushed to GitHub hourly | a data volume with one SQLite file; host backups cover it |
 | code2img | server-side Chrome | removed |
@@ -28,33 +33,50 @@ one sees anyone else's clipboard.
 
 ## 3. Architecture
 
-```
-  device (edge)                              server (coordination)
-  ┌──────────────────────┐                   ┌────────────────────────────┐
-  │ mg daemon            │  wss, per person  │ sync: one room per person  │
-  │  watch / apply clip  │ ◀───────────────▶ │ history: last N per person │
-  │  hotkey → share      │                   │ shares: /midgard/s/<id>    │
-  ├──────────────────────┤  https           │ web page (browser login)   │
-  │ mg share/history/... │ ─────────────────▶│ SQLite + blobs, one volume │
-  └──────────────────────┘                   └─────────────▲──────────────┘
-          │ device grant, actor tokens                    │ JWKS
-          ▼                                               │
-     auth.latere.ai ──────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph you["Your computers: where copies live"]
+        A["Laptop<br/>tray app · history"]
+        B["Desktop<br/>tray app · history"]
+    end
+    subgraph other["Other ways in"]
+        W["Web page · phone"]
+        C["mg · agents · Shortcuts"]
+    end
+    subgraph server["midgard server: keeps no copies"]
+        R["Relay<br/>numbers each copy, holds it<br/>in memory until each of<br/>your devices has it"]
+        S[("Database<br/>devices · shares · tokens")]
+    end
+    L["auth.latere.ai"]
+    A <-->|websocket| R
+    B <-->|websocket| R
+    W <-->|https| R
+    C <-->|https| R
+    R --- S
+    R -.->|checks sign-in| L
 ```
 
-Two programs, one binary:
-
-- **The server** is the only thing that knows more than one device. It
-  authenticates every request, relays a person's copies between that person's
-  devices, keeps their history and shares, and serves a small web page.
-- **The daemon** is the edge: it watches the local clipboard, applies what
-  arrives, drops copies marked sensitive (#53), and turns the hotkey into a
-  share. It runs as its user (#49, #50) and reconnects on its own (#43).
-- **`mg` commands** call the server directly. The gRPC service between `mg` and
-  the daemon goes: every call it carried ended as an HTTP request to the server
-  or a round trip over the daemon's websocket, so it only relayed. `mg` writes
-  the local clipboard itself where it needs to. This also retires the socket
-  from #51.
+- **The server** is the coordination plane. It signs everyone in, knows which
+  of a person's devices are online, and passes each copy from one device to
+  the others. Every copy it passes gets the next number in that person's
+  history, so every device ends up with the same history in the same order
+  (§6). A copy waits in the server's memory until each of the person's
+  devices has it, then the server forgets it. Nothing of a copy is written to
+  the server's disk. Shares are the exception by design: a share is something
+  you published, and its link must work while your devices sleep (§9).
+- **The tray app** is what people use on a computer. It watches the
+  clipboard, applies what arrives, keeps the history, and shows it: a menu of
+  recent copies to put back, and a window to search, preview and delete them.
+  It runs in the person's desktop session, where the clipboard is, and starts
+  at login. It drops copies marked sensitive (#53) before they are shared or
+  kept, and turns the hotkey into a share.
+- **`mg`** stays, for agents and scripts: copy to your devices, read your
+  clipboard and history, share, as text or JSON. It calls the server; what it
+  reads, the server asks one of your online devices for. It also runs the
+  server and its admin commands, and a headless sync for a machine without a
+  desktop.
+- **The web page and Shortcuts** are clients like `mg`: what they read comes
+  from an online device, and what they copy is relayed.
 
 ## 4. Identity
 
@@ -118,29 +140,79 @@ tokens, through every endpoint.
 
 ## 6. History across devices
 
-The server keeps each person's recent copies — text, images and file lists,
-with every format a copy carried — newest first. The newest is the current
-clipboard. Defaults: the last 200 copies or 30 days, whichever is fewer;
-images count against a per-person byte budget (64 MB). A person can delete an
-entry or all of it.
+Each person has one history, and each of their devices keeps a copy of it: the
+last 200 copies or 30 days, whichever is fewer, images within 64 MB. The
+newest copy is the clipboard. Every device trims the same way, so within that
+window every device shows the same list in the same order.
 
-- `mg history` lists it; `mg history copy <n>` puts an entry back on the local
-  clipboard. The web page shows it with a copy button per entry.
-- Copies marked sensitive never reach the server (#53), so history holds none.
-- At rest the database is plaintext, under the server's user. This is a
-  personal server whose operator is its user; end-to-end encryption, where the
-  server could not read a clip at all, is §11.
+**One order.** The server numbers everything that happens to a person's
+history, in the order it arrives: a copy, the deletion of one, a clear. That
+number, `seq`, is the order devices apply events in and catch up by. Each copy
+also has `time`, when it was made: the server's clock for a copy that arrives
+as it is made, and for one made offline, the device's clock corrected by the
+offset the server measured when the device reconnected, and no later than its
+arrival. History is ordered by `(time, seq)`. So a copy made offline takes its
+place at when it was made, and never takes over the clipboard from a newer
+copy that another device made in the meantime.
+
+```mermaid
+sequenceDiagram
+    participant L as Laptop
+    participant S as Server
+    participant D as Desktop (offline)
+    L->>S: copy "a"
+    S->>S: seq 41, held in memory
+    S-->>L: seq 41
+    Note over D: comes back online, has up to 40
+    D->>S: hello, I have up to 40
+    S->>D: seq 41 "a"
+    D->>S: I have up to 41
+    S->>S: every device has 41: forget it
+```
+
+**Catching up.** A device that connects says the last `seq` it has. The
+server sends what it still holds after that. What it no longer holds — it
+restarted, or a copy outlived the bounds below — it asks the person's online
+devices for, and passes on. If none of them is online, the device waits for
+one, and says so.
+
+**Where a copy waits.** The server holds every copy in memory until each of
+the person's devices has it, within bounds per person (64 MB, 7 days) past
+which the oldest go. A device not seen for 30 days stops counting, and the
+tray app and the web page can forget a device. This covers a laptop closed
+right after a copy, a phone's paste while every computer is asleep, and the
+web page's queue alike. (Decided in review, over holding only what the web
+page and Shortcuts send.)
+
+- **The web page's queue** is that buffer: it lists what is still on its way,
+  to which devices, and lets one remove a copy that has not arrived yet.
+- **Deleting** a copy, or clearing the history, is an event like a copy, so it
+  reaches every device in the same order.
+- **Copies marked sensitive** never leave the device they were made on, and
+  are not kept in its history either.
+- **A device** is one install, by a random id it keeps in its configuration
+  directory, with its host name to show. Reinstalling makes a new device; the
+  old one stops counting after 30 days, or when forgotten.
 
 ## 7. Storage
 
-One SQLite file (`modernc.org/sqlite`, pure Go, so the server stays one static
-binary) and a `blobs/` directory for large payloads, both in the `data`
-volume:
+**The server** keeps one SQLite file (`modernc.org/sqlite`, pure Go, so the
+server stays one static binary) in the `data` volume, and no clipboard data in
+it:
 
-- `devices(id, owner, name, last_seen)`
-- `clips(id, owner, device, created, size)` and `clip_formats(clip, mime, bytes | blob)`
-- `shares(slug, owner, created, expires, mime, blob, legacy_path)`
-- `app_tokens(owner, name, hash, created)`
+- `devices(id, owner, name, last_seen, acked)`: `acked` is the last `seq` the
+  device has.
+- `heads(owner, seq)`: the last number given out, so numbers are never reused.
+- `shares(slug, path, owner, created, expires, mime, data)`
+- `app_tokens(owner, email, name, hash, created)`
+
+Copies on their way are in memory only. A restart loses them; devices then
+catch up from each other (§6), and what only the server held — a phone's
+paste while every device was off — is gone. The web page keeps what it sent
+until it is delivered, and offers to send it again.
+
+**A device** keeps its history in a SQLite file of its own, in its user's data
+directory, readable by its user only.
 
 No git. The host's backup of the volume is the backup, and one file copies
 consistently with `sqlite3 .backup`.
@@ -149,22 +221,33 @@ consistently with `sqlite3 .backup`.
 
 The API stays at `/midgard/api/v1` and changes in place. No old client
 survives the change of sign-in anyway, so a second version would only keep a
-path nothing calls:
+path nothing calls.
 
-- `GET/PUT /clipboard`, `GET /history`, `DELETE /history/{id}`
-- `POST /shares`, `GET /shares`, `DELETE /shares/{slug}`
-- `GET /devices`
-- `GET /sync`: the websocket. Typed JSON messages carrying a version; payloads
-  go as binary frames, not base64 inside JSON inside base64 as today.
+- `GET /sync`: the websocket, for devices. Typed messages carrying a version;
+  a copy's bytes go as binary frames, not base64 inside JSON. A device says
+  `hello` with its id, clock and last `seq`; sends `copy`, `delete` and
+  `clear`, and `have` when asked for what it holds; receives events with their
+  `seq` and `time`, and acknowledges them.
+- `POST /clipboard`: copy to one's devices; sequenced like a copy from a
+  device. `GET /clipboard`: the newest copy, from the server's memory or else
+  from an online device; 503 when no device is online to ask.
+- `GET /history`, `GET /history/{seq}`: from an online device. `DELETE
+  /history/{seq}`, `DELETE /history`: a delete or clear event.
+- `GET /queue`: what is on its way, and to which devices; `DELETE
+  /queue/{seq}` takes back a copy no device has yet.
+- `GET /devices`, `DELETE /devices/{id}`: one's devices, online or not, and
+  forgetting one.
+- `POST /shares`, `GET /shares`, `DELETE /shares/{slug}`; `/tokens` as in §4.
 
-Endpoints that no longer fit are removed rather than kept beside the new
-ones. Existing Shortcuts are recreated with app tokens, and daemons signed in
-again with `mg login`.
+`mg`, the web page and Shortcuts use the same endpoints. Endpoints that no
+longer fit are removed rather than kept beside the new ones.
 
 ## 9. Shares
 
-`POST /shares` stores a copy or a file, the requester's clipboard when it
-sends none, and returns `/midgard/s/<id>` (random, 22 characters). It may
+`POST /shares` stores a copy or a file, and returns `/midgard/s/<id>` (random,
+22 characters). The tray app and its hotkey send the bytes; a request without
+them shares the newest copy, which the server takes from its memory or asks an
+online device for. It may
 also ask for a name, `/midgard/<name>`: one namespace for everyone, first
 come, first served, free again once its share expires or is revoked. A share
 may expire; its owner lists and revokes it (`GET /shares`,
@@ -196,17 +279,27 @@ on one host and the page moves to another, which is a change of code. midgard
 stays at changkun.de/midgard.
 
 Migration: import the shares; the plaintext clipboard history in
-`data/logs` (44 MB, 2020–2025) is deleted, not imported — it may hold
-passwords copied before sensitive copies were marked [pending changkun's
-confirmation]; retire the old checkout.
+`data/logs` (44 MB, 2020–2025) is deleted, not imported: the server keeps no
+clipboard data now, and it may hold passwords copied before sensitive copies
+were marked. Retire the old checkout.
 
-## 11. Not now
+## 11. After this
 
-- End-to-end encryption (#31): the devices would share a key, the server would
-  store ciphertext, and a share would be decrypted on the device before it is
-  published.
-- A native mobile app, and a tray icon (#13). The web page covers phones.
-- Peer-to-peer sync on a LAN without the server.
+**End-to-end encryption (#31) is a must, and comes next.** A person's devices
+share a key, and the server passes ciphertext it cannot read. §6–§8 are built
+for it: the server reads only a copy's envelope, never its bytes:
+
+- the envelope: `seq`, `time`, the origin device, the kind of event, and for
+  each format its MIME type and size;
+- the bytes: opaque, relayed as they are.
+
+What changes then: the web page, `mg` and Shortcuts can read and send copies
+only with the key, so each needs pairing with a device (a code or QR shown by
+the tray app); a share is decrypted on the device and published in the clear,
+since a link is for people without the key.
+
+**Not now:** a native mobile app (the web page covers phones), and
+peer-to-peer sync on a LAN without the server.
 
 ## 12. Plan
 
@@ -220,10 +313,22 @@ Each step is its own PR, with its tests, merged when green.
 4. Identity: JWT verification with the allowlist on the server; `mg login` and
    actor tokens on the device; basic auth removed. Needs §4's registration.
    *Done: #60, #61.*
-5. Sync: rooms per person, history, `mg history`. *Done: #62, #63, #64.*
-6. Shares, and `mg server import` for the existing ones. *Done: #65, and
-   `mg server import`; `mg share` replaces `mg alloc`, which stays as its
-   alias.*
-7. The web page, with browser login and app tokens. *Done: the code;
-   signing in waits for `midgard-web`'s registration.*
-8. Deploy on changkun.de, migrate, and retire the old checkout.
+5. Sync: rooms per person, history, `mg history`. *Done: #62, #63, #64; the
+   history moves to the devices in step 8.*
+6. Shares, and `mg server import` for the existing ones. *Done: #65, #66;
+   `mg share` replaces `mg alloc`, which stays as its alias.*
+7. The web page, with browser login and app tokens. *Done: #70; signing in
+   waits for `midgard-web`'s registration.*
+8. The relay (§6–§8): sequence numbers and the in-memory buffer on the server,
+   the history on the devices, catch-up from the buffer and from other
+   devices; the server's copies of clips removed; the web page and `mg` read
+   through devices. The README and docs explain the architecture with
+   diagrams.
+9. The tray app: first a trial of Wails v3 and Fyne on macOS, Windows and
+   Linux (tray, window, clipboard watching, the hotkey on macOS's main
+   thread), then the app: tray menu, history window, sign-in, start at login.
+   `mg daemon` stays for machines without a desktop.
+10. `mg` for agents: `--json` output, copy from stdin and paste to stdout,
+    stable exit codes.
+11. Deploy on changkun.de, migrate, and retire the old checkout.
+12. End-to-end encryption (§11).
