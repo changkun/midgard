@@ -1,0 +1,95 @@
+# Copyright 2026 Changkun Ou. All rights reserved.
+# Use of this source code is governed by a GPL-3.0
+# license that can be found in the LICENSE file.
+
+# Builds mg for every desktop platform and, on a version tag, publishes the
+# archives on the GitHub release for that tag. On a pull request that touches
+# this workflow it only builds, so a change here is proven before it is used.
+#
+# macOS and Linux are built with Cgo on their own runners, because the global
+# hotkey needs it there (golang.design/x/hotkey); without Cgo mg still works,
+# but without the hotkey. Windows needs no Cgo and is cross-compiled.
+
+name: release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+    paths: [ '.github/workflows/release.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write # to attach the archives to the release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - { goos: darwin,  goarch: arm64, runner: macos-latest,     cgo: 1 }
+        - { goos: darwin,  goarch: amd64, runner: macos-latest,     cgo: 1 }
+        - { goos: linux,   goarch: amd64, runner: ubuntu-latest,    cgo: 1 }
+        - { goos: linux,   goarch: arm64, runner: ubuntu-24.04-arm, cgo: 1 }
+        - { goos: windows, goarch: amd64, runner: ubuntu-latest,    cgo: 0 }
+        - { goos: windows, goarch: arm64, runner: ubuntu-latest,    cgo: 0 }
+    runs-on: ${{ matrix.runner }}
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0 # git describe needs the tags
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+        check-latest: true
+    - name: Install X11 headers for the hotkey
+      if: ${{ matrix.goos == 'linux' }}
+      run: sudo apt-get update && sudo apt-get install -y libx11-dev
+    - name: Build
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: ${{ matrix.cgo }}
+      shell: bash
+      run: |
+        version=$(git describe --always --tags)
+        ldflags="-s -w -X changkun.de/x/midgard/internal/version.GitVersion=${version} -X changkun.de/x/midgard/internal/version.BuildTime=$(date -u +%FT%TZ)"
+        exe=mg; [ "$GOOS" = windows ] && exe=mg.exe
+        mkdir -p dist/pkg
+        go build -trimpath -ldflags "$ldflags" -o "dist/pkg/$exe" .
+        cp LICENSE README.md config.example.yml dist/pkg/
+        name="mg_${version}_${GOOS}_${GOARCH}"
+        cd dist/pkg
+        if [ "$GOOS" = windows ]; then zip -q "../${name}.zip" *; else tar czf "../${name}.tar.gz" *; fi
+        echo "ARCHIVE=$(ls ../${name}.*)" >> "$GITHUB_ENV"
+    - name: Smoke test
+      # A binary for this runner must at least start without a configuration.
+      if: ${{ matrix.goos != 'windows' && (matrix.goos != 'darwin' || matrix.goarch == 'arm64') }}
+      run: ./dist/pkg/mg version
+    - uses: actions/upload-artifact@v4
+      with:
+        name: mg-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: ${{ env.ARCHIVE }}
+        if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: dist
+        merge-multiple: true
+    - name: Attach the archives to the release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.ref_name }}
+      run: |
+        cd dist
+        sha256sum mg_* > checksums.txt
+        gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes "See the commits since the previous tag."
+        gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber mg_* checksums.txt
