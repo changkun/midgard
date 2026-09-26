@@ -32,7 +32,7 @@ id      name
 ## Backup Data using Git
 
 Midgard uses Git to backup all the data. All data are stored in the `./data` folder with some naming convention. Midgard server will sync with the configured Git repository,
-see settings in [../config.yml](../config.yml)
+see settings in [config.example.yml](../config.example.yml)
 
 Note, to sync the data, use git instead of https protocol:
 
