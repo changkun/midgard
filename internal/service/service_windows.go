@@ -12,6 +12,7 @@ package service
 // run, and removed by mg daemon uninstall.
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -79,7 +80,9 @@ func (ws *windowsService) Install() error {
 	if err != nil {
 		return err
 	}
-	k, err := registry.OpenKey(registry.CURRENT_USER, runKey, registry.QUERY_VALUE|registry.SET_VALUE)
+	// CreateKey opens the key, or creates it: a profile that has never
+	// had a program start at logon may not have one yet.
+	k, _, err := registry.CreateKey(registry.CURRENT_USER, runKey, registry.QUERY_VALUE|registry.SET_VALUE)
 	if err != nil {
 		return err
 	}
@@ -94,15 +97,19 @@ func (ws *windowsService) Install() error {
 func (ws *windowsService) Remove() error {
 	removed := false
 	k, err := registry.OpenKey(registry.CURRENT_USER, runKey, registry.QUERY_VALUE|registry.SET_VALUE)
-	if err != nil {
+	switch {
+	case errors.Is(err, registry.ErrNotExist):
+		// no Run key, so nothing was installed there
+	case err != nil:
 		return err
-	}
-	defer k.Close()
-	if _, _, err := k.GetStringValue(ws.name); err == nil {
-		if err := k.DeleteValue(ws.name); err != nil {
-			return err
+	default:
+		defer k.Close()
+		if _, _, err := k.GetStringValue(ws.name); err == nil {
+			if err := k.DeleteValue(ws.name); err != nil {
+				return err
+			}
+			removed = true
 		}
-		removed = true
 	}
 	if ws.legacyInstalled() {
 		if err := ws.removeLegacy(); err != nil {
