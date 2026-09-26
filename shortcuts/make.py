@@ -44,6 +44,21 @@ def var(name):
     return {"Value": {"Type": "Variable", "VariableName": name}, "WFSerializationType": "WFTextTokenAttachment"}
 
 
+def as_text(ref):
+    """ref, taken as text: an If compares a value whose type Shortcuts does
+    not know, such as a dictionary's, as nothing, and shows the text it is
+    compared with as missing."""
+    v = dict(ref["Value"])
+    v["Aggrandizements"] = [{"Type": "WFCoercionVariableAggrandizement", "CoercionItemClass": "WFStringContentItem"}]
+    return {"Value": v, "WFSerializationType": ref["WFSerializationType"]}
+
+
+def value_for(key, of, uid):
+    """Get Dictionary Value, of the value for key: what it gets must be said,
+    or Shortcuts asks to choose a value for each parameter."""
+    return action("getvalueforkey", WFInput=of, WFGetDictionaryValueType="Value", WFDictionaryKey=key, UUID=uid)
+
+
 def output(uid, name):
     return {"Value": {"Type": "ActionOutput", "OutputUUID": uid, "OutputName": name},
             "WFSerializationType": "WFTextTokenAttachment"}
@@ -107,24 +122,27 @@ def get_shortcut():
     decoded, cond = new_id(), new_id()
     actions += [
         action("detect.dictionary", WFInput=output(resp, "Contents of URL"), UUID=dict_uid),
-        action("getvalueforkey", WFInput=output(dict_uid, "Dictionary"), WFDictionaryKey="type", UUID=type_uid),
+        value_for("type", output(dict_uid, "Dictionary"), type_uid),
         action("setvariable", WFInput=output(type_uid, "Dictionary Value"), WFVariableName="kind"),
-        action("getvalueforkey", WFInput=output(dict_uid, "Dictionary"), WFDictionaryKey="data", UUID=data_uid),
+        value_for("data", output(dict_uid, "Dictionary"), data_uid),
         action("setvariable", WFInput=output(data_uid, "Dictionary Value"), WFVariableName="data"),
         # an answer without a type is the server saying why there is no copy
         action("conditional", GroupingIdentifier=group, WFControlFlowMode=0, WFCondition=101,
-               WFInput={"Type": "Variable", "Variable": var("kind")}),
-        action("getvalueforkey", WFInput=output(dict_uid, "Dictionary"), WFDictionaryKey="msg", UUID=cond),
+               WFInput={"Type": "Variable", "Variable": as_text(var("kind"))}),
+        value_for("msg", output(dict_uid, "Dictionary"), cond),
         action("notification", WFNotificationActionTitle="Midgard", WFNotificationActionBody=said(cond)),
         action("exit"),
         action("conditional", GroupingIdentifier=group, WFControlFlowMode=2),
     ]
-    image_group = new_id()
+    image_group, named = new_id(), new_id()
     actions += [
         action("conditional", GroupingIdentifier=image_group, WFControlFlowMode=0, WFCondition=4,
-               WFConditionalActionString="image/png", WFInput={"Type": "Variable", "Variable": var("kind")}),
+               WFConditionalActionString="image/png", WFInput={"Type": "Variable", "Variable": as_text(var("kind"))}),
         action("base64encode", WFEncodeMode="Decode", WFInput=var("data"), UUID=decoded),
-        action("setclipboard", WFLocalOnly=True, WFInput=output(decoded, "Base64 Decoded")),
+        # decoded bytes have no type: named .png, they are an image
+        action("setitemname", WFInput=output(decoded, "Base64 Decoded"), WFName=text("clipboard.png"),
+               WFDontIncludeFileExtension=False, UUID=named),
+        action("setclipboard", WFLocalOnly=True, WFInput=output(named, "Renamed Item")),
         action("notification", WFNotificationActionTitle="Midgard",
                WFNotificationActionBody=text("An image from your devices is on the clipboard.")),
         action("conditional", GroupingIdentifier=image_group, WFControlFlowMode=1),
@@ -159,7 +177,7 @@ def send_shortcut():
     actions += [
         action("conditional", GroupingIdentifier=image_group, WFControlFlowMode=0, WFCondition=99,
                WFConditionalActionString="Image",
-               WFInput={"Type": "Variable", "Variable": output(item_type, "Type")}),
+               WFInput={"Type": "Variable", "Variable": as_text(output(item_type, "Type"))}),
         action("image.convert", WFImageFormat="PNG", WFImagePreserveMetadata=False, WFInput=var("content"), UUID=png),
         action("base64encode", WFEncodeMode="Encode", WFBase64LineBreakMode="None",
                WFInput=output(png, "Converted Image"), UUID=b64),
@@ -174,7 +192,7 @@ def send_shortcut():
     answer_dict, msg = new_id(), new_id()
     actions += [
         action("detect.dictionary", WFInput=var("answer"), UUID=answer_dict),
-        action("getvalueforkey", WFInput=output(answer_dict, "Dictionary"), WFDictionaryKey="msg", UUID=msg),
+        value_for("msg", output(answer_dict, "Dictionary"), msg),
         action("notification", WFNotificationActionTitle="Midgard", WFNotificationActionBody=said(msg)),
     ]
     return workflow(actions, questions, glyph=61475, color=4292093695, share=True)
@@ -198,13 +216,34 @@ def workflow(actions, questions, glyph, color, share):
     return w
 
 
+# What each action needs said, which Shortcuts takes a file without and
+# then runs wrong, or stops at: a Set Variable without its input keeps
+# nothing, and the rest ask to choose a value for each parameter.
+REQUIRED = {
+    "setvariable": ["WFVariableName", "WFInput"],
+    "getvalueforkey": ["WFInput", "WFGetDictionaryValueType", "WFDictionaryKey"],
+    "detect.dictionary": ["WFInput"],
+    "downloadurl": ["WFURL", "WFHTTPMethod"],
+    "base64encode": ["WFInput", "WFEncodeMode"],
+    "setitemname": ["WFInput", "WFName"],
+    "setclipboard": ["WFInput"],
+    "notification": ["WFNotificationActionBody"],
+    "getitemtype": ["WFInput"],
+    "image.convert": ["WFInput", "WFImageFormat"],
+}
+
+
 def check(name, w):
-    """Refuses what Shortcuts would take without a word and then run wrong:
-    a Set Variable without its input keeps nothing."""
+    """Refuses a Shortcut with an action missing what it needs."""
     for i, a in enumerate(w["WFWorkflowActions"]):
+        kind = a["WFWorkflowActionIdentifier"].removeprefix("is.workflow.actions.")
         p = a["WFWorkflowActionParameters"]
-        if a["WFWorkflowActionIdentifier"].endswith(".setvariable") and "WFInput" not in p:
-            raise SystemExit("%s: action %d sets %s to nothing" % (name, i, p["WFVariableName"]))
+        need = list(REQUIRED.get(kind, []))
+        if kind == "conditional" and p["WFControlFlowMode"] == 0:
+            need += ["WFInput", "WFCondition"] + (["WFConditionalActionString"] if p["WFCondition"] in (4, 5, 8, 9, 99, 999) else [])
+        missing = [k for k in need if k not in p]
+        if missing:
+            raise SystemExit("%s: action %d (%s) lacks %s" % (name, i, kind, ", ".join(missing)))
 
 
 def main():
