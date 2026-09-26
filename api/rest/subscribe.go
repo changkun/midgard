@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -211,12 +211,6 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			if err != nil {
 				slog.Error("cannot put the clipboard", "user", u.id, "err", err)
 			}
-		case types.ActionListDaemonsRequest:
-			slog.Info("received a list active daemons request", "user", u.id)
-			err := m.handleListDaemons(conn, u, wsm.Data)
-			if err != nil {
-				slog.Error("cannot list the daemons", "user", u.id, "err", err)
-			}
 		default:
 			slog.Warn("unsupported message",
 				"action", wsm.Action, "msg", utils.BytesToString(msg))
@@ -232,27 +226,18 @@ func terminate(u *user, err error) error {
 	return fmt.Errorf("bad action: %w", err)
 }
 
-func (m *Midgard) handleListDaemons(conn *websocket.Conn, u *user, data []byte) (err error) {
+// Devices lists the daemons connected to the server. It is a plain request,
+// which mg daemon ls and mg status make; it used to be a round trip over a
+// daemon's websocket, relayed to the command by the daemon's local RPC.
+func (m *Midgard) Devices(c *gin.Context) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-	defer func() {
-		if err != nil {
-			err = terminate(u, err)
-		}
-	}()
-
-	var resp strings.Builder
-	resp.WriteString("id\tname\n")
-
+	out := types.DevicesOutput{Devices: []types.Device{}}
 	for e := m.users.Front(); e != nil; e = e.Next() {
 		u := e.Value.(*user)
-		fmt.Fprintf(&resp, "%d\t%s\n", u.index, u.id)
+		out.Devices = append(out.Devices, types.Device{Index: u.index, Name: u.id})
 	}
-
-	return u.send(&types.WebsocketMessage{
-		Action: types.ActionListDaemonsResponse,
-		Data:   utils.StringToBytes(resp.String()),
-	})
+	m.mu.Unlock()
+	c.JSON(http.StatusOK, out)
 }
 
 func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data []byte) error {

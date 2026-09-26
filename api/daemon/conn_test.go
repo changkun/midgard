@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/types"
-	"changkun.de/x/midgard/internal/types/proto"
 	"github.com/gorilla/websocket"
 )
 
@@ -127,52 +126,4 @@ func TestReconnectsFromASilentServer(t *testing.T) {
 	})
 	run(t, url)
 	eventually(t, "the daemon gave up on the silent connection", func() bool { return conns.Load() >= 2 })
-}
-
-// TestListDaemonsTimeoutDoesNotStopSync: a timed-out mg daemon ls left its
-// reply channel registered, unbuffered, and the read loop then blocked on it
-// with the next message, for good.
-func TestListDaemonsTimeoutDoesNotStopSync(t *testing.T) {
-	answer := make(chan struct{})
-	url, _ := fakeServer(t, func(n int64, c *websocket.Conn) {
-		for {
-			_, msg, err := c.ReadMessage()
-			if err != nil {
-				return
-			}
-			wsm := &types.WebsocketMessage{}
-			if wsm.Decode(msg) != nil || wsm.Action != types.ActionListDaemonsRequest {
-				continue
-			}
-			select {
-			case <-answer: // answer only once the first request has timed out
-				c.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
-					Action: types.ActionListDaemonsResponse, Data: []byte("id\tname\n"),
-				}).Encode())
-			default:
-				// A stray reply the first reader is no longer waiting for.
-				c.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
-					Action: types.ActionNone,
-				}).Encode())
-			}
-		}
-	})
-	m := run(t, url)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
-	defer cancel()
-	if _, err := m.ListDaemons(ctx, &proto.ListDaemonsInput{}); err == nil {
-		t.Fatal("the first request should have timed out")
-	}
-	close(answer)
-
-	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	out, err := m.ListDaemons(ctx, &proto.ListDaemonsInput{})
-	if err != nil {
-		t.Fatalf("a request after a timed-out one failed: %v", err)
-	}
-	if out.Daemons != "id\tname\n" {
-		t.Fatalf("got %q", out.Daemons)
-	}
 }

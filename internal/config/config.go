@@ -38,7 +38,6 @@ type Config struct {
 	// device with a token needs no server.auth credentials.
 	Token  string  `yaml:"token"`
 	Server *Server `yaml:"server"`
-	Daemon *Daemon `yaml:"daemon"`
 }
 
 // Server is the midgard server side configuration
@@ -68,22 +67,10 @@ type Server struct {
 	TrustedProxies []string `yaml:"trusted_proxies"`
 }
 
-// Daemon is the midgard daemon configuration
-type Daemon struct {
-	Addr   string `yaml:"addr"`
-	Server string `yaml:"server"`
-}
-
 // S returns the midgard server configuration
 func S() *Server {
 	load()
 	return conf.Server
-}
-
-// D returns the midgard daemon configuration
-func D() *Daemon {
-	load()
-	return conf.Daemon
 }
 
 // Get returns the whole midgard configuration

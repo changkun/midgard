@@ -20,6 +20,9 @@ func EndpointClipboard() string { return config.ServerURL() + "/midgard/api/v1/c
 // EndpointAllocateURL allocates a public URL.
 func EndpointAllocateURL() string { return config.ServerURL() + "/midgard/api/v1/allocate" }
 
+// EndpointDevices lists the daemons connected to the server.
+func EndpointDevices() string { return config.ServerURL() + "/midgard/api/v1/devices" }
+
 // EndpointSubscribe is the websocket daemons subscribe to, as a ws:// or
 // wss:// URL.
 func EndpointSubscribe() string {
@@ -82,4 +85,15 @@ type AllocateURLInput struct {
 type AllocateURLOutput struct {
 	URL     string `json:"url"`
 	Message string `json:"msg"`
+}
+
+// Device is a daemon connected to the server.
+type Device struct {
+	Index uint64 `json:"index"`
+	Name  string `json:"name"`
+}
+
+// DevicesOutput is the answer to GET /devices.
+type DevicesOutput struct {
+	Devices []Device `json:"devices"`
 }

@@ -17,6 +17,3 @@ server:
   auth:
     user: midgard-test
     pass: midgard-test-password
-
-daemon:
-  server: ""

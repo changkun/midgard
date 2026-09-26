@@ -14,11 +14,6 @@ BUILD_FLAGS = $(BUILD_SETTINGS) -x -work
 
 all:
 	go build $(TARGET) $(BUILD_FLAGS)
-install:
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-gen:
-	go generate ./...
 dep:
 	go mod tidy
 build:

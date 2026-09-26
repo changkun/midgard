@@ -43,6 +43,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.GET("/clipboard", m.GetFromUniversalClipboard)
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
 		v1auth.GET("/ws", m.Subscribe)
+		v1auth.GET("/devices", m.Devices)
 		v1auth.PUT("/allocate", m.AllocateURL)
 	}
 

@@ -5,15 +5,14 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"changkun.de/x/midgard/api/daemon"
-	"changkun.de/x/midgard/internal/types/proto"
+	"changkun.de/x/midgard/internal/client"
+	"changkun.de/x/midgard/internal/clipboard"
+	"changkun.de/x/midgard/internal/types"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/status"
 )
 
 var (
@@ -39,40 +38,34 @@ func init() {
 	allocCmd.PersistentFlags().StringVarP(&fpath, "for", "f", "", "path to a file you want to create its public url")
 }
 
-// allocate request the midgard daemon to allocate a given URL for
-// a given resource, or the content from the midgard universal clipboard.
+// allocate publishes srcpath, or the universal clipboard when there is none,
+// at dstpath, and puts the resulting link on the local clipboard.
 func allocate(dstpath, srcpath string) {
-	in := &proto.AllocateURLInput{DesiredPath: dstpath}
+	var (
+		data []byte
+		name string
+	)
 	if srcpath != "" {
-		// Read the file here, as the person running mg, and send its bytes;
-		// the daemon does not open paths for its callers.
 		b, err := os.ReadFile(srcpath)
 		if err != nil {
 			errorf("cannot read %s: %v", srcpath, err)
 			os.Exit(1)
 		}
 		if len(b) == 0 {
-			// an empty source means "the clipboard" to the daemon
+			// no data means "the clipboard" to the server
 			errorf("%s is empty, there is nothing to publish", srcpath)
 			os.Exit(1)
 		}
-		in.SourceData = b
-		in.SourceName = filepath.Base(srcpath)
+		data, name = b, filepath.Base(srcpath)
 	}
 
-	daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
-		out, err := c.AllocateURL(ctx, in)
-		if err != nil {
-			errorf("cannot interact with the midgard daemon: %v",
-				status.Convert(err).Message())
-			os.Exit(1)
-		}
-		if out.URL != "" {
-			// Clipboard is updated on the daemon side, we don't have to
-			// write clipboard in the allocate command again, see PR#16.
-			fmt.Println(out.URL)
-		} else {
-			fmt.Printf("%v\n", out.Message)
-		}
-	})
+	url, err := client.Allocate(dstpath, data, name)
+	if err != nil {
+		errorf("cannot publish: %v", err)
+		os.Exit(1)
+	}
+	fmt.Println(url)
+	if clipboard.Local.Write(types.MIMEPlainText, []byte(url)) {
+		errorf("the link is on your clipboard.")
+	}
 }

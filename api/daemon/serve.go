@@ -10,25 +10,18 @@ import (
 	"log/slog"
 	"os"
 	"sync"
-	"time"
 
 	"changkun.de/x/midgard/internal/types"
-	"changkun.de/x/midgard/internal/types/proto"
 	"changkun.de/x/midgard/internal/utils"
-	"google.golang.org/grpc"
 )
 
 // Daemon is the midgard daemon that interact with midgard server.
 type Daemon struct {
 	ID      string
-	s       *grpc.Server
-	readChs sync.Map                     // {string: chan *types.WebsocketMessage}
 	writeCh chan *types.WebsocketMessage // writeCh is used for sending message along ws.
 	url     string                       // the server's websocket, when not the configured one
 
 	keepalive keepalive // how the connection to the server is kept alive
-
-	proto.UnimplementedMidgardServer
 }
 
 // NewDaemon creates a new midgard daemon
@@ -47,9 +40,8 @@ func NewDaemon() *Daemon {
 	}
 }
 
-// Run runs Daemon daemon:
-// 1. maintaining midgard daemon rpc;
-// 2. maintaining midgard daemon to server websocket.
+// Run runs the daemon: it keeps the connection to the server, and syncs the
+// local clipboard over it.
 func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(ctx)
@@ -72,16 +64,11 @@ func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
 	return
 }
 
-// Serve serves Daemon daemon:
-// 1. maintaining midgard daemon rpc;
-// 2. maintaining midgard daemon to server websocket.
+// Serve keeps the daemon connected to the server and watches the local
+// clipboard, until ctx is done. mg commands no longer reach it: they call the
+// server directly (see internal/client).
 func (m *Daemon) Serve(ctx context.Context) {
 	var wg sync.WaitGroup
-	wg.Go(func() {
-		defer slog.Info("the graceful shutdown assistant is terminated")
-		<-ctx.Done()
-		m.s.GracefulStop()
-	})
 	wg.Go(func() {
 		defer slog.Info("the websocket is terminated")
 		m.stayConnected(ctx)
@@ -90,38 +77,7 @@ func (m *Daemon) Serve(ctx context.Context) {
 		defer slog.Info("the clipboard watcher is terminated")
 		m.watchLocalClipboard(ctx)
 	})
-	wg.Go(func() {
-		defer slog.Info("the rpc server is terminated")
-		m.serveRPC()
-	})
 	wg.Wait()
 
 	slog.Info("daemon is down, good bye")
-}
-
-const maxMessageSize = 10 << 20 // 10 MB
-
-func (m *Daemon) serveRPC() {
-	l, addr, err := listenRPC()
-	if err != nil {
-		fatal("cannot initialize the midgard daemon", "err", err)
-	}
-
-	m.s = grpc.NewServer(
-		grpc.MaxRecvMsgSize(maxMessageSize),
-		grpc.MaxSendMsgSize(maxMessageSize),
-		grpc.ConnectionTimeout(time.Minute*5),
-	)
-	proto.RegisterMidgardServer(m.s, m)
-	slog.Info("daemon is running", "addr", addr)
-	if err := m.s.Serve(l); err != nil {
-		fatal("cannot serve the midgard daemon", "err", err)
-	}
-}
-
-// fatal logs at the error level and exits. log/slog has no Fatal, and a
-// daemon that cannot bind its rpc socket has nothing left to do.
-func fatal(msg string, args ...any) {
-	slog.Error(msg, args...)
-	os.Exit(1)
 }

@@ -208,17 +208,6 @@ func (m *Daemon) readFrom(conn *websocket.Conn, alive func()) error {
 			continue
 		}
 
-		// Hand the message to everyone waiting on a reply. A reader that
-		// is not listening — its request timed out — must not stop the
-		// connection, so a full reader is skipped.
-		m.readChs.Range(func(_, v any) bool {
-			select {
-			case v.(chan *types.WebsocketMessage) <- wsm:
-			default:
-			}
-			return true
-		})
-
 		switch wsm.Action {
 		case types.ActionClipboardChanged:
 			var d types.ClipboardData
