@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="100 100 824 824">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0a1233"/>
+      <stop offset="0.6" stop-color="#1a3584"/>
+      <stop offset="1" stop-color="#2c66d4"/>
+    </linearGradient>
+    <linearGradient id="dusk" x1="0" y1="250" x2="0" y2="830" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#16307a"/>
+      <stop offset="1" stop-color="#3f7fe0"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="220" y1="250" x2="804" y2="830" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="1" stop-color="#ee9d12"/>
+    </linearGradient>
+    <linearGradient id="snow" x1="0" y1="330" x2="0" y2="830" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d6e2f6"/>
+    </linearGradient>
+    <linearGradient id="shade" x1="0" y1="330" x2="0" y2="830" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b4c6e8"/>
+      <stop offset="1" stop-color="#8aa3d3"/>
+    </linearGradient>
+    <clipPath id="body">
+      <rect x="100" y="100" width="824" height="824" rx="185"/>
+    </clipPath>
+    <clipPath id="world">
+      <circle cx="512" cy="540" r="290"/>
+    </clipPath>
+    <filter id="lift" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#lift)">
+    <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#sky)"/>
+  </g>
+  <g clip-path="url(#body)">
+    <g fill="#ffffff">
+      <circle cx="238" cy="212" r="6" opacity="0.9"/>
+      <circle cx="318" cy="160" r="4" opacity="0.7"/>
+      <circle cx="786" cy="196" r="5" opacity="0.85"/>
+      <circle cx="714" cy="148" r="3.5" opacity="0.6"/>
+      <circle cx="846" cy="286" r="3.5" opacity="0.6"/>
+      <circle cx="170" cy="318" r="3" opacity="0.5"/>
+    </g>
+
+    <!-- the world inside the ring -->
+    <g clip-path="url(#world)">
+      <rect x="200" y="240" width="624" height="600" fill="url(#dusk)"/>
+      <!-- two peaks behind, a tone deeper -->
+      <path d="M 140 900 L 360 456 L 580 900 Z" fill="#cfdcf3"/>
+      <path d="M 360 456 L 580 900 L 424 900 Z" fill="#94acd9"/>
+      <path d="M 470 900 L 700 440 L 930 900 Z" fill="#cfdcf3"/>
+      <path d="M 700 440 L 930 900 L 770 900 Z" fill="#94acd9"/>
+      <!-- and the high one in front -->
+      <path d="M 280 900 L 540 318 L 800 900 Z" fill="url(#snow)"/>
+      <path d="M 540 318 L 800 900 L 606 900 Z" fill="url(#shade)"/>
+    </g>
+
+    <!-- the ring, the world's rim -->
+    <circle cx="512" cy="540" r="290" fill="none" stroke="url(#ring)" stroke-width="48"/>
+  </g>
+</svg>

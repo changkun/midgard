@@ -35,6 +35,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	mg.GET("/", m.WebPage)
 	mg.GET("/shortcuts/:name", m.Shortcut)
 	mg.GET("/download/:name", m.Download)
+	mg.GET("/icons/:name", m.Icon)
 	if m.web != nil {
 		mg.GET("/.auth/login", m.web.login)
 		mg.GET("/.auth/callback", m.web.callback)

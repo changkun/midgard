@@ -353,6 +353,28 @@ func TestShortcuts(t *testing.T) {
 	}
 }
 
+// TestIcons: the page names its icons, and they are served, to anyone.
+func TestIcons(t *testing.T) {
+	m := testMidgard(t)
+	page := do(t, m, http.MethodGet, "/midgard/", "", false).Body.String()
+	for name, typ := range iconTypes {
+		path := "/midgard/icons/" + name
+		if !strings.Contains(page, `href="`+path+`"`) {
+			t.Errorf("the page does not name %s", path)
+		}
+		w := do(t, m, http.MethodGet, path, "", false)
+		if w.Code != http.StatusOK || w.Header().Get("Content-Type") != typ || w.Body.Len() < 1000 {
+			t.Errorf("GET %s: %d, %q, %d bytes", path, w.Code, w.Header().Get("Content-Type"), w.Body.Len())
+		}
+	}
+	if w := do(t, m, http.MethodGet, "/midgard/icons/nope.png", "", false); w.Code != http.StatusNotFound {
+		t.Errorf("GET an icon there is not: %d, want 404", w.Code)
+	}
+	if code, _ := share(t, m, types.ShareInput{Data: b64("x"), Name: "icons/midgard.svg"}); code != http.StatusBadRequest {
+		t.Errorf("a share named like an icon: %d, want 400", code)
+	}
+}
+
 // TestDownload: the Mac app is handed out to anyone once the server has it,
 // and the page offers it only then; nothing else in the data folder is.
 func TestDownload(t *testing.T) {

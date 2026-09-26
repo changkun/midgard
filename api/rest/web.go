@@ -192,6 +192,35 @@ func (m *Midgard) Shortcut(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
+// The page's icons, in a browser's tab and on an iPhone's Home Screen: the
+// app's (apple/Midgard/Icon/Midgard.svg), without the margin of macOS's icon
+// grid, and square for the Home Screen, which rounds it itself.
+//
+//go:embed web/icons/*
+var iconFiles embed.FS
+
+var iconTypes = map[string]string{
+	"midgard.svg":          "image/svg+xml",
+	"apple-touch-icon.png": "image/png",
+}
+
+// Icon hands out one of the page's icons.
+func (m *Midgard) Icon(c *gin.Context) {
+	typ, ok := iconTypes[c.Param("name")]
+	if !ok {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	b, err := iconFiles.ReadFile("web/icons/" + c.Param("name"))
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	c.Header("Cache-Control", "public, max-age=86400")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Data(http.StatusOK, typ, b)
+}
+
 // downloads are the apps the page offers, when the server has them in
 // config.DownloadPath, by their types.
 var downloads = map[string]string{
