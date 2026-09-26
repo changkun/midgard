@@ -122,8 +122,9 @@ $ mg server
 
 ## Midgard Daemon
 
-`midgard` daemon process **runs on your local machine**
-(automatic start when machine boots):
+The `midgard` daemon **runs on each of your machines** and starts when you log
+in. Install it as yourself, without `sudo`: it syncs your desktop's
+clipboard, which a system service cannot reach.
 
 ```sh
 $ mg daemon install
@@ -132,7 +133,18 @@ $ mg daemon stop
 $ mg daemon uninstall
 ```
 
-> Linux requires `sudo`, windows users may need run PowerShell in "run as administrator" mode.
+- **macOS:** a LaunchAgent in `~/Library/LaunchAgents`.
+- **Linux:** a systemd user unit in `~/.config/systemd/user`, started with
+  your graphical session; without systemd, an autostart entry in
+  `~/.config/autostart`. GNOME and KDE start the session for you. Under a
+  compositor that does not, such as sway or Hyprland, add
+  `exec systemctl --user start midgard-daemon` to its configuration after
+  importing `WAYLAND_DISPLAY` into systemd.
+- **Windows:** run PowerShell as administrator to install.
+
+An older `mg daemon install` put a system-wide service in `/etc`, which ran as
+root and could not reach anyone's clipboard. `sudo mg daemon uninstall`
+removes it.
 
 or
 

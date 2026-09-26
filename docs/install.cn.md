@@ -120,7 +120,7 @@ $ mg server
 
 ## Midgard 守护进程
 
-midgard 守护进程运行在**本地**（而非服务端），若正确安装为系统进程，则将在开机时自启：
+midgard 守护进程运行在**每一台设备上**（而非服务端），登录后自动启动。请以当前用户身份安装，不要使用 `sudo`：它同步的是你的桌面剪贴板，系统服务无法访问。
 
 ```sh
 $ mg daemon install
@@ -129,7 +129,11 @@ $ mg daemon stop
 $ mg daemon uninstall
 ```
 
-> Linux 用户需要 `sudo` 权限, Windows 用户则需要将 PowerShell 以管理员身份运行。
+- **macOS：** 安装为 `~/Library/LaunchAgents` 中的 LaunchAgent。
+- **Linux：** 安装为 `~/.config/systemd/user` 中的 systemd 用户单元，随图形会话启动；没有 systemd 时，安装为 `~/.config/autostart` 中的自启动项。GNOME 与 KDE 会自动启动图形会话；sway、Hyprland 等合成器需要在导入 `WAYLAND_DISPLAY` 之后，于其配置中加入 `exec systemctl --user start midgard-daemon`。
+- **Windows：** 需要以管理员身份运行 PowerShell 进行安装。
+
+旧版 `mg daemon install` 会在 `/etc` 中安装以 root 运行的系统服务，它无法访问任何人的剪贴板。`sudo mg daemon uninstall` 可将其移除。
 
 若不需要安装为系统进程，则可直接使用下列命令运行在终端中（使用 Ctrl+C 退出）：
 

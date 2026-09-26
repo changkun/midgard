@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"os/user"
 	"strings"
+	"syscall"
 	"text/template"
 )
 
@@ -115,8 +116,10 @@ func (s *darwinLaunchdService) Run(onStart, onStop func() error) error {
 		return err
 	}
 
-	sigChan := make(chan os.Signal, 3)
-	signal.Notify(sigChan, os.Interrupt, os.Kill)
+	// launchctl stops a job with SIGTERM; os.Kill was listed here before,
+	// but a process cannot catch it, so the daemon never stopped cleanly.
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
 
 	return onStop()
