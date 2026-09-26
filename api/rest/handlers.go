@@ -61,7 +61,9 @@ func (m *Midgard) Code(c *gin.Context) {
 	ci := codeInfo{}
 	codedir := filepath.Clean(config.RepoPath + "/code")
 	err := filepath.WalkDir(codedir, func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() || err != nil {
+		// err first: d is nil when the directory itself cannot be read,
+		// which is the case until the first code is saved.
+		if err != nil || d.IsDir() {
 			return nil
 		}
 
