@@ -62,12 +62,15 @@ def dictionary(items):
 
 def setup():
     """The actions every Shortcut begins with: the server and the token,
-    which it asks for when it is added."""
+    which it asks for when it is added. Each Set Variable names the text it
+    keeps: without an input, it keeps nothing, as Shortcuts passes no
+    action's output on by itself."""
+    server, token = new_id(), new_id()
     return [
-        action("gettext", WFTextActionText="changkun.de", UUID=new_id()),
-        action("setvariable", WFVariableName="server"),
-        action("gettext", WFTextActionText="", UUID=new_id()),
-        action("setvariable", WFVariableName="token"),
+        action("gettext", WFTextActionText="changkun.de", UUID=server),
+        action("setvariable", WFVariableName="server", WFInput=output(server, "Text")),
+        action("gettext", WFTextActionText="", UUID=token),
+        action("setvariable", WFVariableName="token", WFInput=output(token, "Text")),
     ], [
         {"ActionIndex": 0, "Category": "Parameter", "ParameterKey": "WFTextActionText",
          "DefaultValue": "changkun.de", "Text": "Your Midgard server"},
@@ -195,9 +198,19 @@ def workflow(actions, questions, glyph, color, share):
     return w
 
 
+def check(name, w):
+    """Refuses what Shortcuts would take without a word and then run wrong:
+    a Set Variable without its input keeps nothing."""
+    for i, a in enumerate(w["WFWorkflowActions"]):
+        p = a["WFWorkflowActionParameters"]
+        if a["WFWorkflowActionIdentifier"].endswith(".setvariable") and "WFInput" not in p:
+            raise SystemExit("%s: action %d sets %s to nothing" % (name, i, p["WFVariableName"]))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for name, w in [("Get from Midgard", get_shortcut()), ("Send to Midgard", send_shortcut())]:
+        check(name, w)
         with tempfile.TemporaryDirectory() as tmp:
             raw = os.path.join(tmp, name + ".shortcut")
             with open(raw, "wb") as f:
