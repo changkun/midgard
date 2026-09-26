@@ -5,7 +5,6 @@
 package rest
 
 import (
-	"container/list"
 	"context"
 	"errors"
 	"log/slog"
@@ -26,7 +25,7 @@ type Midgard struct {
 	store *store.Store // nil until Serve opens it, or a test sets it
 
 	mu    sync.Mutex
-	users *list.List
+	relay *relay // passes copies between each person's devices; see rel
 
 	keepalive keepalive   // how dead daemons are noticed
 	latere    *latereAuth // sign-in through auth.latere.ai; nil when not set up
@@ -44,7 +43,18 @@ func (m *Midgard) appTokens() appTokens {
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{users: list.New(), keepalive: defaultKeepalive, latere: newLatereAuth(), web: newWebAuth()}
+	return &Midgard{keepalive: defaultKeepalive, latere: newLatereAuth(), web: newWebAuth()}
+}
+
+// rel is the relay, on the server's store; made on first use, once the
+// store is open.
+func (m *Midgard) rel() *relay {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.relay == nil || m.relay.store != m.store {
+		m.relay = newRelay(m.store)
+	}
+	return m.relay
 }
 
 // Serve serves Midgard RESTful APIs.
@@ -66,6 +76,7 @@ func (m *Midgard) Serve() {
 		slog.Info("received a signal", "signal", sig)
 
 		slog.Info("shutting down the api service")
+		m.rel().closeAll()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		if err := m.s.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {

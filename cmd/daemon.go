@@ -8,6 +8,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"text/tabwriter"
+	"time"
 
 	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/client"
@@ -52,7 +54,11 @@ var daemonCmd = &cobra.Command{
 		case "stop":
 			err = s.Stop()
 		case "run":
-			m := daemon.NewDaemon()
+			m, err := daemon.NewDaemon()
+			if err != nil {
+				errorf("%v", err)
+				os.Exit(1)
+			}
 			onStart, onStop := m.Run(context.Background())
 
 			err = s.Run(onStart, onStop)
@@ -65,11 +71,16 @@ var daemonCmd = &cobra.Command{
 				errorf("cannot list the daemons: %v", err)
 				return
 			}
-			errorf("active daemons:")
-			fmt.Println("id\tname")
+			w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+			fmt.Fprintln(w, "name\tonline\tlast seen\thas up to\tid")
 			for _, d := range devices {
-				fmt.Printf("%d\t%s\n", d.Index, d.Name)
+				online := "no"
+				if d.Online {
+					online = "yes"
+				}
+				fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", d.Name, online, d.LastSeen.Local().Format(time.DateTime), d.Acked, d.ID)
 			}
+			w.Flush()
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])
 		}

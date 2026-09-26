@@ -123,8 +123,9 @@ func TestShareNames(t *testing.T) {
 // clipboard.
 func TestShareTheClipboard(t *testing.T) {
 	m := testMidgard(t)
-	if code, _ := share(t, m, types.ShareInput{}); code != http.StatusBadRequest {
-		t.Fatalf("sharing an empty clipboard: %d, want 400", code)
+	// the clipboard is on the devices, and none is online
+	if code, _ := share(t, m, types.ShareInput{}); code != http.StatusServiceUnavailable {
+		t.Fatalf("sharing the clipboard with no device online: %d, want 503", code)
 	}
 	if w := do(t, m, http.MethodPost, "/midgard/api/v1/clipboard", `{"type":"text","data":"copied"}`, true); w.Code != http.StatusOK {
 		t.Fatalf("copy: %d %s", w.Code, w.Body)

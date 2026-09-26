@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"changkun.de/x/midgard/internal/client"
 	"changkun.de/x/midgard/internal/config"
@@ -63,11 +62,11 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-// connected reports whether the daemon of the machine called host is among
-// devices. The server adds a suffix when two machines share a name.
+// connected reports whether a device of the machine called host is online.
+// Devices are told apart by id; the name is the host's, as it is.
 func connected(devices []types.Device, host string) bool {
 	for _, d := range devices {
-		if d.Name == host || strings.HasPrefix(d.Name, host+"-") {
+		if d.Online && d.Name == host {
 			return true
 		}
 	}

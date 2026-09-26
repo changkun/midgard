@@ -44,8 +44,11 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	{
 		v1auth.GET("/clipboard", m.GetFromUniversalClipboard)
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
-		v1auth.GET("/ws", notFromTheWeb, m.Subscribe)
+		v1auth.GET("/ws", notFromTheWeb, m.Sync)
 		v1auth.GET("/devices", m.Devices)
+		v1auth.DELETE("/devices/:id", m.ForgetDevice)
+		v1auth.GET("/queue", m.Queue)
+		v1auth.DELETE("/queue/:id", m.TakeBack)
 		v1auth.POST("/shares", m.CreateShare)
 		v1auth.GET("/shares", m.Shares)
 		v1auth.DELETE("/shares/:slug", m.DeleteShare)

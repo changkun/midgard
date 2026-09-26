@@ -158,8 +158,8 @@ func TestWebSession(t *testing.T) {
 	resetBlocklist(t)
 	m := testMidgard(t)
 	a := withWeb(t, m)
-	if _, err := m.store.AddClip(context.Background(), testUser, "laptop", "text", []byte("mine")); err != nil {
-		t.Fatal(err)
+	if w := do(t, m, http.MethodPost, "/midgard/api/v1/clipboard", `{"type":"text","data":"mine"}`, true); w.Code != http.StatusOK {
+		t.Fatalf("copying: %d %s", w.Code, w.Body)
 	}
 	session := sessionFor(t, a, testUser, testEmail)
 	ck, tok := csrf(a)
@@ -195,8 +195,9 @@ func TestWebSession(t *testing.T) {
 			}
 		})
 	}
-	if c, _ := m.store.LatestClip(context.Background(), testUser); string(c.Data) != "from the web" || c.Device != "web" {
-		t.Errorf("the clipboard is %q from %q, want the web page's copy", c.Data, c.Device)
+	rm, _ := m.rel().room(context.Background(), testUser)
+	if f, _ := rm.newest(); string(f.Payload) != "from the web" || f.Origin != "web" {
+		t.Errorf("the clipboard is %q from %q, want the web page's copy", f.Payload, f.Origin)
 	}
 	// a token needs no CSRF token: no browser sends it on its own
 	if w := do(t, m, http.MethodPost, "/midgard/api/v1/clipboard", put, true); w.Code != http.StatusOK {
@@ -244,7 +245,7 @@ func TestTokenEndpoints(t *testing.T) {
 	// the token works, and reaches its owner's data, as the one it was
 	// issued with the email of
 	app := map[string]string{"Authorization": "Bearer " + issued.Token}
-	if w := browse(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", nil, app); w.Code != http.StatusOK {
+	if w := browse(t, m, http.MethodGet, "/midgard/api/v1/devices", "", nil, app); w.Code != http.StatusOK {
 		t.Fatalf("the issued token: %d", w.Code)
 	}
 	for _, r := range []struct{ method, path, body string }{
@@ -265,7 +266,7 @@ func TestTokenEndpoints(t *testing.T) {
 	if w := browse(t, m, http.MethodDelete, "/midgard/api/v1/tokens/phone", "", web, hdr); w.Code != http.StatusNoContent {
 		t.Fatalf("revoking: %d %s", w.Code, w.Body)
 	}
-	if w := browse(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", nil, app); w.Code != http.StatusUnauthorized {
+	if w := browse(t, m, http.MethodGet, "/midgard/api/v1/devices", "", nil, app); w.Code != http.StatusUnauthorized {
 		t.Errorf("a revoked token: %d, want 401", w.Code)
 	}
 	if w := browse(t, m, http.MethodDelete, "/midgard/api/v1/tokens/phone", "", web, hdr); w.Code != http.StatusNotFound {

@@ -165,23 +165,29 @@ func (s *Store) migrate(ctx context.Context) error {
 // Apply applies an event the server numbered, once: an event already in the
 // log is left as it is. A copy that a delete or a clear already in the log
 // covers arrives gone, as catching up can bring events out of order; a copy
-// the device sent itself leaves the outbox.
-func (s *Store) Apply(ctx context.Context, f wire.Frame) error {
+// the device sent itself leaves the outbox. It reports whether the event was
+// new, and whether it was the device's own, come back numbered.
+func (s *Store) Apply(ctx context.Context, f wire.Frame) (applied, ours bool, err error) {
 	if f.Seq == 0 {
-		return errors.New("history: an event without a number")
+		return false, false, errors.New("history: an event without a number")
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return false, false, err
 	}
 	defer tx.Rollback()
 
 	var exists bool
 	if err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM events WHERE seq = ?)`, f.Seq).Scan(&exists); err != nil {
-		return err
+		return false, false, err
 	}
 	if exists {
-		return tx.Commit()
+		return false, false, tx.Commit()
+	}
+	if f.Ref != "" {
+		if err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM outbox WHERE ref = ?)`, f.Ref).Scan(&ours); err != nil {
+			return false, false, err
+		}
 	}
 	formats, _ := marshalFormats(f.Formats)
 	switch f.Kind {
@@ -190,7 +196,7 @@ func (s *Store) Apply(ctx context.Context, f wire.Frame) error {
 		err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM events
 			WHERE (kind = 'delete' AND target = ?) OR (kind = 'clear' AND target >= ?))`, f.Seq, f.Seq).Scan(&covered)
 		if err != nil {
-			return err
+			return false, false, err
 		}
 		var data any = f.Payload
 		if covered {
@@ -201,37 +207,37 @@ func (s *Store) Apply(ctx context.Context, f wire.Frame) error {
 		}
 		if _, err := tx.ExecContext(ctx, `INSERT INTO events (seq, kind, time, origin, formats, data, gone) VALUES (?, 'copy', ?, ?, ?, ?, ?)`,
 			f.Seq, f.Time, f.Origin, formats, data, covered); err != nil {
-			return err
+			return false, false, err
 		}
 	case wire.KindDelete, wire.KindClear:
 		if _, err := tx.ExecContext(ctx, `INSERT INTO events (seq, kind, time, origin, target) VALUES (?, ?, ?, ?, ?)`,
 			f.Seq, f.Kind, f.Time, f.Origin, f.Target); err != nil {
-			return err
+			return false, false, err
 		}
 		where := `seq = ?`
 		if f.Kind == wire.KindClear {
 			where = `seq <= ?`
 		}
 		if _, err := tx.ExecContext(ctx, `UPDATE events SET gone = 1, data = NULL WHERE kind = 'copy' AND `+where, f.Target); err != nil {
-			return err
+			return false, false, err
 		}
 	case wire.KindVoid:
 		if _, err := tx.ExecContext(ctx, `INSERT INTO events (seq, kind, time, origin, gone) VALUES (?, 'void', ?, ?, 1)`,
 			f.Seq, f.Time, f.Origin); err != nil {
-			return err
+			return false, false, err
 		}
 	default:
-		return fmt.Errorf("history: an event of kind %q", f.Kind)
+		return false, false, fmt.Errorf("history: an event of kind %q", f.Kind)
 	}
-	if f.Ref != "" {
+	if ours {
 		if _, err := tx.ExecContext(ctx, `DELETE FROM outbox WHERE ref = ?`, f.Ref); err != nil {
-			return err
+			return false, false, err
 		}
 	}
 	if err := s.trim(ctx, tx); err != nil {
-		return err
+		return false, false, err
 	}
-	return tx.Commit()
+	return true, ours, tx.Commit()
 }
 
 // trim removes the copies past the bounds: those older than MaxAge, and past

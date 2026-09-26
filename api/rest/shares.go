@@ -38,12 +38,15 @@ func (m *Midgard) CreateShare(c *gin.Context) {
 		data []byte
 	)
 	if in.Data == "" {
-		t, raw, err := m.clipboard(c)
+		// the newest copy, from what the relay holds or from a device (§9)
+		f, ok, err := m.newest(c)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+			readFailed(c, err)
 			return
 		}
-		mime, data = string(t), raw
+		if ok && len(f.Formats) > 0 {
+			mime, data = f.Formats[0].MIME, f.Parts()[0]
+		}
 	} else {
 		raw, err := base64.StdEncoding.DecodeString(in.Data)
 		if err != nil {

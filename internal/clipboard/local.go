@@ -55,6 +55,9 @@ var ready = sync.OnceValue(func() bool {
 	return true
 })
 
+// pngSignature is how every PNG file begins.
+var pngSignature = []byte("\x89PNG\r\n\x1a\n")
+
 // format maps a midgard MIME type to a clipboard format. ok is false for a
 // MIME type the local clipboard does not carry.
 func format(t types.MIME) (f clipboard.Format, ok bool) {
@@ -140,11 +143,19 @@ func (lc *local) Watch(ctx context.Context, dt types.MIME) <-chan []byte {
 // password manager — is dropped here, so it never leaves the machine. Before,
 // every password copied on any device was synced to the server and on to
 // every other device.
+//
+// An image that is not a PNG is dropped too. The clipboard asks the copying
+// application for image/png, and some answer every request with what they
+// hold: xclip, given text, gives the text for image/png as well. It was
+// synced as an image, and put an image nobody copied on the other devices.
 func forward(ctx context.Context, src <-chan clipboard.Data, out chan<- []byte) {
 	defer close(out)
 	for d := range src {
 		if d.Sensitive {
 			slog.Info("not syncing a copy marked as sensitive")
+			continue
+		}
+		if d.Format == clipboard.FmtImage && !bytes.HasPrefix(d.Bytes, pngSignature) {
 			continue
 		}
 		select {

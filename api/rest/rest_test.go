@@ -78,7 +78,7 @@ func TestAuth(t *testing.T) {
 		{"malformed header", "not-a-basic-header", http.StatusUnauthorized},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/clipboard", nil)
+			req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/devices", nil)
 			if tt.header != "" {
 				req.Header.Set("Authorization", tt.header)
 			}
@@ -96,7 +96,7 @@ func TestAuth(t *testing.T) {
 	}
 
 	// the same endpoint with valid credentials must pass the middleware
-	if w := do(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", true); w.Code != http.StatusOK {
+	if w := do(t, m, http.MethodGet, "/midgard/api/v1/devices", "", true); w.Code != http.StatusOK {
 		t.Fatalf("authenticated request: got %d, want %d", w.Code, http.StatusOK)
 	}
 }

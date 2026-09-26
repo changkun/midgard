@@ -11,10 +11,10 @@ import (
 )
 
 func TestConnected(t *testing.T) {
-	devices := []types.Device{{Name: "laptop"}, {Name: "desktop-Kt7iCygJ"}}
+	devices := []types.Device{{Name: "laptop", Online: true}, {Name: "desktop"}}
 	for host, want := range map[string]bool{
 		"laptop":  true,
-		"desktop": true, // renamed by the server: another machine had the name
+		"desktop": false, // known, but offline
 		"lap":     false,
 		"server":  false,
 	} {

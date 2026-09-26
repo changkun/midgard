@@ -31,3 +31,23 @@ func TestForwardDropsSensitive(t *testing.T) {
 		t.Fatalf("forwarded %q, want [before after]", got)
 	}
 }
+
+// TestForwardDropsImagesThatAreNot: xclip answers a request for image/png
+// with the text it holds, and that text was synced as an image.
+func TestForwardDropsImagesThatAreNot(t *testing.T) {
+	png := []byte("\x89PNG\r\n\x1a\n and the rest")
+	src := make(chan clipboard.Data, 2)
+	src <- clipboard.Data{Format: clipboard.FmtImage, Bytes: []byte("hello, text answered for image/png")}
+	src <- clipboard.Data{Format: clipboard.FmtImage, Bytes: png}
+	close(src)
+
+	out := make(chan []byte)
+	go forward(context.Background(), src, out)
+	var got [][]byte
+	for b := range out {
+		got = append(got, b)
+	}
+	if len(got) != 1 || string(got[0]) != string(png) {
+		t.Fatalf("forwarded %q, want the PNG alone", got)
+	}
+}

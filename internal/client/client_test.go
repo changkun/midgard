@@ -115,7 +115,7 @@ func TestShares(t *testing.T) {
 
 func TestDevices(t *testing.T) {
 	server(t, func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(types.DevicesOutput{Devices: []types.Device{{Index: 1, Name: "laptop"}}})
+		json.NewEncoder(w).Encode(types.DevicesOutput{Devices: []types.Device{{ID: "a1", Name: "laptop", Online: true}}})
 	})
 	devices, err := Devices()
 	if err != nil || len(devices) != 1 || devices[0].Name != "laptop" {

@@ -7,15 +7,13 @@ package rest
 import (
 	"cmp"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 
-	"changkun.de/x/midgard/internal/store"
 	"changkun.de/x/midgard/internal/types"
-	"changkun.de/x/midgard/internal/utils"
 	"changkun.de/x/midgard/internal/version"
+	"changkun.de/x/midgard/internal/wire"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,94 +26,111 @@ func (m *Midgard) PingPong(c *gin.Context) {
 	})
 }
 
-// GetFromUniversalClipboard returns the in-memory clipboard data inside
-// the midgard server
+// GetFromUniversalClipboard is the requester's clipboard: the newest copy in
+// their history, which is on their devices (specs/redesign.md §8).
 func (m *Midgard) GetFromUniversalClipboard(c *gin.Context) {
-	t, buf, err := m.clipboard(c)
+	f, ok, err := m.newest(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, types.GetFromUniversalClipboardOutput{})
+		readFailed(c, err)
 		return
 	}
-
-	var raw string
-	if t == types.MIMEImagePNG {
-		// We stored our clipboard in bytes, if client is retriving this
-		// data, then let's encode it into base64.
-		raw = base64.StdEncoding.EncodeToString(buf)
-	} else {
-		raw = utils.BytesToString(buf)
+	out := types.GetFromUniversalClipboardOutput{Type: types.MIMEPlainText}
+	if ok {
+		out = types.GetFromUniversalClipboardOutput(clipboardData(f))
 	}
-
-	c.JSON(http.StatusOK, types.GetFromUniversalClipboardOutput{
-		Type: t,
-		Data: raw,
-	})
+	c.JSON(http.StatusOK, out)
 }
 
-// PutToUniversalClipboard saves data to the in-memory clipboard data
-// inside the midgrad server.
+// PutToUniversalClipboard copies to the requester's devices: the relay
+// numbers it, and holds it until each of their devices has it.
 func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, wire.MaxPayload/3*4+1<<16)
 	var b types.PutToUniversalClipboardInput
-
-	err := c.ShouldBindJSON(&b)
-	if err != nil {
-		err = fmt.Errorf("cannot bind requested data, err: %w", err)
+	if err := c.ShouldBindJSON(&b); err != nil {
 		c.JSON(http.StatusBadRequest, types.PutToUniversalClipboardOutput{
-			Message: err.Error(),
+			Message: fmt.Sprintf("cannot bind requested data, err: %v", err),
 		})
 		return
 	}
-
-	var raw []byte
+	raw := []byte(b.Data)
 	if b.Type == types.MIMEImagePNG {
-		// We assume the client send us a base64 encoded image data,
-		// Let's decode it into bytes.
-		raw, err = base64.StdEncoding.DecodeString(b.Data)
-		if err != nil {
-			raw = []byte{}
+		var err error
+		if raw, err = base64.StdEncoding.DecodeString(b.Data); err != nil {
+			c.JSON(http.StatusBadRequest, types.PutToUniversalClipboardOutput{Message: "an image must be base64"})
+			return
 		}
-	} else {
-		raw = utils.StringToBytes(b.Data)
 	}
-
-	if b.DaemonID == "" {
-		b.DaemonID = cmp.Or(c.GetString(ctxDevice), c.ClientIP())
+	if len(raw) == 0 || string(raw) == "\n" {
+		c.JSON(http.StatusBadRequest, types.PutToUniversalClipboardOutput{Message: "nothing to copy"})
+		return
 	}
-	owner := c.GetString(ctxOwner)
-	updated, err := m.store.AddClip(c.Request.Context(), owner, b.DaemonID, string(b.Type), raw)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, types.PutToUniversalClipboardOutput{
-			Message: fmt.Sprintf("cannot keep the copy: %v", err),
+	if len(raw) > wire.MaxPayload {
+		c.JSON(http.StatusRequestEntityTooLarge, types.PutToUniversalClipboardOutput{
+			Message: fmt.Sprintf("a copy holds at most %d MB", wire.MaxPayload>>20),
 		})
 		return
 	}
-	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{
-		Message: "clipboard data is saved.",
-	})
-	if !updated {
+	rm, err := m.rel().room(c.Request.Context(), c.GetString(ctxOwner))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.PutToUniversalClipboardOutput{Message: err.Error()})
 		return
 	}
-
-	// Include MIME type information so that the clipboard is
-	// consistent after sync propagation.
-	raw, _ = json.Marshal(b.ClipboardData)
-	m.boardcastMessage(owner, &types.WebsocketMessage{
-		Action:  types.ActionClipboardChanged,
-		UserID:  b.DaemonID,
-		Message: "universal clipboard has changes",
-		Data:    raw,
-	})
+	origin := cmp.Or(b.DaemonID, c.GetString(ctxDevice), c.ClientIP())
+	ev, err := m.rel().number(c.Request.Context(), rm, nil, origin, wire.NewCopy(string(cmp.Or(b.Type, types.MIMEPlainText)), raw))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.PutToUniversalClipboardOutput{Message: fmt.Sprintf("cannot copy: %v", err)})
+		return
+	}
+	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{Message: "copied to your devices", Seq: ev.Seq})
 }
 
-// clipboard is the requester's clipboard: the newest copy in their history,
-// or an empty text when they have none yet.
-func (m *Midgard) clipboard(c *gin.Context) (types.MIME, []byte, error) {
-	clip, err := m.store.LatestClip(c.Request.Context(), c.GetString(ctxOwner))
-	if errors.Is(err, store.ErrNotFound) {
-		return types.MIMEPlainText, []byte{}, nil
-	}
+// newest is the requester's newest copy: what their device online that has
+// the most says, or what the relay holds that is newer, which is all there
+// is when none is online.
+func (m *Midgard) newest(c *gin.Context) (wire.Frame, bool, error) {
+	ctx := c.Request.Context()
+	rm, err := m.rel().room(ctx, c.GetString(ctxOwner))
 	if err != nil {
-		return "", nil, err
+		return wire.Frame{}, false, err
 	}
-	return types.MIME(clip.MIME), clip.Data, nil
+	best, ok := rm.newest()
+	answers, err := m.rel().query(ctx, rm, wire.Envelope{Newest: true})
+	switch {
+	case errors.Is(err, errNoDevice) && ok:
+		return best, true, nil
+	case err != nil:
+		return wire.Frame{}, false, err
+	}
+	for _, f := range answers {
+		if f.Kind == wire.KindCopy && (!ok || f.Time > best.Time || (f.Time == best.Time && f.Seq > best.Seq)) {
+			best, ok = f, true
+		}
+	}
+	return best, ok, nil
+}
+
+// clipboardData encodes a copy as GET /clipboard answers: text as it is, an
+// image as base64.
+func clipboardData(f wire.Frame) types.ClipboardData {
+	if len(f.Formats) == 0 {
+		return types.ClipboardData{Type: types.MIMEPlainText}
+	}
+	t := types.MIME(f.Formats[0].MIME)
+	data := f.Parts()[0]
+	if t == types.MIMEImagePNG {
+		return types.ClipboardData{Type: t, Data: base64.StdEncoding.EncodeToString(data)}
+	}
+	return types.ClipboardData{Type: t, Data: string(data)}
+}
+
+// readFailed answers a read the person's devices could not answer.
+func readFailed(c *gin.Context, err error) {
+	switch {
+	case errors.Is(err, errNoDevice):
+		c.JSON(http.StatusServiceUnavailable, gin.H{"msg": "none of your devices is online; your clipboard and history are on them"})
+	case errors.Is(err, errNoAnswer):
+		c.JSON(http.StatusGatewayTimeout, gin.H{"msg": err.Error()})
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+	}
 }

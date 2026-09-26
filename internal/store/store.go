@@ -46,8 +46,11 @@ func Open(path string) (*Store, error) {
 	}
 	// WAL lets readers go on while one connection writes, and the busy
 	// timeout makes a writer wait for another instead of failing: the
-	// websocket and REST paths write concurrently.
-	dsn := "file:" + path + "?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(ON)"
+	// websocket and REST paths write concurrently. synchronous(FULL) makes
+	// every commit durable before it returns, power loss included: a
+	// number the relay gives out must never be given out twice (§6), and
+	// writes are few.
+	dsn := "file:" + path + "?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(ON)&_pragma=synchronous(FULL)"
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
@@ -103,6 +106,25 @@ var migrations = []string{
 		data    BLOB    NOT NULL
 	);
 	CREATE INDEX shares_by_owner ON shares (owner, created)`,
+	// 5: the server keeps no clipboard data (specs/redesign.md §7): the
+	// history moves to the devices, and what the server keeps instead is
+	// the last number it gave out for each person, and their devices with
+	// what each has.
+	`DROP TABLE clips;
+	CREATE TABLE heads (
+		owner TEXT    PRIMARY KEY,
+		seq   INTEGER NOT NULL
+	);
+	CREATE TABLE devices (
+		owner     TEXT    NOT NULL,
+		id        TEXT    NOT NULL,
+		name      TEXT    NOT NULL,
+		last_seen INTEGER NOT NULL,
+		acked     INTEGER NOT NULL DEFAULT 0,
+		gaps      TEXT    NOT NULL DEFAULT '[]',
+		forgotten INTEGER NOT NULL DEFAULT 0,
+		PRIMARY KEY (owner, id)
+	)`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {

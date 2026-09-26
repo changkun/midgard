@@ -23,7 +23,7 @@ func resetBlocklist(t *testing.T) {
 
 // login sends a clipboard read from remote, claiming to forward for xff.
 func login(m *Midgard, remote, xff string, good bool) int {
-	req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/clipboard", nil)
+	req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/devices", nil)
 	req.RemoteAddr = remote
 	if xff != "" {
 		req.Header.Set("X-Forwarded-For", xff)

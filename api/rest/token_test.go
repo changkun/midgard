@@ -38,7 +38,7 @@ func TestAppTokenLogin(t *testing.T) {
 		t.Fatal(err)
 	}
 	bearer := func(tok, remote string) int {
-		req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/clipboard", nil)
+		req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/devices", nil)
 		req.Header.Set("Authorization", "Bearer "+tok)
 		req.RemoteAddr = remote
 		w := httptest.NewRecorder()
@@ -50,11 +50,11 @@ func TestAppTokenLogin(t *testing.T) {
 		t.Fatalf("an issued token got %d, want 200", code)
 	}
 	// signing in keeps working alongside
-	if w := do(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", true); w.Code != http.StatusOK {
+	if w := do(t, m, http.MethodGet, "/midgard/api/v1/devices", "", true); w.Code != http.StatusOK {
 		t.Fatalf("a signed-in request got %d, want 200", w.Code)
 	}
 	// and there is no password any more
-	req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/clipboard", nil)
+	req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/devices", nil)
 	req.SetBasicAuth("midgard", "password")
 	req.RemoteAddr = "192.0.2.9:1"
 	w := httptest.NewRecorder()

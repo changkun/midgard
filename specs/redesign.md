@@ -223,7 +223,7 @@ The API stays at `/midgard/api/v1` and changes in place. No old client
 survives the change of sign-in anyway, so a second version would only keep a
 path nothing calls.
 
-- `GET /sync`: the websocket, for devices. Typed messages carrying a version;
+- `GET /ws`: the websocket, for devices. Typed messages carrying a version;
   a copy's bytes go as binary frames, not base64 inside JSON. A device says
   `hello` with its id, clock and last `seq`; sends `copy`, `delete` and
   `clear`, and `have` when asked for what it holds; receives events with their

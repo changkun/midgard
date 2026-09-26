@@ -223,8 +223,8 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     }
     try {
       const d = await call("GET", "/devices");
-      const names = (d.devices || []).map((x) => x.name);
-      $("devices").textContent = names.length ? "connected: " + names.join(", ") : "no device connected";
+      const names = (d.devices || []).filter((x) => x.online).map((x) => x.name);
+      $("devices").textContent = names.length ? "online: " + names.join(", ") : "no device online";
     } catch (_) {}
   }
   $("clip-copy").addEventListener("click", async () => {

@@ -48,7 +48,7 @@ func event(seq uint64, kind wire.Kind, target uint64) wire.Frame {
 func apply(t *testing.T, s *Store, fs ...wire.Frame) {
 	t.Helper()
 	for _, f := range fs {
-		if err := s.Apply(ctx, f); err != nil {
+		if _, _, err := s.Apply(ctx, f); err != nil {
 			t.Fatalf("Apply(%d): %v", f.Seq, err)
 		}
 	}
@@ -240,14 +240,26 @@ func TestOutbox(t *testing.T) {
 		t.Fatalf("Outbox = %+v", out)
 	}
 
-	// The server numbers it and sends it back: it leaves the outbox.
+	// The server numbers it and sends it back: it leaves the outbox, and is
+	// known for the device's own.
 	back := copyAt(2, t0, "mine")
 	back.Ref = sent.Ref
-	apply(t, s, back)
+	if applied, ours, err := s.Apply(ctx, back); err != nil || !applied || !ours {
+		t.Fatalf("Apply(its own) = %v, %v, %v", applied, ours, err)
+	}
+	if applied, _, _ := s.Apply(ctx, back); applied {
+		t.Fatal("applied it twice")
+	}
+	// a ref from another device's outbox is not this one's
+	other := copyAt(3, t0.Add(-time.Hour), "theirs")
+	other.Ref = "someone-elses"
+	if _, ours, _ := s.Apply(ctx, other); ours {
+		t.Fatal("another device's copy counted as this one's")
+	}
 	if out, _ := s.Outbox(ctx); len(out) != 0 {
 		t.Fatalf("the outbox still has %+v", out)
 	}
-	if got := texts(t, s); got != "mine from the phone" {
+	if got := texts(t, s); got != "mine from the phone theirs" {
 		t.Fatalf("history %q", got)
 	}
 
@@ -256,7 +268,7 @@ func TestOutbox(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := texts(t, s); got != "mine" {
+	if got := texts(t, s); got != "mine theirs" {
 		t.Fatalf("after deleting 1 here: %q", got)
 	}
 	if out, _ := s.Outbox(ctx); len(out) != 1 || out[0].Type != wire.Delete || out[0].Target != 1 || out[0].Ref != del.Ref {

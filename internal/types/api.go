@@ -24,6 +24,9 @@ func EndpointShares() string { return config.ServerURL() + "/midgard/api/v1/shar
 // EndpointDevices lists the daemons connected to the server.
 func EndpointDevices() string { return config.ServerURL() + "/midgard/api/v1/devices" }
 
+// EndpointQueue is what the server holds until every device has it.
+func EndpointQueue() string { return config.ServerURL() + "/midgard/api/v1/queue" }
+
 // EndpointSubscribe is the websocket daemons subscribe to, as a ws:// or
 // wss:// URL.
 func EndpointSubscribe() string {
@@ -60,6 +63,7 @@ type PutToUniversalClipboardInput struct {
 // the universal clipboard put request.
 type PutToUniversalClipboardOutput struct {
 	Message string `json:"msg"`
+	Seq     uint64 `json:"seq,omitempty"` // the copy's number in the history
 }
 
 // ShareInput asks to publish a share: Data, base64, of Type, or the
@@ -89,15 +93,41 @@ type SharesOutput struct {
 	Shares []ShareInfo `json:"shares"`
 }
 
-// Device is a daemon connected to the server.
+// Device is one of a person's devices: one install of midgard.
 type Device struct {
-	Index uint64 `json:"index"`
-	Name  string `json:"name"`
+	ID       string    `json:"id"`
+	Name     string    `json:"name"`
+	Online   bool      `json:"online"`
+	LastSeen time.Time `json:"last_seen"`
+	Acked    uint64    `json:"acked"`   // the highest number it has applied
+	Counted  bool      `json:"counted"` // the server holds copies until it has them
 }
 
-// DevicesOutput is the answer to GET /devices.
+// DevicesOutput is the answer to GET /devices: one's devices, and the last
+// number given out.
 type DevicesOutput struct {
+	Head    uint64   `json:"head"`
 	Devices []Device `json:"devices"`
+}
+
+// QueueEntry is something the server holds until every device has it.
+type QueueEntry struct {
+	Seq     uint64    `json:"seq"`
+	Kind    string    `json:"kind"` // copy, delete, clear, or void
+	Created time.Time `json:"created"`
+	Origin  string    `json:"origin"`
+	Type    MIME      `json:"type,omitempty"`
+	Size    int       `json:"size"`
+	Waiting []string  `json:"waiting"` // the ids of the devices that lack it
+}
+
+// QueueOutput is the answer to GET /queue: what is on its way, and to
+// which devices. A number no device has and the queue no longer holds was
+// lost, as when the server restarted before a device came back.
+type QueueOutput struct {
+	Head    uint64       `json:"head"`
+	Devices []Device     `json:"devices"`
+	Queue   []QueueEntry `json:"queue"`
 }
 
 // EndpointHistory is a person's clipboard history.

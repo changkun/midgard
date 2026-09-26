@@ -6,8 +6,6 @@ package daemon
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
@@ -16,9 +14,12 @@ import (
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/hotkey"
 	"changkun.de/x/midgard/internal/types"
-	"changkun.de/x/midgard/internal/utils"
 )
 
+// watchLocalClipboard records every copy made on this device in its history,
+// which sends it to the person's other devices, until ctx is done. Copies
+// marked sensitive never get here (internal/clipboard drops them), and what
+// the daemon put on the clipboard itself is not sent back.
 func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 	last := time.Now()
 	hotkey.Handle(ctx, func() {
@@ -27,67 +28,49 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 			return
 		}
 		last = time.Now()
-
-		var msg string
-		defer func() {
-			slog.Info(msg)
-			clipboard.Local.Write(
-				types.MIMEPlainText, utils.StringToBytes(msg))
-		}()
-
 		slog.Info("the hotkey is triggered")
-		sh, err := client.Share("", nil, "", 0)
-		if err != nil {
-			msg = fmt.Sprintf("cannot share the clipboard: %v", err)
-			return
-		}
-		msg = sh.URL
+		msg := m.share()
+		slog.Info(msg)
+		clipboard.Local.Write(types.MIMEPlainText, []byte(msg))
 	})
 
 	textCh := clipboard.Local.Watch(ctx, types.MIMEPlainText)
 	imagCh := clipboard.Local.Watch(ctx, types.MIMEImagePNG)
 	for {
+		var mime types.MIME
+		var data []byte
+		var ok bool
 		select {
 		case <-ctx.Done():
 			return
-		case text, ok := <-textCh:
-			if !ok {
-				return
-			}
-
-			// don't send an '\n' character
-			if utils.BytesToString(text) == "\n" {
-				continue
-			}
-
-			d := &types.PutToUniversalClipboardInput{}
-			d.Type = types.MIMEPlainText
-			d.Data = utils.BytesToString(text)
-			d.DaemonID = m.ID
-			b, _ := json.Marshal(d)
-			slog.Info("the local clipboard changed, syncing to the server", "mime", types.MIMEPlainText)
-			m.writeCh <- &types.WebsocketMessage{
-				Action:  types.ActionClipboardPut,
-				UserID:  m.ID,
-				Message: "local clipboard has changed",
-				Data:    b,
-			}
-		case img, ok := <-imagCh:
-			if !ok {
-				return
-			}
-			d := &types.PutToUniversalClipboardInput{}
-			d.Type = types.MIMEImagePNG
-			d.Data = base64.StdEncoding.EncodeToString(img)
-			d.DaemonID = m.ID
-			b, _ := json.Marshal(d)
-			slog.Info("the local clipboard changed, syncing to the server", "mime", types.MIMEImagePNG)
-			m.writeCh <- &types.WebsocketMessage{
-				Action:  types.ActionClipboardPut,
-				UserID:  m.ID,
-				Message: "local clipboard has changed",
-				Data:    b,
-			}
+		case data, ok = <-textCh:
+			mime = types.MIMEPlainText
+		case data, ok = <-imagCh:
+			mime = types.MIMEImagePNG
+		}
+		if !ok {
+			return
+		}
+		if len(data) == 0 || string(data) == "\n" || m.ours(data) {
+			continue
+		}
+		slog.Info("the local clipboard changed", "mime", mime, "online", m.engine.Online())
+		if err := m.engine.Copy(ctx, string(mime), data); err != nil {
+			slog.Error("cannot record the copy", "err", err)
 		}
 	}
+}
+
+// share publishes what is on the local clipboard at a link, and says what
+// to put on the clipboard: the link, or why there is none.
+func (m *Daemon) share() string {
+	_, data := clipboard.Local.Read()
+	if len(data) == 0 {
+		return "there is nothing on the clipboard to share"
+	}
+	sh, err := client.Share("", data, "", 0)
+	if err != nil {
+		return fmt.Sprintf("cannot share the clipboard: %v", err)
+	}
+	return sh.URL
 }
