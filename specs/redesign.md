@@ -323,7 +323,9 @@ Each step is its own PR, with its tests, merged when green.
    the history on the devices, catch-up from the buffer and from other
    devices; the server's copies of clips removed; the web page and `mg` read
    through devices. The README and docs explain the architecture with
-   diagrams.
+   diagrams. *Done: 7a7ab7b (internal/wire), 949b0e7 (internal/history),
+   79c031d (the switch), ed052f4 (queue and devices in mg and on the page),
+   and docs/architecture.md.*
 9. The tray app: first a trial of Wails v3 and Fyne on macOS, Windows and
    Linux (tray, window, clipboard watching, the hotkey on macOS's main
    thread), then the app: tray menu, history window, sign-in, start at login.

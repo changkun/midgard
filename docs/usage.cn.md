@@ -19,19 +19,40 @@ daemon status: OK
 打开 `https://<你的域名>/midgard/` 并登录。网页上可以查看剪贴板并将文本发送到你的设备、
 浏览历史记录、将文件或剪贴板分享为链接并撤销分享，以及签发应用令牌。在没有运行守护进程的手机上同样可用。
 
-## 显示全部活跃设备
+## 历史记录
 
-检查所有连接的设备：
+你的每台设备都保存来自所有设备的最近复制内容：最近 200 条、30 天内、不超过 64 MB，每台设备上都相同。最新的一条就是你的剪贴板。服务端不保存任何内容，`mg history` 会向你某台在线的设备查询。
 
 ```sh
-$ mg daemon ls
-id      name
-1       changkun-perflock
-2       changkun-air-arm
-3       changkun-pro-intel
-4       changkun-ubuntu
-5       changkun-win
+$ mg history              # 最新的在前
+$ mg history copy 41      # 让第 41 条重新成为所有设备上的剪贴板
+$ mg history rm 41
+$ mg history clear
 ```
+
+密码管理器标记为机密的内容不会被保存，也不会离开复制它的设备。删除或清空历史记录会同步到每台设备，但不会改变任何人此刻剪贴板上的内容。
+
+## 正在路上的内容
+
+复制内容会在服务端内存中等待，直到你的每台设备都收到。查看正在等待的内容及其等待的设备，或撤回尚未到达任何设备的内容：
+
+```sh
+$ mg queue
+$ mg queue rm 57          # 仅当你没有设备在线时
+$ mg devices              # 你的设备，无论是否在线
+$ mg devices forget <id>  # 不再使用的设备：复制内容不再等待它
+```
+
+## 你的设备
+
+```sh
+$ mg devices
+name     online  last seen            has up to  id
+laptop   yes     2026-09-26 18:02:40  57         4f1c…
+desktop  no      2026-09-26 09:12:03  52         9a0e…
+```
+
+一台设备就是一次 midgard 安装，以保存在其配置目录中的 id 区分。`mg daemon ls` 输出相同的列表。
 
 ## 分享链接
 

@@ -2,17 +2,44 @@
 
 English | [中文](./README.cn.md)
 
-midgard is a universal clipboard service, it supports macOS/Linux/Windows/iOS.
-
-Copy on one machine, paste on another. Turn what you copied into a link you can
-share. It all runs on a server you own.
+midgard keeps your clipboard the same on all your devices: copy on one,
+paste on another, and find what you copied yesterday on any of them. Turn a
+copy or a file into a link to share. It runs on a server you own, for the
+people you let sign in, on macOS, Linux and Windows, and on phones through
+the web page and iOS Shortcuts.
 
 ## How it works
 
-You run one **server**. Each of your machines runs a **daemon**, which syncs
-that machine's clipboard with the server. The `mg` command talks to the local
-daemon, and phones talk to the server directly, through iOS Shortcuts or
-Android's Tasker.
+```mermaid
+flowchart LR
+    subgraph you["Your computers: where copies live"]
+        A["Laptop<br/>midgard · history"]
+        B["Desktop<br/>midgard · history"]
+    end
+    subgraph other["Other ways in"]
+        W["Web page · phone"]
+        C["mg · agents · Shortcuts"]
+    end
+    R["Your midgard server<br/>relays and orders copies,<br/>keeps none of them"]
+    A <-->|websocket| R
+    B <-->|websocket| R
+    W <-->|https| R
+    C <-->|https| R
+```
+
+- **Your copies stay on your devices.** Each device keeps the history, the
+  same list in the same order on every one.
+- **The server keeps none of them.** It passes each copy from one of your
+  devices to the others, numbering them so every device agrees on the order,
+  and holds a copy in memory only until each device has it: one that was off
+  gets it when it comes back.
+- **Only you see your clipboard.** Everyone signs in through auth.latere.ai,
+  the server lets in the people on its allowlist, and each reaches only their
+  own.
+
+[How midgard works](./docs/architecture.md) explains it in full: what is kept
+where, what happens while a device is away or the server restarts, and what
+the server can see.
 
 ## Quick start
 
@@ -56,6 +83,7 @@ clipboard, or a file, into a link; see [Usage](./docs/usage.md).
 
 ## Docs
 
+- [How midgard works](./docs/architecture.md)
 - [Installation](./docs/install.md)
 - [Usage](./docs/usage.md)
 

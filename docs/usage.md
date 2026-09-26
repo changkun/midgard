@@ -36,8 +36,10 @@ phone too, where no daemon runs.
 
 ## History
 
-The server keeps your recent copies, from all your devices: the last 200, for
-30 days, up to 64 MB. The newest is your clipboard.
+Each of your devices keeps your recent copies, from all your devices: the last
+200, for 30 days, up to 64 MB, the same on every device. The newest is your
+clipboard. The server keeps none; `mg history` asks one of your devices that
+is online.
 
 ```sh
 $ mg history              # newest first
@@ -49,8 +51,25 @@ $ mg history rm 41
 $ mg history clear
 ```
 
-Copies a password manager marks as secret never reach it: the daemon keeps
-them on the device. It is yours alone; no one else who signs in can see it.
+Copies a password manager marks as secret are not kept, and never leave the
+device they were made on. Your history is yours alone; no one else who signs
+in can see it. Deleting a copy, or clearing the history, reaches every device,
+and does not change what is on anyone's clipboard.
+
+## What Is on Its Way
+
+A copy waits on the server, in memory, until each of your devices has it. See
+what waits, and for which devices, and take back a copy that has not reached
+any:
+
+```sh
+$ mg queue
+number  copied               from  type  size  waiting for
+57      2026-09-26 18:02:11  web   text  14    desktop
+$ mg queue rm 57          # only while none of your devices is online
+$ mg devices              # your devices, online or not
+$ mg devices forget <id>  # one you no longer use: copies stop waiting for it
+```
 
 ## App Tokens
 
@@ -79,19 +98,17 @@ as `Authorization: Bearer mgt_...`. A token only works while its owner is on
 the server's `AUTH_ALLOWED_PRINCIPALS`; issue it with `--email` if the list
 names people by email.
 
-## List Active Daemons
-
-Check all connected daemon users:
+## Your Devices
 
 ```sh
-$ mg daemon ls
-id      name
-1       changkun-perflock
-2       changkun-air-arm
-3       changkun-pro-intel
-4       changkun-ubuntu
-5       changkun-win
+$ mg devices
+name     online  last seen            has up to  id
+laptop   yes     2026-09-26 18:02:40  57         4f1c…
+desktop  no      2026-09-26 09:12:03  52         9a0e…
 ```
+
+A device is one install of midgard, known by an id it keeps in its
+configuration directory. `mg daemon ls` prints the same list.
 
 ## Share a Link
 

@@ -4,32 +4,17 @@ English | [中文](./install.cn.md)
 
 ## Architecture
 
-Before start installing/using midgard, it is necessary to
-understand how midgard works. The midgard service contains three parts:
+midgard has a server, which you run once, and a program on each of your
+devices. The devices keep the clipboard history; the server passes copies
+between them and keeps none. [How midgard works](./architecture.md) explains
+it, with diagrams. For installing, what matters is:
 
-- CLI
-- Daemon
-- Server
-
-Each device runs the daemon, which keeps the device's clipboard in sync with
-the server over a websocket. The CLI talks to the server directly, over HTTPS,
-and phones do the same.
-
-```
-Mobile ──────────────── HTTPS ────────────────┐
-CLI    ──────────────── HTTPS ────────────────┤
-                                              ▼
-daemon ◀──────── secure websocket ─────────▶ server ◀── HTTPS ── public links
-daemon ◀──────── secure websocket ─────────▶
-```
-
-Since midgard serves as a personal service, which does not need to address trust/privacy issue for other customers, it is designed and implemented in a centralized way: everything communicates to a central proxy. This brings several benefits:
-
-1. One place to back up: everything the server keeps is in its `data` folder
-2. Single connection broadcasting (a device only need a single connection, server broadcasts all messages)
-3. Distributed synchronization consistency (server is the lead)
-
-And more :-)
+- **The server** needs a public address, a TLS-terminating reverse proxy in
+  front of it (below), and a `data` folder for its database: your devices,
+  shares and app tokens, and no copies.
+- **Each device** runs `mg daemon`, as its user, in its desktop session: that
+  is where the clipboard is. It keeps its history in its user's data
+  directory.
 
 ## Dependencies
 
