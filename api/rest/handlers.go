@@ -36,7 +36,7 @@ func (m *Midgard) PingPong(c *gin.Context) {
 // GetFromUniversalClipboard returns the in-memory clipboard data inside
 // the midgard server
 func (m *Midgard) GetFromUniversalClipboard(c *gin.Context) {
-	t, buf := clipboard.Universal.Read()
+	t, buf := clipboard.UniversalFor(c.GetString(ctxOwner)).Read()
 
 	var raw string
 	if t == types.MIMEImagePNG {
@@ -79,7 +79,8 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 		raw = utils.StringToBytes(b.Data)
 	}
 
-	updated := clipboard.Universal.Write(b.Type, raw)
+	owner := c.GetString(ctxOwner)
+	updated := clipboard.UniversalFor(owner).Write(b.Type, raw)
 	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{
 		Message: "clipboard data is saved.",
 	})
@@ -94,7 +95,7 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 	// Include MIME type information so that the clipboard is
 	// consistent after sync propagation.
 	raw, _ = json.Marshal(b.ClipboardData)
-	m.boardcastMessage(&types.WebsocketMessage{
+	m.boardcastMessage(owner, &types.WebsocketMessage{
 		Action:  types.ActionClipboardChanged,
 		UserID:  b.DaemonID,
 		Message: "universal clipboard has changes",
@@ -124,7 +125,7 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 	)
 	switch in.Source {
 	case types.SourceUniversalClipboard:
-		t, raw := clipboard.Universal.Read()
+		t, raw := clipboard.UniversalFor(c.GetString(ctxOwner)).Read()
 		data = raw
 		if t == types.MIMEImagePNG {
 			ext = ".png"
