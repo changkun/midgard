@@ -232,6 +232,7 @@ final class Model: ObservableObject {
         set {
             do {
                 if newValue { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+                loginItem = newValue // the toggle turns now, not when macOS is asked again
             } catch {
                 problem = "Cannot change starting at login: \(error.localizedDescription)"
             }

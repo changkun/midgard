@@ -169,16 +169,23 @@ private struct Detail: View {
         }
     }
 
-    /// Fetches the copy away from the main thread, and makes it what the
-    /// pane shows.
+    /// Fetches the copy, and cuts a text, away from the main thread, and
+    /// makes it what the pane shows.
     private func load() async -> Shown? {
         guard !item.waiting else { return nil }
-        let seq = item.seq
-        guard let (mime, data) = await Task.detached(priority: .userInitiated, operation: { Engine.get(seq) }).value else { return nil }
-        if mime == "image/png" {
-            return NSImage(data: data).map { .image($0) }
+        let seq = item.seq, most = Self.most
+        enum Got { case image(Data), text(String, cut: Bool) }
+        let got = await Task.detached(priority: .userInitiated) { () -> Got? in
+            guard let (mime, data) = Engine.get(seq) else { return nil }
+            if mime == "image/png" { return .image(data) }
+            let text = String(decoding: data, as: UTF8.self)
+            if data.count <= most { return .text(text, cut: false) } // no more characters than bytes
+            return text.count > most ? .text(String(text.prefix(most)), cut: true) : .text(text, cut: false)
+        }.value
+        switch got {
+        case .image(let data): return NSImage(data: data).map { .image($0) }
+        case .text(let text, let cut): return .text(text, cut: cut)
+        case nil: return nil
         }
-        let text = String(decoding: data, as: UTF8.self)
-        return text.count > Self.most ? .text(String(text.prefix(Self.most)), cut: true) : .text(text, cut: false)
     }
 }
