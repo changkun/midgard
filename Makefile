@@ -22,8 +22,10 @@ up:
 	docker-compose up -d
 down:
 	docker-compose down
-mac: # the Mac app, into apple/build/Midgard.app
+mac: # the Mac app, into apple/build: Midgard.app, and Midgard.dmg
 	./apple/build.sh
+dmg: # the same, for Apple silicon and Intel both, as the download is
+	./apple/build.sh universal
 clean: down
 	rm -rf $(BINARY)
 	docker rmi -f $(shell docker images -f "dangling=true" -q) 2> /dev/null; true

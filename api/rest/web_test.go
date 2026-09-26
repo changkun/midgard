@@ -10,11 +10,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 
+	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"latere.ai/x/pkg/authkit"
 	"latere.ai/x/pkg/authkit/oidc"
@@ -347,5 +350,59 @@ func TestShortcuts(t *testing.T) {
 	// and no share can take their place
 	if code, _ := share(t, m, types.ShareInput{Data: b64("x"), Name: "shortcuts/get-from-midgard.shortcut"}); code != http.StatusBadRequest {
 		t.Errorf("a share named like a Shortcut: %d, want 400", code)
+	}
+}
+
+// TestDownload: the Mac app is handed out to anyone once the server has it,
+// and the page offers it only then; nothing else in the data folder is.
+func TestDownload(t *testing.T) {
+	resetBlocklist(t)
+	t.Chdir(t.TempDir())
+	m := testMidgard(t)
+	a := withWeb(t, m)
+	const path = "/midgard/download/Midgard.dmg"
+	page := func(cookies ...*http.Cookie) string {
+		return browse(t, m, http.MethodGet, "/midgard/", "", cookies, nil).Body.String()
+	}
+
+	if w := do(t, m, http.MethodGet, path, "", false); w.Code != http.StatusNotFound {
+		t.Errorf("before there is an app: %d, want 404", w.Code)
+	}
+	if strings.Contains(page(), path) {
+		t.Error("the page offers an app the server does not have")
+	}
+
+	app := strings.Repeat("koly", 1000)
+	os.MkdirAll(config.DownloadPath, 0o755)
+	os.WriteFile(filepath.Join(config.DownloadPath, "Midgard.dmg"), []byte(app), 0o644)
+	os.WriteFile(filepath.Join(config.DownloadPath, "other.dmg"), []byte("x"), 0o644)
+
+	w := do(t, m, http.MethodGet, path, "", false)
+	if w.Code != http.StatusOK || w.Body.String() != app {
+		t.Fatalf("GET %s: %d, %d bytes", path, w.Code, w.Body.Len())
+	}
+	for k, want := range map[string]string{
+		"Content-Type":        "application/x-apple-diskimage",
+		"Content-Disposition": `attachment; filename="Midgard.dmg"`,
+		"Accept-Ranges":       "bytes", // so a broken download resumes
+	} {
+		if got := w.Header().Get(k); got != want {
+			t.Errorf("%s = %q, want %q", k, got, want)
+		}
+	}
+	if !strings.Contains(page(), `href="`+path+`"`) {
+		t.Error("the signed-out page does not offer the app")
+	}
+	if body := page(sessionFor(t, a, testUser, testEmail)); !strings.Contains(body, `id="mac"`) || !strings.Contains(body, "Open Anyway") {
+		t.Error("the signed-in page does not say how to install the app")
+	}
+
+	for _, p := range []string{"/midgard/download/other.dmg", "/midgard/download/..%2fdb%2fmidgard.db", "/midgard/download/"} {
+		if w := do(t, m, http.MethodGet, p, "", false); w.Code != http.StatusNotFound {
+			t.Errorf("GET %s: %d, want 404", p, w.Code)
+		}
+	}
+	if code, _ := share(t, m, types.ShareInput{Data: b64("x"), Name: "download/Midgard.dmg"}); code != http.StatusBadRequest {
+		t.Errorf("a share named like the app: %d, want 400", code)
 	}
 }

@@ -65,8 +65,13 @@ jobs:
         go-version-file: go.mod
         check-latest: true
     - name: Build the app
-      run: ./apple/build.sh
+      run: ./apple/build.sh universal
     - name: Test the app
       run: |
         cd apple/Midgard
         swift test
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Midgard.dmg
+        path: apple/build/Midgard.dmg
+        if-no-files-found: error

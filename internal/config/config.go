@@ -32,6 +32,10 @@ var RepoPath = "./data/repo"
 // its own in the data folder.
 var DBPath = "./data/db/midgard.db"
 
+// DownloadPath is where the server finds the apps it offers for download,
+// such as Midgard.dmg, which apple/build.sh makes.
+var DownloadPath = "./data/downloads"
+
 // Config is a combination of all possible midgard configuration.
 type Config struct {
 	Title  string `yaml:"title"`

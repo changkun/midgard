@@ -152,7 +152,9 @@ ol.steps p { margin: 2px 0 8px; }
 .hero svg.logo { width: 96px; height: 96px; }
 .hero h1 { font-size: 32px; letter-spacing: -.02em; margin: 18px 0 8px; }
 .hero p { color: var(--muted); font-size: 17px; margin: 0 0 22px; }
-.hero .button.primary { font-size: 16px; padding: 11px 22px; }
+.hero .button { font-size: 16px; padding: 11px 22px; }
+.hero .cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.hero p.fine { font-size: 13px; margin: 12px auto 0; }
 .points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 44px; text-align: left; }
 .points div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; font-size: 13.5px; color: var(--muted); }
 .points b { display: block; color: var(--ink); font-size: 14px; margin-bottom: 4px; }
@@ -204,13 +206,18 @@ footer a { color: var(--faint); }
     <svg class="logo"><use href="#logo"/></svg>
     <h1>Midgard</h1>
     <p>Signing in from a browser is not set up on this server. The Midgard app and <code>mg</code> work as before.</p>
+    {{if .MacApp}}<a class="button" href="{{.MacApp}}" download>Get Midgard for Mac</a>{{end}}
   </div>
 {{else if not .Email}}
   <div class="hero">
     <svg class="logo"><use href="#logo"/></svg>
     <h1>Your clipboard, on all your devices</h1>
     <p>Copy on one, paste on another, and find what you copied yesterday on any of them.</p>
-    <a class="button primary" href="{{.Login}}">Sign in</a>
+    <div class="cta">
+      <a class="button primary" href="{{.Login}}">Sign in</a>
+      {{if .MacApp}}<a class="button" href="{{.MacApp}}" download>Get Midgard for Mac</a>{{end}}
+    </div>
+    {{if .MacApp}}<p class="fine">The Mac app: macOS 14 or later, Apple silicon or Intel.</p>{{end}}
     <div class="points">
       <div><b>Your copies stay yours</b>They live on your devices. This server passes them between them, and keeps none.</div>
       <div><b>Every device</b>A Mac app in the menu bar, a daemon for Linux and Windows, Shortcuts on the iPhone, and this page.</div>
@@ -270,6 +277,21 @@ footer a { color: var(--faint); }
         <ul class="items" id="queue-list"></ul>
         <p class="note" id="queue-status" role="status"></p>
       </section>
+
+      {{if .MacApp}}
+      <section class="card" id="mac">
+        <div class="head"><h2>Your Mac</h2><small>the Midgard app, in the menu bar</small></div>
+        <ol class="steps">
+          <li><div>
+            <p>Download Midgard. It runs on macOS 14 or later.</p>
+            <a class="button primary" href="{{.MacApp}}" download>Get Midgard for Mac</a>
+          </div></li>
+          <li><div><p>Open the disk image, and drag Midgard to Applications.</p></div></li>
+          <li><div><p>Open Midgard. It is not notarized by Apple yet, so the first time the Mac will not open it: go to System Settings, Privacy &amp; Security, and click Open Anyway.</p></div></li>
+          <li><div><p>Enter this server, <code id="mac-server"></code>, and sign in.</p></div></li>
+        </ol>
+      </section>
+      {{end}}
 
       <section class="card" id="iphone">
         <div class="head"><h2>Your iPhone</h2><small>two Shortcuts, a minute</small></div>
@@ -753,6 +775,8 @@ footer a { color: var(--faint); }
       catch (_) { status("iphone-status", "Copy the token above, then add the Shortcuts."); }
     } catch (e) { status("iphone-status", e.message, true); }
   });
+  // the server to give the Mac app
+  if ($("mac-server")) $("mac-server").textContent = location.host;
   // on an iPhone, its setup comes first
   if (/iPhone|iPad/.test(navigator.userAgent)) {
     const grid = document.querySelector(".grid");

@@ -101,6 +101,20 @@ midgard believes `X-Forwarded-For` from loopback and the private networks
 only, where a proxy usually is; set `server.trusted_proxies` otherwise. It
 is what failed sign-ins are counted by.
 
+### Offering the Mac App
+
+The web page offers the Mac app for download once the server has it, in
+`data/downloads/Midgard.dmg`. Build the disk image, for Apple silicon and
+Intel both, on a Mac with Go and Xcode's command line tools, and copy it
+there; the page links to it from then on:
+
+```sh
+$ make dmg
+$ scp apple/build/Midgard.dmg your.server:midgard/data/downloads/
+```
+
+A newer build replaces it under the same name.
+
 ### Moving from an Older Server
 
 An older server kept its shares as files, under `data/repo`, and a
@@ -126,12 +140,14 @@ server's allowlist.
 
 ### A Mac: the Midgard App
 
-Midgard lives in the menu bar. Build it, and open it:
+Midgard lives in the menu bar, on macOS 14 or later. Download it from your
+server's web page, **Get Midgard for Mac**, open the disk image, and drag
+Midgard to Applications.
 
-```sh
-$ make mac                     # needs Go and Xcode's command line tools
-$ open apple/build/Midgard.app # or copy it to /Applications first
-```
+It is not notarized by Apple yet, so the first time you open it the Mac
+refuses: in System Settings, under Privacy & Security, click **Open
+Anyway**. Or, once, in a terminal:
+`xattr -dr com.apple.quarantine /Applications/Midgard.app`.
 
 The first time, it asks for your server and signs you in, in the browser.
 Its menu then has your recent copies, to put one back on the clipboard; the
@@ -143,10 +159,6 @@ secret are not synced, nor kept.
 The app and `mg daemon` are the same device to the server, and one runs at a
 time: on a Mac with the daemon installed, stop it first (`mg daemon stop`,
 then `mg daemon uninstall`).
-
-A build of your own is signed for your Mac only. To run it on another Mac,
-remove the quarantine there once:
-`xattr -dr com.apple.quarantine /Applications/Midgard.app`.
 
 ### Linux and Windows: `mg daemon`
 
@@ -234,8 +246,9 @@ directory on macOS and Windows, readable by you alone.
 
 Go, as `go.mod` says. The daemon's clipboard and hotkey need
 `sudo apt install -y libx11-dev` on Linux, and `xcode-select --install` on
-macOS. Then `make` builds `mg`, `make build` the server image, and `make mac`
-the Mac app.
+macOS. Then `make` builds `mg`, `make build` the server image, `make mac` the
+Mac app, into `apple/build`, and `make dmg` its disk image for both kinds
+of Mac.
 
 ## License
 

@@ -12,6 +12,8 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -190,6 +192,44 @@ func (m *Midgard) Shortcut(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
+// downloads are the apps the page offers, when the server has them in
+// config.DownloadPath, by their types.
+var downloads = map[string]string{
+	"Midgard.dmg": "application/x-apple-diskimage",
+}
+
+// Download hands out one of the apps, to anyone.
+func (m *Midgard) Download(c *gin.Context) {
+	name := c.Param("name")
+	typ, ok := downloads[name]
+	if !ok {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	f, err := os.Open(filepath.Join(config.DownloadPath, name))
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	defer f.Close()
+	fi, err := f.Stat()
+	if err != nil || !fi.Mode().IsRegular() {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	h := c.Writer.Header()
+	h.Set("Content-Type", typ)
+	h.Set("Content-Disposition", `attachment; filename="`+name+`"`)
+	h.Set("Cache-Control", "no-cache") // a new build takes its place under the same name
+	http.ServeContent(c.Writer, c.Request, name, fi.ModTime(), f)
+}
+
+// offers reports whether the server has an app to hand out.
+func offers(name string) bool {
+	fi, err := os.Stat(filepath.Join(config.DownloadPath, name))
+	return err == nil && fi.Mode().IsRegular()
+}
+
 var indexTmpl = template.Must(template.New("index").Parse(indexHTML))
 
 // page is what the web page is rendered with.
@@ -200,6 +240,7 @@ type page struct {
 	Allowed   bool   // whether they may use this server
 	NoSignIn  bool   // this server has no web sign-in set up
 	AuthError string // why the last sign-in failed, if it did
+	MacApp    string // where to download the Mac app, if the server has it
 	Page      string
 	Login     string
 	Logout    string
@@ -217,6 +258,9 @@ func (m *Midgard) WebPage(c *gin.Context) {
 		Login:     webLogin,
 		Logout:    webLogout,
 		API:       "/midgard/api/v1",
+	}
+	if offers("Midgard.dmg") {
+		p.MacApp = "/midgard/download/Midgard.dmg"
 	}
 	if m.web != nil {
 		p.CSRF = m.web.csrfToken(c.Writer, c.Request)

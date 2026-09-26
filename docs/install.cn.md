@@ -79,6 +79,17 @@ location /midgard {
 
 midgard 只信任来自本机回环地址和私有网络的 `X-Forwarded-For`（反向代理通常位于这些地址）；否则请设置 `server.trusted_proxies`。登录失败次数按地址统计，依据的就是它。
 
+### 提供 Mac 应用下载
+
+服务端的 `data/downloads/Midgard.dmg` 存在时，网页就会提供 Mac 应用下载。在装有 Go 和 Xcode 命令行工具的 Mac 上构建同时支持 Apple 芯片和 Intel 的磁盘映像，复制过去即可，网页随即给出下载链接：
+
+```sh
+$ make dmg
+$ scp apple/build/Midgard.dmg your.server:midgard/data/downloads/
+```
+
+新的构建以同名文件替换旧的即可。
+
 ### 从旧版服务端迁移
 
 旧版服务端把分享以文件形式保存在 `data/repo` 下，并在 `data/logs` 下保存每一次复制的明文日志。把分享一次性导入为某人的分享，链接保持不变。日志不导入：服务端现在不保存复制内容，日志可以删除。
@@ -98,18 +109,13 @@ $ docker compose run --rm -v /path/to/old/data/repo:/app/old:ro \
 
 ### Mac：Midgard 应用
 
-Midgard 常驻菜单栏。构建并打开它：
+Midgard 常驻菜单栏，需要 macOS 14 或更高版本。在服务端的网页上点 **Get Midgard for Mac** 下载，打开磁盘映像，把 Midgard 拖到“应用程序”。
 
-```sh
-$ make mac                     # 需要 Go 和 Xcode 命令行工具
-$ open apple/build/Midgard.app # 或先复制到 /Applications
-```
+它尚未经过 Apple 公证，所以第一次打开时 Mac 会拒绝：在“系统设置”的“隐私与安全性”中点击**仍要打开**。也可以在终端中执行一次：`xattr -dr com.apple.quarantine /Applications/Midgard.app`。
 
 首次启动时，它会询问你的服务端，并在浏览器中引导你登录。之后菜单中有：最近的复制内容，可放回剪贴板；历史记录窗口；**将剪贴板分享为链接**，快捷键 **Ctrl+Option+S**，无需辅助功能权限；**暂停同步**；以及**登录时启动**。密码管理器标记为机密的内容不会被同步，也不会被保存。
 
 应用与 `mg daemon` 在服务端看来是同一台设备，同一时间只能运行其中一个：如果这台 Mac 装了守护进程，请先停止它（`mg daemon stop`，然后 `mg daemon uninstall`）。
-
-自己构建的应用只为本机签名。要在另一台 Mac 上运行，请在那台 Mac 上解除一次隔离：`xattr -dr com.apple.quarantine /Applications/Midgard.app`。
 
 ### Linux 和 Windows：`mg daemon`
 
@@ -175,7 +181,7 @@ midgard 使用以下位置中第一个存在的文件：
 
 ### 从源码构建
 
-需要 `go.mod` 中指定的 Go 版本。守护进程的剪贴板和快捷键在 Linux 上需要 `sudo apt install -y libx11-dev`，在 macOS 上需要 `xcode-select --install`。然后 `make` 构建 `mg`，`make build` 构建服务端镜像，`make mac` 构建 Mac 应用。
+需要 `go.mod` 中指定的 Go 版本。守护进程的剪贴板和快捷键在 Linux 上需要 `sudo apt install -y libx11-dev`，在 macOS 上需要 `xcode-select --install`。然后 `make` 构建 `mg`，`make build` 构建服务端镜像，`make mac` 把 Mac 应用构建到 `apple/build`，`make dmg` 构建同时支持两种 Mac 的磁盘映像。
 
 ## 许可
 
