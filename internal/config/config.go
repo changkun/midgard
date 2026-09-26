@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -175,29 +174,13 @@ func find() (string, error) {
 		}
 	}
 
-	// Before the lookup above existed, the configuration was read from the
-	// source tree the binary was built in. Installed daemons still depend on
-	// that, so keep finding it, but say where it should move to.
-	if p := sourceTreeConfig(); p != "" {
-		if _, err := os.Stat(p); err == nil {
-			slog.Warn("reading the configuration from the source tree; "+
-				"move it to one of the searched locations",
-				"path", p, "searched", strings.Join(candidates, ", "))
-			return p, nil
-		}
-	}
+	// The source tree a binary was built in is no longer searched, as it
+	// was for daemons installed before this lookup (#35): whatever
+	// config.yml sat in a checkout was read by any program built there, the
+	// Mac app and the tests included, and those daemons must sign in again
+	// since the redesign anyway (specs/redesign.md §4).
 	return "", fmt.Errorf("no config.yml in %s, and MIDGARD_CONF is not set: %w",
 		strings.Join(candidates, ", "), fs.ErrNotExist)
-}
-
-// sourceTreeConfig is where config.yml sat relative to this file's source,
-// which only exists on the machine that built the binary.
-func sourceTreeConfig() string {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return ""
-	}
-	return filepath.Join(filepath.Dir(filename), "..", "..", "config.yml")
 }
 
 // read parses the configuration file at path.

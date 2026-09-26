@@ -128,6 +128,20 @@ var shared = sync.OnceValues(func() (*source, error) {
 	return &source{client: newClient(), store: store}, nil
 })
 
+// SignedIn reports whether this device has a sign-in: an app token in
+// config.yml, or one kept by Login. It asks no one whether it still works.
+func SignedIn() bool {
+	if config.Get().Token != "" {
+		return true
+	}
+	s, err := shared()
+	if err != nil {
+		return false
+	}
+	tok, err := s.store.Load()
+	return err == nil && tok != nil && tok.AccessToken != ""
+}
+
 // Authorization is the Authorization header for a call to the midgard server:
 // this device's app token when config.yml sets one, and otherwise a token
 // minted for midgard from its sign-in.

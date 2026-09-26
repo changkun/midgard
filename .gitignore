@@ -24,3 +24,7 @@ data/
 
 # The server environment holds who may sign in; see .env.template.
 /.env
+
+# the Mac app: the engine library, and Swift's build
+/apple/build/
+/apple/Midgard/.build/

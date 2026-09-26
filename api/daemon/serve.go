@@ -9,14 +9,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"sync"
 
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/device"
 	"changkun.de/x/midgard/internal/history"
-	"changkun.de/x/midgard/internal/signin"
 	"changkun.de/x/midgard/internal/types"
 	"github.com/gorilla/websocket"
 )
@@ -102,19 +100,10 @@ func (m *Daemon) Serve(ctx context.Context) {
 
 // dial connects to the server's websocket, signed in.
 func (m *Daemon) dial(ctx context.Context) (*websocket.Conn, error) {
-	auth, err := signin.Authorization(ctx)
-	if err != nil {
-		return nil, err
+	if m.url != "" {
+		return device.DialURL(ctx, m.url)
 	}
-	url := m.url
-	if url == "" {
-		url = types.EndpointSubscribe()
-	}
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, url, http.Header{"Authorization": {auth}})
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect midgard server: %w", err)
-	}
-	return conn, nil
+	return device.Dial(ctx)
 }
 
 // changed puts a copy from another device on the local clipboard.
