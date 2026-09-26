@@ -91,7 +91,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--brand); backgrou
 textarea { width: 100%; min-height: 84px; resize: vertical; }
 input[type=text], input[type=search] { flex: 1 1 160px; }
 code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
-code.secret { display: block; background: var(--soft); border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; user-select: all; margin: 8px 0; }
+code.secret { display: block; background: var(--soft); border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; -webkit-user-select: all; user-select: all; }
+.secret-row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.secret-row code.secret { flex: 1; min-width: 0; }
+.secret-row button { flex: none; }
 
 /* the clipboard */
 .clip { border-radius: 12px; background: var(--soft); padding: 16px; min-height: 96px; position: relative; overflow: hidden; }
@@ -111,6 +114,8 @@ ul.items > li { display: flex; gap: 12px; align-items: flex-start; padding: 10px
 ul.items > li:hover { background: var(--soft); }
 ul.items > li.empty { color: var(--muted); justify-content: center; padding: 26px 8px; }
 ul.items > li.empty:hover { background: transparent; }
+ul.items > li.more { justify-content: center; padding: 6px 8px; }
+ul.items > li.more:hover { background: transparent; }
 .tile { width: 40px; height: 40px; flex: none; border-radius: 10px; background: var(--brand-soft); color: var(--brand);
   display: grid; place-items: center; overflow: hidden; }
 .tile svg { width: 19px; height: 19px; }
@@ -297,9 +302,9 @@ footer a { color: var(--faint); }
         <div class="head"><h2>Your iPhone</h2><small>two Shortcuts, a minute</small></div>
         <ol class="steps">
           <li><div>
-            <p>Issue a token for the iPhone. It is copied, for step 3.</p>
+            <p>Issue a token for the iPhone, and copy it, for step 3.</p>
             <button class="primary" id="iphone-token">Issue a token</button>
-            <code class="secret" id="iphone-token-value" hidden></code>
+            <div id="iphone-token-value"></div>
           </div></li>
           <li><div>
             <p>On the iPhone, add the Shortcuts:</p>
@@ -377,6 +382,29 @@ footer a { color: var(--faint); }
     u.setAttribute("href", "#" + name);
     s.append(u);
     return s;
+  }
+  // secret shows a token once, with a button that copies it and says so.
+  // Where the browser will not copy, the button selects it, to copy by hand.
+  function secret(token) {
+    const code = el("code", { class: "secret", text: token });
+    const label = el("span", { text: "Copy" });
+    const copied = () => {
+      label.textContent = "Copied";
+      setTimeout(() => { label.textContent = "Copy"; }, 1600);
+    };
+    const button = el("button", { class: "primary", onclick: async () => {
+      try { await navigator.clipboard.writeText(token); copied(); }
+      catch (_) {
+        const r = document.createRange();
+        r.selectNodeContents(code);
+        getSelection().removeAllRanges();
+        getSelection().addRange(r);
+        label.textContent = "Selected: copy it";
+      }
+    } }, icon("i-copy"), label);
+    const row = el("div", { class: "secret-row" }, code, button);
+    row.copied = copied;
+    return row;
   }
   const iconButton = (name, label, onclick, cls) => el("button", { class: "icon " + (cls || ""), title: label, "aria-label": label, onclick }, icon(name));
 
@@ -679,10 +707,14 @@ footer a { color: var(--faint); }
   }
 
   // Shares
+  // The newest shares, and the rest on asking: a long list would push the
+  // cards below it off the page.
+  const fewShares = 5;
+  let allShares = false;
   async function loadShares() {
     try {
-      const s = (await call("GET", "/shares")).shares || [];
-      $("share-list").replaceChildren(...(s.length ? s.map((sh) => {
+      const s = ((await call("GET", "/shares")).shares || []).sort((a, b) => new Date(b.created) - new Date(a.created));
+      const items = (allShares ? s : s.slice(0, fewShares)).map((sh) => {
         const expired = sh.expires && new Date(sh.expires) < new Date();
         const exp = sh.expires ? (expired ? "expired " : "expires ") + ago(sh.expires) : "never expires";
         return el("li", {},
@@ -700,7 +732,10 @@ footer a { color: var(--faint); }
               try { await call("DELETE", "/shares/" + encodeURIComponent(sh.slug)); loadShares(); }
               catch (e) { status("share-status", e.message, true); }
             }, "danger")));
-      }) : [el("li", { class: "empty", text: "You have shared nothing." })]));
+      });
+      if (s.length > fewShares) items.push(el("li", { class: "more" },
+        el("button", { text: allShares ? "Show the newest " + fewShares : "Show all " + s.length, onclick: () => { allShares = !allShares; loadShares(); } })));
+      $("share-list").replaceChildren(...(s.length ? items : [el("li", { class: "empty", text: "You have shared nothing." })]));
     } catch (e) {
       $("share-list").replaceChildren(el("li", { class: "empty error", text: e.message }));
     }
@@ -754,11 +789,8 @@ footer a { color: var(--faint); }
       $("token-name").value = "";
       $("token-new").replaceChildren(
         el("p", { class: "note", text: "The token for " + t.name + ", shown only now. Send it as “Authorization: Bearer <token>”, or put it in config.yml." }),
-        el("code", { class: "secret", text: t.token }),
+        secret(t.token),
         el("div", { class: "row" },
-          el("button", { text: "Copy token", onclick: async () => {
-            try { await navigator.clipboard.writeText(t.token); status("token-status", "Copied."); } catch (e) { status("token-status", e.message, true); }
-          } }),
           el("button", { text: "Done", onclick: () => $("token-new").replaceChildren() })));
       status("token-status", "");
     } catch (e) { status("token-status", e.message, true); }
@@ -768,11 +800,13 @@ footer a { color: var(--faint); }
   $("iphone-token").addEventListener("click", async () => {
     try {
       const t = await issue("iphone-" + new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-"));
-      const code = $("iphone-token-value");
-      code.textContent = t.token;
-      code.hidden = false;
-      try { await navigator.clipboard.writeText(t.token); status("iphone-status", "The token is copied. Now add the Shortcuts."); }
-      catch (_) { status("iphone-status", "Copy the token above, then add the Shortcuts."); }
+      const row = secret(t.token);
+      $("iphone-token").hidden = true; // one token for one iPhone; App tokens issues more
+      $("iphone-token-value").replaceChildren(row);
+      // A browser that still counts the tap as the reason may copy it now;
+      // Safari does not, after waiting for the token.
+      try { await navigator.clipboard.writeText(t.token); row.copied(); status("iphone-status", "It is copied, and shown only now. Next, add the Shortcuts. It is listed under App tokens, to revoke."); }
+      catch (_) { status("iphone-status", "Copy it: it is shown only now. Next, add the Shortcuts. It is listed under App tokens, to revoke."); }
     } catch (e) { status("iphone-status", e.message, true); }
   });
   // the server to give the Mac app
