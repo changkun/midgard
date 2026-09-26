@@ -117,20 +117,30 @@ func (lc *local) Watch(ctx context.Context, dt types.MIME) <-chan []byte {
 		return nil
 	}
 
-	// clipboard.Watch reports the format alongside the bytes so that one
-	// call can observe several formats; midgard watches one format per
-	// channel, so unwrap each change down to its bytes.
-	src := clipboard.Watch(ctx, f)
 	out := make(chan []byte)
-	go func() {
-		defer close(out)
-		for d := range src {
-			select {
-			case out <- d.Bytes:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
+	go forward(ctx, clipboard.Watch(ctx, f), out)
 	return out
+}
+
+// forward passes each change on as its bytes, and closes out when src is
+// done. clipboard.Watch reports the format alongside the bytes so that one
+// call can observe several formats; midgard watches one format per channel.
+//
+// A change the copying application marked as sensitive — a password from a
+// password manager — is dropped here, so it never leaves the machine. Before,
+// every password copied on any device was synced to the server and on to
+// every other device.
+func forward(ctx context.Context, src <-chan clipboard.Data, out chan<- []byte) {
+	defer close(out)
+	for d := range src {
+		if d.Sensitive {
+			slog.Info("not syncing a copy marked as sensitive")
+			continue
+		}
+		select {
+		case out <- d.Bytes:
+		case <-ctx.Done():
+			return
+		}
+	}
 }
