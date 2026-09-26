@@ -76,7 +76,8 @@ midgard 守护进程将自动监控剪贴板并将内容与 midgard 服务器进
 
 ### iOS, iPadOS, macOS 捷径 - Clipboard
 
-请在 iOS, iPadOS, macOS 设备上访问 midgard-getclipboard 和 midgard-putclipboard 的捷径链接，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
+下列捷径是为旧的用户名和密码制作的，服务端已不再接受。使用时请编辑其中的 **获取 URL 内容** 操作，
+将 `Authorization` 请求头改为 `Bearer mgt_...`（一个应用令牌，见 `mg server token`），替换原先编码的用户名和密码。
 
 - midgard-getclipboard
   + iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/66c475e013e94dbf9f3714365d6c3f95

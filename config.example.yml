@@ -4,7 +4,7 @@
 
 # An example midgard configuration. Copy it to config.yml in one of the places
 # midgard looks (see docs/install.md#configuration) and fill in your own values.
-# Never commit the real file: it holds your server's password.
+# Never commit the real file: a device's may hold its app token.
 
 ---
 # midgard common settings

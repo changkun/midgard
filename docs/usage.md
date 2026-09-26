@@ -137,6 +137,11 @@ clipboard cross platforms (e.g. between Mac and Linux).
 
 ### iOS, iPadOS, macOS Shortcut - Clipboard
 
+These Shortcuts were made for the old user name and password, which the server
+no longer accepts. To use one, edit its **Get Contents of URL** action so that
+the `Authorization` header is `Bearer mgt_...`, an [app token](#app-tokens),
+instead of the encoded user name and password.
+
 - midgard-getclipboard
   + iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/66c475e013e94dbf9f3714365d6c3f95
   + iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/c88e44b318e74eedb20201e4f513dabf
