@@ -3,7 +3,7 @@
 # license that can be found in the LICENSE file.
 
 # An example midgard configuration. Copy it to config.yml in one of the places
-# midgard looks (see docs/install.md#configuration) and fill in your own values.
+# midgard looks (see docs/install.md#where-configyml-is-found) and fill in your own values.
 # Never commit the real file: a device's may hold its app token.
 
 ---

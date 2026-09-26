@@ -58,7 +58,7 @@ $ make build && make up              # or run: mg server
 Go), and open `apple/build/Midgard.app`. It asks for your server, signs you
 in, and lives in the menu bar: recent copies to put back, the history in a
 window, **Ctrl+Option+S** to share the clipboard at a link. It replaces
-`mg daemon` on a Mac; see [The Mac App](./docs/install.md#the-mac-app).
+`mg daemon` on a Mac; see [the Midgard app](./docs/install.md#a-mac-the-midgard-app).
 
 **3. Linux, Windows, or a Mac without the app.** Download `mg` from the
 [releases](https://github.com/changkun/midgard/releases) (or

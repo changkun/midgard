@@ -1,278 +1,242 @@
-# Midgard Installation
+# Installing midgard
 
 English | [中文](./install.cn.md)
 
-## Architecture
+midgard has two parts: **one server**, which you run somewhere public, and
+**your devices**, which keep your clipboard and its history. The server
+passes copies between your devices and keeps none of them; see
+[How midgard works](./architecture.md).
 
-midgard has a server, which you run once, and a program on each of your
-devices. The devices keep the clipboard history; the server passes copies
-between them and keeps none. [How midgard works](./architecture.md) explains
-it, with diagrams. For installing, what matters is:
+1. [Run the server](#run-the-server), once.
+2. [Set up each device](#set-up-your-devices): the Midgard app on a Mac,
+   `mg daemon` on Linux and Windows, the web page on a phone.
 
-- **The server** needs a public address, a TLS-terminating reverse proxy in
-  front of it (below), and a `data` folder for its database: your devices,
-  shares and app tokens, and no copies.
-- **Each device** runs `mg daemon`, as its user, in its desktop session: that
-  is where the clipboard is. It keeps its history in its user's data
-  directory.
+## Run the Server
 
-## Dependencies
+You need a machine with a public address and Docker, a domain, and a reverse
+proxy in front of midgard that serves it over HTTPS.
 
-- macOS (Daemon)
-
-  ```
-  $ xcode-select --install
-  ```
-
-- Linux (Daemon)
-
-  ```
-  $ sudo apt install -y git libx11-dev
-  ```
-
-- Windows
-
-  ```
-  $ choco install git
-  ```
-
-## Build
-
-### Download
-
-Each [release](https://github.com/changkun/midgard/releases) carries a ready
-`mg` for macOS, Linux and Windows, on amd64 and arm64: unpack it and put `mg`
-on your `PATH`. `checksums.txt` next to the archives lets you verify them.
-
-### Binary Distribution
-
-```
-$ git clone https://github.com/changkun/midgard
-
-$ make
-
-$ ln "$(pwd)/mg" /usr/local/bin/mg
-
-$ mg help
-midgard is a universal clipboard service.
-See https://changkun.de/s/midgard for more details.
-
-Usage:
-  mg [command]
-```
-
-### Docker Distribution (Recommended)
-
-Build the server image with `make build`; each release also publishes it as
-`ghcr.io/changkun/midgard`. The image holds no configuration and no keys.
-[docker-compose.yml](../docker-compose.yml) mounts them when the container
-starts:
-
-- `./config.yml` is your configuration, read-only;
-- `./data` is everything the server keeps. Back it up with the rest of the
-  host; there is nothing else to back up.
-
-## Configuration
-
-midgard reads its settings from a `config.yml`. Start from
-[config.example.yml](../config.example.yml), which lists every option, and keep
-your copy out of git, since a device's may hold an app token. midgard uses the first
-`config.yml` it finds:
-
-1. the file named by the `MIDGARD_CONF` environment variable, for example
-   `MIDGARD_CONF=/path/to/your/config.yml`;
-2. `config.yml` in the directory you run `mg` from;
-3. `midgard/config.yml` in your user configuration directory:
-   `~/.config/midgard/config.yml` on Linux,
-   `~/Library/Application Support/midgard/config.yml` on macOS, and
-   `%AppData%\midgard\config.yml` on Windows.
-
-For a daemon that starts with your machine, use the third location: a service
-has no useful working directory. Commands such as `mg version` need no
-configuration at all.
-
-## Midgard Server
-
-People sign in through [auth.latere.ai](https://auth.latere.ai). The server
-takes its settings from the environment, as changkun.de's other services do:
-`AUTH_ALLOWED_PRINCIPALS` lists who may use it, by email or principal id, and
-`AUTH_URL` names the issuer (auth.latere.ai by default). Copy
-[.env.template](../.env.template) to `.env`, which `docker-compose.yml` reads.
-A token is accepted only if it was minted for midgard, by that issuer, for
-someone on the list; app tokens stop working when their owner leaves it.
-
-The web page at `/midgard/` signs people in from a browser. It needs a client
-registered with auth.latere.ai (`midgard-web`, with the redirect URI
-`https://<your domain>/midgard/.auth/callback`), named by `AUTH_CLIENT_ID`,
-and an `AUTH_COOKIE_KEY` to encrypt its session cookie
-(`openssl rand -hex 32`). Without them the page says sign-in is not set up,
-and everything else works as before.
-
-Docker:
-
-```
-$ make up
-```
-
-> Hint: You need understand how [docker-compose](../docker-compose.yml) works.
-
-Native:
+**1. Get the code and the image.**
 
 ```sh
-$ mg server
+$ git clone https://github.com/changkun/midgard && cd midgard
+$ make build              # builds the midgard:latest image
 ```
 
-### Moving from an Older Server
+Releases also publish the image as `ghcr.io/changkun/midgard`.
 
-An older server kept its shares as files, under `data/repo`. This server
-keeps them in its database and serves nothing from disk, so import them once,
-as someone's shares; they keep their links. With Docker:
+**2. Configure it.** Two files, both kept out of git:
 
 ```sh
-$ docker compose run --rm midgard import --owner <owner> --dry-run   # what it would do
-$ docker compose run --rm midgard import --owner <owner>
+$ cp config.example.yml config.yml   # set domain: your domain
+$ cp .env.template .env              # set who may sign in
 ```
 
-Natively, `mg server import --owner <owner>`, from the directory the server
-runs in. The owner is a principal id, as for app tokens. Hidden files, such as
-the old git backup's `.git`, stay behind. Running it again imports only what
-is new. Once the old links work, `data/repo` can go.
+In `.env`:
 
-## The Mac App
+- `AUTH_ALLOWED_PRINCIPALS`: who may use this server, by email or principal
+  id, comma-separated. Everyone signs in through
+  [auth.latere.ai](https://auth.latere.ai); the list decides who is let in,
+  and each person reaches only their own clipboard.
+- `AUTH_CLIENT_ID` and `AUTH_COOKIE_KEY`: for signing in to the web page.
+  The client is `midgard-web`, registered with auth.latere.ai for
+  `https://changkun.de/midgard/.auth/callback`; on another domain, register a
+  client of your own with your callback. The key encrypts the session cookie:
+  `openssl rand -hex 32`. Leave both empty to go without the web sign-in;
+  everything else works.
 
-On a Mac, Midgard is an app in the menu bar. It keeps the Mac's clipboard in
-sync and its history, as `mg daemon` does elsewhere, and runs the same sync
-engine: the app is Swift, for the menu, the window, the clipboard and the
-hotkey, and links midgard's Go engine as a library.
+**3. Start it.**
 
 ```sh
-$ make mac                   # needs Go and Xcode's command line tools
-$ open apple/build/Midgard.app
+$ make up                 # docker compose up -d
+$ curl https://your.domain/midgard/ping
+{"version":"…","go_version":"…","build_time":"…"}
 ```
 
-The first time, it asks for your server and signs you in, in the browser. It
-then offers, in its menu:
+[docker-compose.yml](../docker-compose.yml) runs a container named `midgard`
+on the network `traefik_proxy`, mounts `config.yml` read-only, and keeps
+everything the server stores in `./data`: your devices, shares and app
+tokens, and no copies. Back up `./data`; there is nothing else to back up.
 
-- your recent copies, to put one back on the clipboard;
-- the history, in a window, to search, look at, copy back and delete;
-- **Share Clipboard at a Link**, also on **Ctrl+Option+S**, which needs no
-  Accessibility permission;
-- **Pause Syncing**, which stops it reading or writing the Mac's clipboard;
-- **Start at Login**.
+**4. Put it behind your reverse proxy** at `/midgard`, with websockets
+allowed, and a body limit above 32 MB, the size of the largest copy or
+share.
 
-Copies a password manager marks as secret are not synced, nor kept. The app
-and `mg daemon` are the same device to the server, and one of them runs at a
-time: stop the daemon first (`mg daemon stop`, then `mg daemon uninstall`).
-`mg` commands work beside the app.
+With traefik, next to the container on its network (a complete setup is
+[changkun/proxy](https://changkun.de/s/proxy)):
 
-The build is signed for your Mac only; to give the app to others, sign it
-with a Developer ID and notarize it.
-
-## Midgard Daemon
-
-The `midgard` daemon **runs on each of your machines** and starts when you log
-in. Install it as yourself, without `sudo`: it syncs your desktop's
-clipboard, which a system service cannot reach.
-
-```sh
-$ mg daemon install
-$ mg daemon start
-$ mg daemon stop
-$ mg daemon uninstall
+```yaml
+http:
+  routers:
+    to-midgard:
+      rule: "Host(`your.domain`) && PathPrefix(`/midgard`)"
+      tls:
+        certResolver: yourResolver
+      service: midgard
+  services:
+    midgard:
+      loadBalancer:
+        servers:
+          - url: http://midgard
 ```
 
-- **macOS:** a LaunchAgent in `~/Library/LaunchAgents`.
-- **Linux:** a systemd user unit in `~/.config/systemd/user`, started with
-  your graphical session; without systemd, an autostart entry in
-  `~/.config/autostart`. GNOME and KDE start the session for you. Under a
-  compositor that does not, such as sway or Hyprland, add
-  `exec systemctl --user start midgard-daemon` to its configuration after
-  importing `WAYLAND_DISPLAY` into systemd.
-- **Windows:** added to the programs Windows starts when you log in
-  (`HKCU\...\CurrentVersion\Run`); no administrator needed. An older
-  install registered a Windows service instead, which runs in a session of its
-  own and cannot see your clipboard; `mg daemon uninstall`, in a PowerShell
-  run as administrator, removes it.
+With nginx, with midgard's port published on the host, for example as
+`127.0.0.1:8456:80` under `ports:` in `docker-compose.yml`:
 
-An older `mg daemon install` put a system-wide service in `/etc`, which ran as
-root and could not reach anyone's clipboard. `sudo mg daemon uninstall`
-removes it.
-
-`mg` commands talk to the server directly, not to the daemon, so they work
-whether or not the daemon is running. Older configurations have a `daemon:`
-section with `addr: localhost:9125`; it is no longer read, and can go.
-
-or
-
-```sh
-$ mg daemon run
-```
-
-## Reverse Proxy
-
-If midgard is deployed behind an nginx server, then the following
-configuration could help:
-
-```
+```nginx
 location /midgard {
-    proxy_pass          http://0.0.0.0:80;
-    proxy_set_header    Host             $host;
-    proxy_set_header    X-Real-IP        $remote_addr;
-    proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
-    proxy_set_header    X-Client-Verify  SUCCESS;
-    proxy_set_header    X-Client-DN      $ssl_client_s_dn;
-    proxy_set_header    X-SSL-Subject    $ssl_client_s_dn;
-    proxy_set_header    X-SSL-Issuer     $ssl_client_i_dn;
-
-    # websocket support
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    client_max_body_size 2M;
+    proxy_pass              http://127.0.0.1:8456;
+    proxy_set_header        Host              $host;
+    proxy_set_header        X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header        X-Forwarded-Proto $scheme;
+    proxy_http_version      1.1;
+    proxy_set_header        Upgrade           $http_upgrade;
+    proxy_set_header        Connection        "upgrade";
+    proxy_read_timeout      120s;   # devices ping every 30 s
+    client_max_body_size    48m;
 }
 ```
 
-If you use traefik, then the following configuration could help (see [changkun/proxy](https://changkun.de/s/proxy) as a complete example):
+midgard believes `X-Forwarded-For` from loopback and the private networks
+only, where a proxy usually is; set `server.trusted_proxies` otherwise. It
+is what failed sign-ins are counted by.
 
-- **Static configuration**:
+### Moving from an Older Server
 
-  ```yaml
-  entryPoints:
-    web:
-      address: :80
-      http:
-        redirections:
-          entryPoint:
-            to: websecure
-            scheme: https
-    websecure:
-      address: :443
+An older server kept its shares as files, under `data/repo`, and a
+plaintext log of every copy under `data/logs`. Import the shares once, as
+someone's, and they keep their links. The log is not imported: the server
+keeps no copies now, and it may be deleted.
 
-  certificatesResolvers:
-    changkunResolver:
-      acme:
-        email: your@email.com
-        storage: /path/to/your/acme.json
-        httpChallenge:
-          entryPoint: web
-  ```
+```sh
+$ docker compose run --rm -v /path/to/old/data/repo:/app/old:ro \
+    midgard import --owner <principal id> --from /app/old --dry-run   # what it would do
+$ docker compose run --rm -v /path/to/old/data/repo:/app/old:ro \
+    midgard import --owner <principal id> --from /app/old
+```
 
-- **Dynamic configuration**:
+Your principal id is the owner the server records when you first sign in.
+Hidden files, such as the old git backup's `.git`, stay behind. Running it
+again imports only what is new.
 
-  ```yaml
-  http:
-    routers:
-      to-midgard:
-        rule: "Host(`example.com`)&&PathPrefix(`/midgard`)"
-        tls:
-          certResolver: yourCertResolver
-        service: midgard
-    services:
-      midgard:
-        loadBalancer:
-          servers:
-          - url: http://midgard
-  ```
+## Set Up Your Devices
+
+Every device signs in once, through auth.latere.ai, and must be on the
+server's allowlist.
+
+### A Mac: the Midgard App
+
+Midgard lives in the menu bar. Build it, and open it:
+
+```sh
+$ make mac                     # needs Go and Xcode's command line tools
+$ open apple/build/Midgard.app # or copy it to /Applications first
+```
+
+The first time, it asks for your server and signs you in, in the browser.
+Its menu then has your recent copies, to put one back on the clipboard; the
+history, in a window; **Share Clipboard at a Link**, also on
+**Ctrl+Option+S**, with no Accessibility permission needed; **Pause
+Syncing**; and **Start at Login**. Copies a password manager marks as
+secret are not synced, nor kept.
+
+The app and `mg daemon` are the same device to the server, and one runs at a
+time: on a Mac with the daemon installed, stop it first (`mg daemon stop`,
+then `mg daemon uninstall`).
+
+A build of your own is signed for your Mac only. To run it on another Mac,
+remove the quarantine there once:
+`xattr -dr com.apple.quarantine /Applications/Midgard.app`.
+
+### Linux and Windows: `mg daemon`
+
+**1. Get `mg`**, from the [releases](https://github.com/changkun/midgard/releases)
+for your system, and put it on your `PATH`; `checksums.txt` next to the
+archives verifies them. Or build it: `go install changkun.de/x/midgard@latest`,
+which names it `midgard`.
+
+**2. Point it at your server**, in `~/.config/midgard/config.yml` on Linux or
+`%AppData%\midgard\config.yml` on Windows:
+
+```yaml
+domain: your.domain   # or http://your-server:8456
+```
+
+**3. Sign in, and install the daemon**, as yourself, without `sudo`: it syncs
+your desktop's clipboard, which a system service cannot reach.
+
+```sh
+$ mg login
+$ mg daemon install
+$ mg daemon start
+$ mg status
+server status: OK
+daemon status: OK
+```
+
+It then starts when you log in: on Linux as a systemd user unit, started
+with your graphical session, or an autostart entry without systemd; on
+Windows from the programs started at logon, with no administrator needed.
+
+- Under a compositor that starts no graphical session, such as sway or
+  Hyprland, add `exec systemctl --user start midgard-daemon` to its
+  configuration, after importing `WAYLAND_DISPLAY` into systemd.
+- An older `mg daemon install` made a system-wide service, which could not
+  reach anyone's clipboard: `sudo mg daemon uninstall` on Linux, or
+  `mg daemon uninstall` in a PowerShell run as administrator on Windows,
+  removes it.
+- `mg daemon run` runs the daemon in the terminal instead.
+
+### A Phone
+
+Open `https://your.domain/midgard/` and sign in: your clipboard, sending
+text to your devices, your history, and your shares. iOS Shortcuts use an
+app token; see [Usage](./usage.md#app-tokens).
+
+### A Machine Without a Browser, or an Agent
+
+Issue an app token on the web page, under **App tokens**, or on the server:
+
+```sh
+$ docker compose run --rm midgard token add build-box --owner <principal id>
+```
+
+and put it in that machine's `config.yml` instead of running `mg login`:
+
+```yaml
+domain: your.domain
+token: mgt_...
+```
+
+## Reference
+
+### Where `config.yml` Is Found
+
+midgard uses the first of:
+
+1. the file named by `MIDGARD_CONF`;
+2. `config.yml` in the directory you run `mg` from;
+3. `midgard/config.yml` in your configuration directory:
+   `~/.config/midgard/` on Linux, `~/Library/Application Support/midgard/`
+   on macOS, `%AppData%\midgard\` on Windows.
+
+A daemon that starts with your machine has no useful working directory: use
+the third. [config.example.yml](../config.example.yml) lists every setting.
+
+### Where a Device Keeps Its Data
+
+In the configuration directory above: `config.yml`, the sign-in
+(`token.json`), and the device's id (`device`). The history is in
+`~/.local/share/midgard/history.db` on Linux, and in the configuration
+directory on macOS and Windows, readable by you alone.
+
+### Building from Source
+
+Go, as `go.mod` says. The daemon's clipboard and hotkey need
+`sudo apt install -y libx11-dev` on Linux, and `xcode-select --install` on
+macOS. Then `make` builds `mg`, `make build` the server image, and `make mac`
+the Mac app.
 
 ## License
 
-Copyright 2020-2021 [Changkun Ou](https://changkun.de). All rights reserved.
+Copyright 2020-2026 [Changkun Ou](https://changkun.de). All rights reserved.
