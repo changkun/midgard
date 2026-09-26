@@ -13,7 +13,7 @@ import (
 	"changkun.de/x/midgard/internal/config"
 )
 
-// TestStoreHidesHiddenFiles covers the store's git clone: its .git directory
+// TestStoreHidesHiddenFiles covers a store left by the old git backup: its .git
 // used to be served like any published file.
 func TestStoreHidesHiddenFiles(t *testing.T) {
 	t.Chdir(t.TempDir())

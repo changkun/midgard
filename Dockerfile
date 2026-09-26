@@ -3,8 +3,8 @@
 # license that can be found in the LICENSE file.
 
 # The server needs no Cgo, so it is built static. Nothing secret goes into
-# the image: the configuration and, for backups over ssh, a key are mounted
-# when the container runs (see docker-compose.yml).
+# the image: the configuration is mounted when the container runs (see
+# docker-compose.yml).
 FROM golang:1.27 AS build
 WORKDIR /src
 COPY go.mod go.sum ./
@@ -15,19 +15,12 @@ RUN CGO_ENABLED=0 go build -trimpath \
   -ldflags "-s -w -X changkun.de/x/midgard/internal/version.GitVersion=${VERSION}" \
   -o /out/mg .
 
-# git is for backups. There is no browser any more: code2img, which needed
-# one, is gone.
-FROM debian:stable-slim
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends dumb-init git openssh-client ca-certificates && \
-  rm -rf /var/lib/apt/lists/*
+# A static binary needs no distribution: only CA certificates, for the
+# HTTPS the server makes, which distroless/static carries. There is no git
+# any more (backups are the data volume's) and no browser (code2img is gone).
+FROM gcr.io/distroless/static-debian12
 WORKDIR /app
 COPY --from=build /out/mg /app/mg
-COPY data/template /app/data/template
-# Backup commits need an author; set your own in docker-compose.yml.
-ENV MIDGARD_CONF=/app/config.yml \
-  GIT_AUTHOR_NAME=midgard GIT_AUTHOR_EMAIL=midgard@localhost \
-  GIT_COMMITTER_NAME=midgard GIT_COMMITTER_EMAIL=midgard@localhost
+ENV MIDGARD_CONF=/app/config.yml
 EXPOSE 80
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["/app/mg", "server"]
+ENTRYPOINT ["/app/mg", "server"]

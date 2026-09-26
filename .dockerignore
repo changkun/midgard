@@ -2,7 +2,6 @@
 .git
 config.yml
 id_rsa
-data/*
-!data/template
+data
 mg
 *.test
