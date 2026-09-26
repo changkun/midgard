@@ -130,6 +130,22 @@ Native:
 $ mg server
 ```
 
+### Moving from an Older Server
+
+An older server kept its shares as files, under `data/repo`. This server
+keeps them in its database and serves nothing from disk, so import them once,
+as someone's shares; they keep their links. With Docker:
+
+```sh
+$ docker compose run --rm midgard import --owner <owner> --dry-run   # what it would do
+$ docker compose run --rm midgard import --owner <owner>
+```
+
+Natively, `mg server import --owner <owner>`, from the directory the server
+runs in. The owner is a principal id, as for app tokens. Hidden files, such as
+the old git backup's `.git`, stay behind. Running it again imports only what
+is new. Once the old links work, `data/repo` can go.
+
 ## Midgard Daemon
 
 The `midgard` daemon **runs on each of your machines** and starts when you log
