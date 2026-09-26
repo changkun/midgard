@@ -156,6 +156,12 @@ An older `mg daemon install` put a system-wide service in `/etc`, which ran as
 root and could not reach anyone's clipboard. `sudo mg daemon uninstall`
 removes it.
 
+`mg` commands reach the daemon over a socket only you can open:
+`$XDG_RUNTIME_DIR/midgard/daemon.sock` on Linux, and `midgard/daemon.sock`
+in your cache directory elsewhere. Older configurations set `daemon.addr:
+localhost:9125`, which any user on the machine can reach; remove it, then
+restart the daemon.
+
 or
 
 ```sh

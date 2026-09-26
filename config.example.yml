@@ -43,4 +43,5 @@ server:
 # midgard daemon settings
 # these settings are only used in daemon mode (run under `mg daemon run`)
 daemon:
-  addr: localhost:9125
+  # addr: localhost:9125 # listen on TCP instead of a socket only you can reach;
+  #                      # any local user could then drive the daemon
