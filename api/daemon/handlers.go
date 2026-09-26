@@ -113,12 +113,21 @@ func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (o
 		return nil, err
 	}
 
-	readerCh := make(chan *types.WebsocketMessage)
+	// The reader is always removed, and buffered: the connection hands every
+	// message to every reader, and used to block on one whose request had
+	// timed out, which stopped the daemon from syncing at all.
+	readerCh := make(chan *types.WebsocketMessage, 8)
 	m.readChs.Store(readerId, readerCh)
-	m.writeCh <- &types.WebsocketMessage{
+	defer m.readChs.Delete(readerId)
+
+	select {
+	case m.writeCh <- &types.WebsocketMessage{
 		Action:  types.ActionListDaemonsRequest,
 		UserID:  m.ID,
 		Message: "list active daemons",
+	}:
+	case <-ctx.Done():
+		return nil, errors.New("list daemons timeout: not connected to the server")
 	}
 
 	for {
@@ -129,7 +138,6 @@ func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (o
 		case resp := <-readerCh:
 			switch resp.Action {
 			case types.ActionListDaemonsResponse:
-				m.readChs.Delete(readerId)
 				return &proto.ListDaemonsOutput{Daemons: utils.BytesToString(resp.Data)}, nil
 			default:
 				// not interested, ignore.
