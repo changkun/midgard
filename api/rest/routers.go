@@ -6,6 +6,7 @@ package rest
 
 import (
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/pprof"
 	"path"
@@ -42,11 +43,13 @@ func (m *Midgard) routers() (r *gin.Engine) {
 }
 
 func staticHandler(prefix, root string) gin.HandlerFunc {
-	fs := gin.Dir(root, false)
+	fs := visibleOnly{gin.Dir(root, false)}
 	fileServer := http.StripPrefix(prefix, http.FileServer(fs))
 
 	return func(c *gin.Context) {
-		file := strings.TrimPrefix(c.Request.URL.String(), prefix)
+		// URL.Path, not URL.String: the latter keeps the query, so any link
+		// with ?something appended used to 404.
+		file := strings.TrimPrefix(c.Request.URL.Path, prefix)
 		// Check if file exists and/or if we have permission to access it
 		f, err := fs.Open(file)
 		if err != nil {
@@ -56,6 +59,21 @@ func staticHandler(prefix, root string) gin.HandlerFunc {
 		f.Close()
 		fileServer.ServeHTTP(c.Writer, c.Request)
 	}
+}
+
+// visibleOnly serves a store without its hidden files. The store is a git
+// clone, so without this /midgard/.git/ served the repository itself, and
+// with it the name of every published file, including the "random" ones
+// that are meant to be found only through their link.
+type visibleOnly struct{ http.FileSystem }
+
+func (v visibleOnly) Open(name string) (http.File, error) {
+	for seg := range strings.SplitSeq(path.Clean("/"+name), "/") {
+		if strings.HasPrefix(seg, ".") {
+			return nil, fs.ErrNotExist
+		}
+	}
+	return v.FileSystem.Open(name)
 }
 
 // FixPath fixes a relative path
