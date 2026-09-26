@@ -24,9 +24,6 @@ server:
   mode: release # or debug/test
   store: # data folder is in ./data
     prefix: /midgard # access via example.com/midgard/*
-    # keep every copied text in data/logs/clipboard, in plain text. Off by
-    # default: what people copy includes passwords.
-    log_clipboard: false
   # networks whose X-Forwarded-For header is believed, for a reverse proxy in
   # front of midgard. Empty means loopback and the private networks.
   trusted_proxies: []

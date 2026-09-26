@@ -31,7 +31,7 @@ func TestStoreHidesHiddenFiles(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	m := NewMidgard()
+	m := testMidgard(t)
 
 	for _, tt := range []struct {
 		path string

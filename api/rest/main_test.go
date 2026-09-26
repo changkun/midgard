@@ -50,3 +50,11 @@ func TestMain(m *testing.M) {
 	srv.Close()
 	os.Exit(code)
 }
+
+// testMidgard is a server for one test, with a database of its own.
+func testMidgard(t *testing.T) *Midgard {
+	t.Helper()
+	m := NewMidgard()
+	withStore(t, m)
+	return m
+}

@@ -6,6 +6,7 @@ package rest
 
 import (
 	"container/list"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -16,7 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -268,7 +268,10 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 		raw = utils.StringToBytes(b.Data)
 	}
 
-	updated := clipboard.UniversalFor(u.owner).Write(b.Type, raw)
+	updated, err := m.store.AddClip(context.Background(), u.owner, u.id, string(b.Type), raw)
+	if err != nil {
+		return fmt.Errorf("cannot keep the copy: %w", err)
+	}
 	slog.Info("the universal clipboard is updated", "from", u.id)
 	if updated {
 		// Include MIME type information so that the clipboard is

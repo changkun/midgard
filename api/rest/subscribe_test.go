@@ -45,7 +45,7 @@ func (m *Midgard) subscribers() int {
 // by every broadcast.
 func TestServerDropsSilentDaemons(t *testing.T) {
 	resetBlocklist(t)
-	m := NewMidgard()
+	m := testMidgard(t)
 	m.keepalive = keepalive{ping: 50 * time.Millisecond, wait: 300 * time.Millisecond, write: time.Second}
 	srv := httptest.NewServer(m.routers())
 	t.Cleanup(srv.Close)

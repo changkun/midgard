@@ -38,7 +38,7 @@ func allocate(t *testing.T, m *Midgard, uri string, data []byte) (int, types.All
 
 func TestAllocate(t *testing.T) {
 	t.Chdir(t.TempDir())
-	m := NewMidgard()
+	m := testMidgard(t)
 
 	code, out := allocate(t, m, "/notes/hello.txt", []byte("hi"))
 	if code != http.StatusOK || out.URL != "/midgard/notes/hello.txt" {
@@ -67,7 +67,7 @@ func TestAllocate(t *testing.T) {
 func TestAllocateStaysInStore(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
-	m := NewMidgard()
+	m := testMidgard(t)
 
 	for _, uri := range []string{
 		"../escape.txt",
@@ -106,7 +106,7 @@ func TestAllocateThroughSymlink(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	code, _ := allocate(t, NewMidgard(), "link/escape.txt", []byte("x"))
+	code, _ := allocate(t, testMidgard(t), "link/escape.txt", []byte("x"))
 	if code == http.StatusOK {
 		t.Errorf("allocating through a symlink out of the store succeeded")
 	}

@@ -5,6 +5,7 @@
 package rest
 
 import (
+	"cmp"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -16,8 +17,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/store"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 	"changkun.de/x/midgard/internal/version"
@@ -36,7 +37,11 @@ func (m *Midgard) PingPong(c *gin.Context) {
 // GetFromUniversalClipboard returns the in-memory clipboard data inside
 // the midgard server
 func (m *Midgard) GetFromUniversalClipboard(c *gin.Context) {
-	t, buf := clipboard.UniversalFor(c.GetString(ctxOwner)).Read()
+	t, buf, err := m.clipboard(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.GetFromUniversalClipboardOutput{})
+		return
+	}
 
 	var raw string
 	if t == types.MIMEImagePNG {
@@ -79,17 +84,22 @@ func (m *Midgard) PutToUniversalClipboard(c *gin.Context) {
 		raw = utils.StringToBytes(b.Data)
 	}
 
+	if b.DaemonID == "" {
+		b.DaemonID = cmp.Or(c.GetString(ctxDevice), c.ClientIP())
+	}
 	owner := c.GetString(ctxOwner)
-	updated := clipboard.UniversalFor(owner).Write(b.Type, raw)
+	updated, err := m.store.AddClip(c.Request.Context(), owner, b.DaemonID, string(b.Type), raw)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.PutToUniversalClipboardOutput{
+			Message: fmt.Sprintf("cannot keep the copy: %v", err),
+		})
+		return
+	}
 	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{
 		Message: "clipboard data is saved.",
 	})
 	if !updated {
 		return
-	}
-
-	if b.DaemonID == "" {
-		b.DaemonID = c.ClientIP()
 	}
 
 	// Include MIME type information so that the clipboard is
@@ -125,7 +135,11 @@ func (m *Midgard) AllocateURL(c *gin.Context) {
 	)
 	switch in.Source {
 	case types.SourceUniversalClipboard:
-		t, raw := clipboard.UniversalFor(c.GetString(ctxOwner)).Read()
+		t, raw, err := m.clipboard(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, types.AllocateURLOutput{Message: err.Error()})
+			return
+		}
 		data = raw
 		if t == types.MIMEImagePNG {
 			ext = ".png"
@@ -232,4 +246,17 @@ func persist(name string, data []byte) error {
 		return err
 	}
 	return f.Close()
+}
+
+// clipboard is the requester's clipboard: the newest copy in their history,
+// or an empty text when they have none yet.
+func (m *Midgard) clipboard(c *gin.Context) (types.MIME, []byte, error) {
+	clip, err := m.store.LatestClip(c.Request.Context(), c.GetString(ctxOwner))
+	if errors.Is(err, store.ErrNotFound) {
+		return types.MIMEPlainText, []byte{}, nil
+	}
+	if err != nil {
+		return "", nil, err
+	}
+	return types.MIME(clip.MIME), clip.Data, nil
 }

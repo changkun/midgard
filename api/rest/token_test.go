@@ -29,7 +29,7 @@ func withStore(t *testing.T, m *Midgard) *store.Store {
 
 func TestAppTokenLogin(t *testing.T) {
 	resetBlocklist(t)
-	m := NewMidgard()
+	m := testMidgard(t)
 	s := withStore(t, m)
 	ctx := context.Background()
 
