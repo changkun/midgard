@@ -8,10 +8,12 @@ package hotkey
 
 import "golang.design/x/hotkey"
 
+// getModifiers is Ctrl+Super. Mod2 is NumLock on most keyboards; it used to
+// be listed here too, so the hotkey fired only while NumLock was on. The
+// hotkey package already listens with every NumLock and CapsLock state.
 func getModifiers() []hotkey.Modifier {
 	return []hotkey.Modifier{
 		hotkey.ModCtrl,
-		hotkey.Mod2,
 		hotkey.Mod4,
 	}
 }
