@@ -36,24 +36,37 @@ var ErrTaken = errors.New("store: the name is taken")
 // first served, as they always were, until the share expires or is revoked.
 // A zero expires never expires.
 func (s *Store) CreateShare(ctx context.Context, owner, path, mime string, data []byte, expires time.Time) (Share, error) {
-	if owner == "" {
+	return s.insertShare(ctx, Share{Path: path, Owner: owner, Created: time.Now(), Expires: expires, MIME: mime, Data: data})
+}
+
+// ImportShare is CreateShare for a share an older server published, as a file:
+// it keeps when the file was made, and never expires.
+func (s *Store) ImportShare(ctx context.Context, owner, path, mime string, data []byte, created time.Time) (Share, error) {
+	return s.insertShare(ctx, Share{Path: path, Owner: owner, Created: created, MIME: mime, Data: data})
+}
+
+func (s *Store) insertShare(ctx context.Context, sh Share) (Share, error) {
+	if sh.Owner == "" {
 		return Share{}, errors.New("store: a share needs an owner")
 	}
 	slug, err := newSlug()
 	if err != nil {
 		return Share{}, err
 	}
-	sh := Share{Slug: slug, Path: path, Owner: owner, Created: time.Now(), Expires: expires, MIME: mime, Data: data, Size: len(data)}
-	if path != "" {
+	sh.Slug, sh.Size = slug, len(sh.Data)
+	if sh.Data == nil {
+		sh.Data = []byte{} // an empty file is still a share, and data is NOT NULL
+	}
+	if sh.Path != "" {
 		// a name is free again once the share that had it has expired
-		_, err := s.db.ExecContext(ctx, `DELETE FROM shares WHERE path = ? AND expires <= ?`, path, sh.Created.UnixMilli())
+		_, err := s.db.ExecContext(ctx, `DELETE FROM shares WHERE path = ? AND expires <= ?`, sh.Path, time.Now().UnixMilli())
 		if err != nil {
 			return Share{}, err
 		}
 	}
 	_, err = s.db.ExecContext(ctx,
 		`INSERT INTO shares (slug, path, owner, created, expires, mime, data) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		slug, nullable(path), owner, sh.Created.UnixMilli(), unixOrNull(expires), mime, data)
+		slug, nullable(sh.Path), sh.Owner, sh.Created.UnixMilli(), unixOrNull(sh.Expires), sh.MIME, sh.Data)
 	if err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed: shares.path") {
 		return Share{}, ErrTaken
 	}

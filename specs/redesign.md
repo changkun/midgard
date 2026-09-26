@@ -159,6 +159,8 @@ runs as midgard's own origin. Nothing is served from disk any more.
 The 74 existing shares on the server move into the table with their old path
 as their name, so every link already out there — `/midgard/random/…`,
 `/midgard/img/…`, `/midgard/code/…`, and the custom paths — keeps working.
+`mg server import --owner <sub>` does it, keeping when each file was made,
+leaving hidden files behind, and skipping what it imported before.
 
 ## 10. Deployment
 
@@ -194,7 +196,8 @@ Each step is its own PR, with its tests, merged when green.
    actor tokens on the device; basic auth removed. Needs §4's registration.
    *Done: #60, #61.*
 5. Sync: rooms per person, history, `mg history`. *Done: #62, #63, #64.*
-6. Shares, and `mg server import` for the existing ones. *Shares: done;
-   `mg share` replaces `mg alloc`, which stays as its alias.*
+6. Shares, and `mg server import` for the existing ones. *Done: #65, and
+   `mg server import`; `mg share` replaces `mg alloc`, which stays as its
+   alias.*
 7. The web page, with browser login and app tokens.
 8. Deploy on changkun.de, migrate, and retire the old checkout.

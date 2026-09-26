@@ -64,7 +64,7 @@ func (m *Midgard) CreateShare(c *gin.Context) {
 	name := ""
 	if in.Name != "" {
 		var err error
-		if name, err = shareName(in.Name); err != nil {
+		if name, err = ShareName(in.Name); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
 			return
 		}
@@ -176,11 +176,11 @@ func contentType(mime string) string {
 	return mime
 }
 
-// shareName turns a requested name into one a share may take, or says why it
+// ShareName turns a requested name into one a share may take, or says why it
 // cannot. It is part of a URL under the prefix, so it must be a clean
 // relative path, name no hidden file, and not start where midgard's own
 // routes are.
-func shareName(name string) (string, error) {
+func ShareName(name string) (string, error) {
 	p := path.Clean(strings.TrimPrefix(name, "/"))
 	if p == "." || !filepath.IsLocal(filepath.FromSlash(p)) {
 		return "", fmt.Errorf("invalid name %q", name)

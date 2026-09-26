@@ -108,6 +108,20 @@ $ make up
 $ mg server
 ```
 
+### 从旧版服务端迁移
+
+旧版服务端将分享以文件形式保存在 `data/repo` 下。新版服务端将分享保存在数据库中，
+不再从磁盘提供文件，因此需要将它们一次性导入为某人的分享；原有链接保持不变。使用 Docker：
+
+```sh
+$ docker compose run --rm midgard import --owner <owner> --dry-run   # 预览
+$ docker compose run --rm midgard import --owner <owner>
+```
+
+直接运行时，在服务端的运行目录下执行 `mg server import --owner <owner>`。
+owner 是主体 ID，与应用令牌相同。隐藏文件（例如旧 git 备份的 `.git`）不会导入。
+重复执行只会导入新增的文件。确认旧链接可用后即可删除 `data/repo`。
+
 ## Midgard 守护进程
 
 midgard 守护进程运行在**每一台设备上**（而非服务端），登录后自动启动。请以当前用户身份安装，不要使用 `sudo`：它同步的是你的桌面剪贴板，系统服务无法访问。
