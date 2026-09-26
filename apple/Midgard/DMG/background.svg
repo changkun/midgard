@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 400" width="660" height="400">
+  <!-- The disk image's window (apple/build.sh, settings.py): Midgard on the
+       left, Applications on the right, an arrow from one to the other. Light
+       and opaque, as Finder draws the labels under the icons black whatever
+       the appearance. The icons sit at y 160; the text stays clear of the
+       bottom, which the window's title bar may take from its height. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbfcff"/>
+      <stop offset="1" stop-color="#e6edfa"/>
+    </linearGradient>
+    <linearGradient id="arrow" x1="262" y1="0" x2="398" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9fb9ee"/>
+      <stop offset="1" stop-color="#2c66d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="660" height="400" fill="url(#sky)"/>
+  <!-- the logo's mountains, faint, along the bottom -->
+  <path d="M0 400 L96 318 L150 352 L236 284 L330 372 L400 330 L470 300 L560 352 L612 322 L660 346 L660 400 Z" fill="#dfe7f8"/>
+  <path d="M0 400 L60 368 L130 386 L236 336 L318 392 L420 364 L520 384 L600 362 L660 380 L660 400 Z" fill="#d4dff5"/>
+  <!-- from Midgard to Applications -->
+  <path d="M262 164 C 300 136, 360 136, 394 160" fill="none" stroke="url(#arrow)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M378 142 L396 162 L372 168" fill="none" stroke="#2c66d4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif" text-anchor="middle">
+    <text x="330" y="290" font-size="17" font-weight="600" fill="#1d2a52">Drag Midgard to Applications</text>
+    <text x="330" y="314" font-size="12.5" fill="#56648a">The first time you open it, allow it in System Settings › Privacy &amp; Security.</text>
+  </g>
+</svg>

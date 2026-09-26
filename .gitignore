@@ -28,3 +28,4 @@ data/
 # the Mac app: the engine library, and Swift's build
 /apple/build/
 /apple/Midgard/.build/
+__pycache__/

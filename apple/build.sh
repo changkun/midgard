@@ -23,6 +23,22 @@ engine() {
 		go build -trimpath -buildmode=c-archive -o "apple/build/libmidgard-$1.a" ./apple/engine
 }
 
+# dmgbuild lays out the disk image's window (apple/Midgard/DMG). It is set
+# up once, in apple/build/dmgbuild, from a Python of 3.10 or later; 1.6.7 is
+# the first whose background Finder still finds on macOS 15 and later.
+dmgbuild() {
+	venv=apple/build/dmgbuild
+	if [ ! -x "$venv/bin/dmgbuild" ]; then
+		for py in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
+			command -v "$py" >/dev/null && "$py" -c 'import sys; sys.exit(sys.version_info < (3, 10))' && break
+			py=""
+		done
+		[ -n "$py" ] || return 1
+		{ "$py" -m venv "$venv" && "$venv/bin/pip" install -q "dmgbuild==1.6.7"; } >&2 || { rm -rf "$venv"; return 1; }
+	fi
+	echo "$venv/bin/dmgbuild"
+}
+
 echo "building the engine for $ARCHS"
 mkdir -p apple/build
 libs=""
@@ -56,11 +72,20 @@ fi
 
 echo "packing the disk image"
 dmg=apple/build/Midgard.dmg
-stage=$(mktemp -d)
-cp -R "$app" "$stage/"
-ln -s /Applications "$stage/Applications" # to drag it to
-hdiutil create -quiet -volname Midgard -srcfolder "$stage" -format UDZO -ov "$dmg"
-rm -rf "$stage"
+rm -f "$dmg"
+if dmgbuild=$(dmgbuild); then
+	# the window's picture, for both kinds of screen, in the TIFF Finder shows
+	tiffutil -cathidpicheck apple/Midgard/DMG/background.png apple/Midgard/DMG/background@2x.png \
+		-out apple/build/background.tiff >/dev/null
+	"$dmgbuild" -s apple/Midgard/DMG/settings.py -D app="$app" -D background=apple/build/background.tiff Midgard "$dmg" >/dev/null
+else
+	echo "no dmgbuild: the disk image has no background, and its icons stand where Finder puts them" >&2
+	stage=$(mktemp -d)
+	cp -R "$app" "$stage/"
+	ln -s /Applications "$stage/Applications" # to drag it to
+	hdiutil create -quiet -volname Midgard -srcfolder "$stage" -format UDZO -ov "$dmg"
+	rm -rf "$stage"
+fi
 if [ -n "$MIDGARD_SIGN" ]; then codesign --force --sign "$MIDGARD_SIGN" "$dmg"; fi
 echo "$app ($(lipo -archs "$app/Contents/MacOS/Midgard"))"
 echo "$dmg"
