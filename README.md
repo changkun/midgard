@@ -29,7 +29,7 @@ $ make build && make up              # or run: mg server
 **2. A token for each device.** On the server, from the directory it runs in:
 
 ```sh
-$ mg server token add laptop
+$ mg server token add laptop --owner you
 mgt_...
 ```
 

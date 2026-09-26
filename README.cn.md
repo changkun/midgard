@@ -24,7 +24,7 @@ $ make build && make up              # 或直接运行：mg server
 **2. 为每台设备签发令牌。** 在服务端运行目录下：
 
 ```sh
-$ mg server token add laptop
+$ mg server token add laptop --owner you
 mgt_...
 ```
 

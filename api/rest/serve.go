@@ -17,16 +17,27 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/store"
 )
 
 // Midgard is the midgard server that serves all API endpoints.
 type Midgard struct {
-	s *http.Server
+	s     *http.Server
+	store *store.Store // nil until Serve opens it, or a test sets it
 
 	mu    sync.Mutex
 	users *list.List
 
 	keepalive keepalive // how dead daemons are noticed
+}
+
+// appTokens is what the login checks app tokens against: the store, when
+// there is one.
+func (m *Midgard) appTokens() appTokens {
+	if m.store == nil {
+		return nil
+	}
+	return m.store
 }
 
 // NewMidgard creates a new midgard server
@@ -37,6 +48,12 @@ func NewMidgard() *Midgard {
 // Serve serves Midgard RESTful APIs.
 func (m *Midgard) Serve() {
 	requirements()
+	st, err := store.Open(config.DBPath)
+	if err != nil {
+		fatal("cannot open the database", "path", config.DBPath, "err", err)
+	}
+	defer st.Close()
+	m.store = st
 	var wg sync.WaitGroup
 	wg.Go(func() {
 		// SIGTERM is how docker stop and systemd ask; only Ctrl-C was

@@ -5,6 +5,7 @@
 package rest
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/base64"
 	"log/slog"
@@ -15,7 +16,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"changkun.de/x/midgard/internal/token"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -85,10 +85,22 @@ const maxFailureAttempts = 5
 // Credentials is the basic auth authentication credentials
 type Credentials map[string]string
 
+// appTokens finds whom an app token acts for; *store.Store is one.
+type appTokens interface {
+	CheckAppToken(ctx context.Context, tok string) (owner, name string, ok bool)
+}
+
+// Keys the middleware sets on an authenticated request. The owner is whose
+// data the request may reach, and the only place handlers take it from.
+const (
+	ctxOwner  = "midgard_owner"
+	ctxDevice = "midgard_device"
+)
+
 // BasicAuthWithAttemptsControl offers basic auth with maximum failure control.
-// It also accepts a device token from tokens, sent as "Bearer <token>"; a
-// failed token counts against the address like a wrong password.
-func BasicAuthWithAttemptsControl(creds Credentials, tokens *token.Store) gin.HandlerFunc {
+// It also accepts an app token, sent as "Bearer <token>"; a failed token
+// counts against the address like a wrong password. tokens may be nil.
+func BasicAuthWithAttemptsControl(creds Credentials, tokens appTokens) gin.HandlerFunc {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
 	pairs := processCreds(creds)
 	return func(c *gin.Context) {
@@ -121,9 +133,11 @@ func BasicAuthWithAttemptsControl(creds Credentials, tokens *token.Store) gin.Ha
 		// tokens for a bearer.
 		header := c.Request.Header.Get("Authorization")
 		user, found := pairs.searchCredential(header)
+		owner, device := user, ""
 		if bearer, ok := strings.CutPrefix(header, "Bearer "); ok && tokens != nil {
-			if device, ok := tokens.Check(bearer); ok {
-				user, found = "device:"+device, true
+			if o, name, ok := tokens.CheckAppToken(c.Request.Context(), bearer); ok {
+				user, found = "device:"+name, true
+				owner, device = o, name
 			}
 		}
 		if !found {
@@ -154,6 +168,8 @@ func BasicAuthWithAttemptsControl(creds Credentials, tokens *token.Store) gin.Ha
 		// The user credentials was found, set user's id to key
 		// in this context.
 		c.Set("midgard_user", user)
+		c.Set(ctxOwner, owner)
+		c.Set(ctxDevice, device)
 	}
 }
 
