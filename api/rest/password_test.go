@@ -6,7 +6,7 @@ package rest
 
 import (
 	"os"
-	"strings"
+	"regexp"
 	"testing"
 )
 
@@ -32,7 +32,9 @@ func TestExamplePasswordMatchesConfigExample(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(b), "pass: "+examplePassword+"\n") {
+	// \s* rather than \n: Windows checks the file out with CRLF endings.
+	line := regexp.MustCompile(`(?m)^\s*pass:\s*` + regexp.QuoteMeta(examplePassword) + `\s*$`)
+	if !line.Match(b) {
 		t.Fatalf("config.example.yml does not use the placeholder password %q", examplePassword)
 	}
 }
