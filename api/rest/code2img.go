@@ -90,10 +90,18 @@ func (m *Midgard) Code2img(c *gin.Context) {
 		return
 	}
 
-	// save the code
+	// save the code. The directory exists only once the backup has copied
+	// the data template into the store, which it never does with backups
+	// off, so make sure of it here.
 	id := time.Now().UTC().Format(code2imgTimeFormat)
 	codefile := "/code/" + id // no extension! we don't care which language is using.
 
+	if err := os.MkdirAll(config.RepoPath+"/code", 0o755); err != nil {
+		c.JSON(http.StatusInternalServerError, &types.Code2ImgOutput{
+			Message: fmt.Sprintf("failed to save your code: %v", err),
+		})
+		return
+	}
 	err := os.WriteFile(config.RepoPath+codefile, utils.StringToBytes(in.Code), 0o644)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{
