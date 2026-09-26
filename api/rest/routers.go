@@ -41,6 +41,10 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
 		v1auth.GET("/ws", m.Subscribe)
 		v1auth.GET("/devices", m.Devices)
+		v1auth.GET("/history", m.History)
+		v1auth.DELETE("/history", m.ClearHistory)
+		v1auth.GET("/history/:id", m.HistoryEntry)
+		v1auth.DELETE("/history/:id", m.DeleteHistoryEntry)
 		v1auth.PUT("/allocate", m.AllocateURL)
 	}
 

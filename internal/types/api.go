@@ -6,6 +6,7 @@ package types
 
 import (
 	"strings"
+	"time"
 
 	"changkun.de/x/midgard/internal/config"
 )
@@ -96,4 +97,21 @@ type Device struct {
 // DevicesOutput is the answer to GET /devices.
 type DevicesOutput struct {
 	Devices []Device `json:"devices"`
+}
+
+// EndpointHistory is a person's clipboard history.
+func EndpointHistory() string { return config.ServerURL() + "/midgard/api/v1/history" }
+
+// HistoryEntry is one copy in a person's history, without its content.
+type HistoryEntry struct {
+	ID      int64     `json:"id"`
+	Device  string    `json:"device"`
+	Created time.Time `json:"created"`
+	Type    MIME      `json:"type"`
+	Size    int       `json:"size"`
+}
+
+// HistoryOutput is the answer to GET /history, newest first.
+type HistoryOutput struct {
+	History []HistoryEntry `json:"history"`
 }

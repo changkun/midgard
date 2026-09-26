@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	"changkun.de/x/midgard/internal/client"
-	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/types"
 	"github.com/spf13/cobra"
 )
@@ -65,7 +64,12 @@ func allocate(dstpath, srcpath string) {
 		os.Exit(1)
 	}
 	fmt.Println(url)
-	if clipboard.Local.Write(types.MIMEPlainText, []byte(url)) {
-		errorf("the link is on your clipboard.")
+	// Through the server, so the daemons keep it: on X11 and Wayland a copy
+	// this command made would go when it exits (see client.Copy).
+	if err := client.Copy(types.MIMEPlainText, []byte(url)); err != nil {
+		errorf("the link is not on your clipboard: %v", err)
+		return
 	}
+	copyHere(types.MIMEPlainText, []byte(url))
+	errorf("the link is on your clipboard.")
 }

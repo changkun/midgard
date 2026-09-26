@@ -27,6 +27,24 @@ $ mg logout
 The server lets in only the people on its `AUTH_ALLOWED_PRINCIPALS`, and each
 person reaches only their own clipboard.
 
+## History
+
+The server keeps your recent copies, from all your devices: the last 200, for
+30 days, up to 64 MB. The newest is your clipboard.
+
+```sh
+$ mg history              # newest first
+number  copied               device  type  size
+42      2026-09-26 13:02:11  laptop  text  14
+41      2026-09-26 12:58:40  phone   text  31
+$ mg history copy 41      # make copy 41 your clipboard again, on every device
+$ mg history rm 41
+$ mg history clear
+```
+
+Copies a password manager marks as secret never reach it: the daemon keeps
+them on the device. It is yours alone; no one else who signs in can see it.
+
 ## App Tokens
 
 For a client that cannot sign in, such as an iOS Shortcut or a device without a
