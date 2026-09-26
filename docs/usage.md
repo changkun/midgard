@@ -15,6 +15,31 @@ server status: OK
 daemon status: OK
 ```
 
+## Device Tokens
+
+Give each device its own token instead of the server's password. Revoke a
+token and only that device loses access, and no device holds the password
+that runs the server. On the server's machine, in the directory the server
+runs from:
+
+```sh
+$ mg server token add laptop   # prints the token, once
+$ mg server token ls           # devices that have a token
+$ mg server token rm laptop    # revoke it; takes effect at once
+```
+
+On the device, put the token in its `config.yml` and leave out
+`server.auth`:
+
+```yaml
+domain: example.com
+token: mgt_...
+```
+
+Anything else that talks to the server, such as an iOS Shortcut, can send it
+as `Authorization: Bearer mgt_...`. The server's user name and password keep
+working too.
+
 ## List Active Daemons
 
 Check all connected daemon users:

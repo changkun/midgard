@@ -10,10 +10,12 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"changkun.de/x/midgard/internal/token"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -84,7 +86,9 @@ const maxFailureAttempts = 5
 type Credentials map[string]string
 
 // BasicAuthWithAttemptsControl offers basic auth with maximum failure control.
-func BasicAuthWithAttemptsControl(creds Credentials) gin.HandlerFunc {
+// It also accepts a device token from tokens, sent as "Bearer <token>"; a
+// failed token counts against the address like a wrong password.
+func BasicAuthWithAttemptsControl(creds Credentials, tokens *token.Store) gin.HandlerFunc {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
 	pairs := processCreds(creds)
 	return func(c *gin.Context) {
@@ -113,8 +117,15 @@ func BasicAuthWithAttemptsControl(creds Credentials) gin.HandlerFunc {
 
 		}
 
-		// Search user in the slice of allowed credentials
-		user, found := pairs.searchCredential(c.Request.Header.Get("Authorization"))
+		// Search user in the slice of allowed credentials, or the device
+		// tokens for a bearer.
+		header := c.Request.Header.Get("Authorization")
+		user, found := pairs.searchCredential(header)
+		if bearer, ok := strings.CutPrefix(header, "Bearer "); ok && tokens != nil {
+			if device, ok := tokens.Check(bearer); ok {
+				user, found = "device:"+device, true
+			}
+		}
 		if !found {
 			if i, ok := blocklist.Load(ip); !ok {
 				info := &blockinfo{

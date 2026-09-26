@@ -13,6 +13,9 @@ title: "midgard"
 # localhost); spell it out otherwise, with the port if it is not the default,
 # for example http://mg.local:8456.
 domain: example.com
+# this device's token, from `mg server token add <device>` on the server. With
+# a token, a device needs no server.auth credentials.
+# token: mgt_...
 
 # midgard server settings
 # these settings are only used in server mode (run under `mg server`)
