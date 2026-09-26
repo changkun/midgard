@@ -5,7 +5,6 @@
 package daemon
 
 import (
-	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -13,7 +12,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -43,18 +41,17 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 		uri    string
 	)
 
-	if in.SourcePath != "" {
+	// The mg command reads the file and sends its bytes. The daemon does not
+	// open paths it is given: it answers any program on the machine, and
+	// would publish any file it can read.
+	if len(in.SourceData) > 0 {
 		source = types.SourceAttachment
-		b, err := os.ReadFile(in.SourcePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read %v, err: %w", in.SourcePath, err)
-		}
-		data = base64.StdEncoding.EncodeToString(b)
+		data = base64.StdEncoding.EncodeToString(in.SourceData)
 	}
 	if in.DesiredPath != "" {
 		// we want to make sure the extension of the file is correct
 		dext := filepath.Ext(in.DesiredPath)
-		sext := filepath.Ext(in.SourcePath)
+		sext := filepath.Ext(in.SourceName)
 		uri = strings.TrimSuffix(in.DesiredPath, dext) + sext
 	}
 
@@ -85,42 +82,10 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 
 // CodeToImage tries to create an image for the given code.
 func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (out *proto.CodeToImageOutput, err error) {
-	slog.Info("received a code2img request", "path", in.CodePath)
-	var code string
+	slog.Info("received a code2img request", "bytes", len(in.Code))
 
-	// the user presented a file, so we read it.
-	// if it does not exist, then we don't bother the server.
-	if len(in.CodePath) > 0 {
-
-		if in.Start == in.End && in.Start == 0 {
-			b, err := os.ReadFile(in.CodePath)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read the given file: %w", err)
-			}
-			code = utils.BytesToString(b)
-		} else {
-			f, err := os.Open(in.CodePath)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read the given file: %w", err)
-			}
-			s := bufio.NewScanner(f)
-			line := int64(1)
-			for s.Scan() {
-				if line < in.Start {
-					line++
-					continue
-				} else if line > in.End {
-					break
-				}
-				code += s.Text() + "\n"
-				line++
-			}
-			code = code[:len(code)-1] // remove the last \n
-			f.Close()
-		}
-	}
-
-	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image(), &types.Code2ImgInput{Code: code})
+	// An empty code asks the server to render the universal clipboard.
+	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image(), &types.Code2ImgInput{Code: in.Code})
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert: %w", err)
 	}
