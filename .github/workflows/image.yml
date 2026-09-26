@@ -41,7 +41,13 @@ jobs:
       run: |
         echo "version=$(git describe --always --tags)" >> "$GITHUB_OUTPUT"
         image="ghcr.io/${GITHUB_REPOSITORY,,}"
-        echo "tags=${image}:${GITHUB_REF_NAME},${image}:latest" >> "$GITHUB_OUTPUT"
+        # Only a version tag names a published image; a pull request's ref
+        # (46/merge) is not even a valid tag.
+        if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+          echo "tags=${image}:${GITHUB_REF_NAME},${image}:latest" >> "$GITHUB_OUTPUT"
+        else
+          echo "tags=midgard:ci" >> "$GITHUB_OUTPUT"
+        fi
     - uses: docker/build-push-action@v6
       with:
         context: .
