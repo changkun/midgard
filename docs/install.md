@@ -87,8 +87,10 @@ $ make build
 
 ## Configuration
 
-midgard reads its settings from a `config.yml` (see [config.yml](../config.yml)
-for every option). It uses the first one it finds:
+midgard reads its settings from a `config.yml`. Start from
+[config.example.yml](../config.example.yml), which lists every option, and keep
+your copy out of git: it holds the server password. midgard uses the first
+`config.yml` it finds:
 
 1. the file named by the `MIDGARD_CONF` environment variable, for example
    `MIDGARD_CONF=/path/to/your/config.yml`;

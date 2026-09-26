@@ -82,10 +82,21 @@ func (m *Midgard) serveHTTP() {
 	}
 }
 
+// examplePassword is the placeholder password in config.example.yml.
+const examplePassword = "change-me"
+
+// weakPassword reports whether p is a password nobody should serve with: none
+// at all, or the published placeholder, which anyone can read.
+func weakPassword(p string) bool { return p == "" || p == examplePassword }
+
 // requirements checks what the server needs from the system it runs on. It
 // runs when the server starts rather than at package init, because every mg
 // command links this package and only the server needs these.
 func requirements() {
+	if weakPassword(config.S().Auth.Pass) {
+		fatal("set server.auth.pass in config.yml: the server refuses to run " +
+			"with an empty password or the one from config.example.yml")
+	}
 	if config.S().Store.Backup.Enable {
 		if _, err := exec.LookPath("git"); err != nil {
 			fatal("the backup feature needs git; install it or disable backup in config.yml")
