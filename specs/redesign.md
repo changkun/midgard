@@ -331,6 +331,7 @@ Each step is its own PR, with its tests, merged when green.
    thread), then the app: tray menu, history window, sign-in, start at login.
    `mg daemon` stays for machines without a desktop.
 10. `mg` for agents: `--json` output, copy from stdin and paste to stdout,
-    stable exit codes.
+    stable exit codes. *Done: `mg copy`, `mg paste`, `mg history show`,
+    `--json`, exit codes 0–5 (docs/usage.md).*
 11. Deploy on changkun.de, migrate, and retire the old checkout.
 12. End-to-end encryption (§11).

@@ -19,12 +19,46 @@ daemon status: OK
 打开 `https://<你的域名>/midgard/` 并登录。网页上可以查看剪贴板并将文本发送到你的设备、
 浏览历史记录、将文件或剪贴板分享为链接并撤销分享，以及签发应用令牌。在没有运行守护进程的手机上同样可用。
 
+## 在命令行中复制与粘贴
+
+```sh
+$ mg copy hello world          # 复制到你所有设备的剪贴板
+$ git log -1 | mg copy         # 原样复制标准输入的内容
+$ mg copy < shot.png           # 一张 PNG 图片
+$ mg paste                     # 你的剪贴板：任意设备上最新的一条
+$ mg paste > shot.png          # 图片需输出到文件
+```
+
+复制的内容会在离线设备重新上线后送达。`mg paste` 需要你有一台设备在线，除非该内容仍在发往设备的路上。
+
+## 供智能体与脚本使用
+
+智能体或脚本通过 `mg` 使用 midgard：在其运行的地方配置应用令牌，或运行一次 `mg login`。任何输出结果的命令加上 `--json`，结果就会以 JSON 形式输出到标准输出，提示信息则输出到标准错误：
+
+```sh
+$ echo "the build is green" | mg copy --json
+{"seq": 58, "type": "text", "size": 19}
+$ mg history --json            # 另有：devices、queue、shares、share、paste、history show
+```
+
+每个命令都以下列退出码之一结束：
+
+| 退出码 | 含义 |
+|---|---|
+| 0 | 成功 |
+| 1 | 服务端或网络出错，或请求被拒绝 |
+| 2 | 命令用法错误 |
+| 3 | 本设备未登录：运行 `mg login`，或在 `config.yml` 中配置令牌 |
+| 4 | 你没有设备在线可以应答（剪贴板和历史记录都在设备上） |
+| 5 | 没有这条复制内容、分享、设备或令牌 |
+
 ## 历史记录
 
 你的每台设备都保存来自所有设备的最近复制内容：最近 200 条、30 天内、不超过 64 MB，每台设备上都相同。最新的一条就是你的剪贴板。服务端不保存任何内容，`mg history` 会向你某台在线的设备查询。
 
 ```sh
 $ mg history              # 最新的在前
+$ mg history show 41      # 输出第 41 条
 $ mg history copy 41      # 让第 41 条重新成为所有设备上的剪贴板
 $ mg history rm 41
 $ mg history clear

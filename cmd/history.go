@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -19,33 +18,39 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// historyCmd shows and edits the clipboard history the server keeps for the
-// person signed in, across all their devices.
+// historyCmd shows and edits the person's clipboard history, which is on
+// their devices; the server asks one that is online (specs/redesign.md §6).
 var historyCmd = &cobra.Command{
-	Use:   "history [copy|rm <number> | clear]",
+	Use:   "history [show|copy|rm <number> | clear]",
 	Short: "Show your clipboard history, from all your devices",
 	Long: `Show your clipboard history, from all your devices, newest first.
 
   mg history              list it
-  mg history copy <n>     put copy number n back on this device's clipboard
-  mg history rm <n>       remove copy number n
+  mg history show <n>     print copy number n, as mg paste prints the clipboard
+  mg history copy <n>     make copy number n your clipboard again, on every device
+  mg history rm <n>       remove copy number n, from every device
   mg history clear        remove all of it
 
-Copies a password manager marked are never kept.`,
+The history is on your devices: one of them must be online. Copies a password
+manager marked are never kept.`,
 	Args: cobra.MaximumNArgs(2),
 	Run: func(_ *cobra.Command, args []string) {
 		switch {
 		case len(args) == 0:
 			listHistory()
-		case len(args) == 2 && (args[0] == "copy" || args[0] == "rm"):
+		case len(args) == 2 && (args[0] == "show" || args[0] == "copy" || args[0] == "rm"):
 			id, err := strconv.ParseInt(args[1], 10, 64)
 			if err != nil {
-				errorf("a copy is named by its number, as mg history lists it")
-				os.Exit(2)
+				fail(exitUsage, "a copy is named by its number, as mg history lists it")
 			}
-			if args[0] == "copy" {
+			switch args[0] {
+			case "show":
+				t, data, err := client.HistoryEntry(id)
+				exitOn(err, "read that copy")
+				printCopy(t, data)
+			case "copy":
 				copyFromHistory(id)
-			} else {
+			default:
 				exitOn(client.DeleteHistoryEntry(id), "remove it")
 				errorf("removed.")
 			}
@@ -53,8 +58,7 @@ Copies a password manager marked are never kept.`,
 			exitOn(client.ClearHistory(), "clear the history")
 			errorf("your history is empty.")
 		default:
-			errorf("usage: mg history [copy|rm <number> | clear]")
-			os.Exit(2)
+			fail(exitUsage, "usage: mg history [show|copy|rm <number> | clear]")
 		}
 	},
 }
@@ -62,6 +66,10 @@ Copies a password manager marked are never kept.`,
 func listHistory() {
 	entries, err := client.History()
 	exitOn(err, "read the history")
+	if jsonOut {
+		printJSON(types.HistoryOutput{History: entries})
+		return
+	}
 	if len(entries) == 0 {
 		errorf("your history is empty.")
 		return
@@ -76,12 +84,17 @@ func listHistory() {
 }
 
 // copyFromHistory makes copy id the clipboard again, on all the person's
-// devices: it goes to the server, whose daemons apply it.
+// devices: it goes to the server, which relays it to them.
 func copyFromHistory(id int64) {
 	t, data, err := client.HistoryEntry(id)
 	exitOn(err, "read that copy")
-	exitOn(client.Copy(t, data), "put it on your clipboard")
+	seq, err := client.Copy(t, data)
+	exitOn(err, "put it on your clipboard")
 	copyHere(t, data)
+	if jsonOut {
+		printJSON(copied{Seq: seq, Type: t, Size: len(data)})
+		return
+	}
 	errorf("copy %d is on your clipboard.", id)
 }
 
@@ -94,17 +107,4 @@ func copyHere(t types.MIME, data []byte) {
 	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 		clipboard.Local.Write(t, data)
 	}
-}
-
-// exitOn stops the command with a message when err is not nil.
-func exitOn(err error, doing string) {
-	switch {
-	case err == nil:
-		return
-	case errors.Is(err, client.ErrNotFound):
-		errorf("cannot %s: there is no such copy in your history", doing)
-	default:
-		errorf("cannot %s: %v", doing, err)
-	}
-	os.Exit(1)
 }

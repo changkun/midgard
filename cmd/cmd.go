@@ -20,16 +20,26 @@ func Execute() {
 
 	var r = &cobra.Command{
 		Use:   "mg",
-		Short: "midgard is a universal clipboard service.",
-		Long: `midgard is a universal clipboard service.
-See https://changkun.de/s/midgard for more details.
+		Short: "midgard keeps your clipboard the same on all your devices.",
+		Long: `midgard keeps your clipboard the same on all your devices. Your copies are
+on your devices; your server passes them between them and keeps none.
+
+For scripts and agents, --json prints results as JSON, and every command
+exits with 0 on success, 1 when the server or the network failed, 2 when it
+was used wrongly, 3 when this device is not signed in, 4 when none of your
+devices is online to answer, and 5 when there is no such thing.
+
+See https://changkun.de/s/midgard for more.
 `,
 	}
+	r.PersistentFlags().BoolVar(&jsonOut, "json", false, "print results as JSON, for scripts and agents")
 
 	r.AddCommand(
 		versionCmd,
 		loginCmd,
 		logoutCmd,
+		copyCmd,
+		pasteCmd,
 		historyCmd,
 		serverCmd,
 		daemonCmd,

@@ -30,18 +30,20 @@ var devicesCmd = &cobra.Command{
 		case len(args) == 0:
 			devices, err := client.Devices()
 			exitOn(err, "list your devices")
+			if jsonOut {
+				printJSON(types.DevicesOutput{Devices: devices})
+				return
+			}
 			printDevices(devices)
 		case len(args) == 2 && args[0] == "forget":
 			err := client.ForgetDevice(args[1])
 			if errors.Is(err, client.ErrNotFound) {
-				errorf("you have no device %s", args[1])
-				os.Exit(1)
+				fail(exitNotFound, "you have no device %s", args[1])
 			}
 			exitOn(err, "forget it")
 			errorf("forgotten; the server no longer holds copies for it, until it connects again.")
 		default:
-			errorf("usage: mg devices [forget <id>]")
-			os.Exit(2)
+			fail(exitUsage, "usage: mg devices [forget <id>]")
 		}
 	},
 }
@@ -74,6 +76,10 @@ var queueCmd = &cobra.Command{
 		case len(args) == 0:
 			q, err := client.Queue()
 			exitOn(err, "read the queue")
+			if jsonOut {
+				printJSON(q)
+				return
+			}
 			if len(q.Queue) == 0 {
 				errorf("nothing is on its way; every device has everything.")
 				return
@@ -100,19 +106,16 @@ var queueCmd = &cobra.Command{
 		case len(args) == 2 && args[0] == "rm":
 			seq, err := strconv.ParseUint(args[1], 10, 64)
 			if err != nil {
-				errorf("%s is not a number from mg queue", args[1])
-				os.Exit(2)
+				fail(exitUsage, "%s is not a number from mg queue", args[1])
 			}
 			err = client.TakeBack(seq)
 			if errors.Is(err, client.ErrNotFound) {
-				errorf("the queue holds no copy %d", seq)
-				os.Exit(1)
+				fail(exitNotFound, "the queue holds no copy %d", seq)
 			}
 			exitOn(err, "take it back")
 			errorf("taken back; no device will get it.")
 		default:
-			errorf("usage: mg queue [rm <number>]")
-			os.Exit(2)
+			fail(exitUsage, "usage: mg queue [rm <number>]")
 		}
 	},
 }

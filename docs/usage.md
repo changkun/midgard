@@ -34,6 +34,43 @@ and can send text to your devices, go through your history, share a file or
 your clipboard at a link and revoke shares, and issue app tokens. It works on a
 phone too, where no daemon runs.
 
+## Copy and Paste from the Command Line
+
+```sh
+$ mg copy hello world          # to the clipboard of all your devices
+$ git log -1 | mg copy         # what comes on stdin, as it is
+$ mg copy < shot.png           # a PNG image
+$ mg paste                     # your clipboard, the newest copy from any device
+$ mg paste > shot.png          # an image goes to a file
+```
+
+A copy reaches devices that are off when they come back. `mg paste` needs
+one of your devices online, unless the copy is still on its way to them.
+
+## For Agents and Scripts
+
+`mg` is how an agent or a script uses midgard: give it an app token (see App
+Tokens) or run `mg login` once where it runs. Add `--json` to any command
+that prints results, and they come as JSON on stdout, while messages go to
+stderr:
+
+```sh
+$ echo "the build is green" | mg copy --json
+{"seq": 58, "type": "text", "size": 19}
+$ mg history --json            # also: devices, queue, shares, share, paste, history show
+```
+
+Every command ends with one of these exit codes:
+
+| Code | Means |
+|---|---|
+| 0 | it worked |
+| 1 | the server or the network failed, or refused |
+| 2 | the command was used wrongly |
+| 3 | this device is not signed in: `mg login`, or a token in `config.yml` |
+| 4 | none of your devices is online to answer (your clipboard and history are on them) |
+| 5 | there is no such copy, share, device or token |
+
 ## History
 
 Each of your devices keeps your recent copies, from all your devices: the last
@@ -46,6 +83,7 @@ $ mg history              # newest first
 number  copied               device  type  size
 42      2026-09-26 13:02:11  laptop  text  14
 41      2026-09-26 12:58:40  phone   text  31
+$ mg history show 41      # print it
 $ mg history copy 41      # make copy 41 your clipboard again, on every device
 $ mg history rm 41
 $ mg history clear

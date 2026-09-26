@@ -96,6 +96,10 @@ func TakeBack(seq uint64) error {
 // ErrNotFound means the server has no such thing for this person.
 var ErrNotFound = errors.New("not found")
 
+// ErrNoDevice means none of this person's devices is online to answer a read
+// of their clipboard or history, which are on the devices.
+var ErrNoDevice = errors.New("none of your devices is online")
+
 // call makes a request and turns a failure into an error, with the server's
 // reason when it gives one.
 func call(method, api string, in, out any) error {
@@ -109,6 +113,8 @@ func call(method, api string, in, out any) error {
 	switch {
 	case status == http.StatusNotFound:
 		return ErrNotFound
+	case status == http.StatusServiceUnavailable:
+		return ErrNoDevice
 	case status >= 300:
 		var reason struct {
 			Msg string `json:"msg"`
@@ -135,11 +141,7 @@ func HistoryEntry(id int64) (types.MIME, []byte, error) {
 	if err := call(http.MethodGet, fmt.Sprintf("%s/%d", types.EndpointHistory(), id), nil, &out); err != nil {
 		return "", nil, err
 	}
-	if out.Type == types.MIMEImagePNG {
-		b, err := base64.StdEncoding.DecodeString(out.Data)
-		return out.Type, b, err
-	}
-	return out.Type, []byte(out.Data), nil
+	return decode(out)
 }
 
 // DeleteHistoryEntry removes the copy numbered id from this person's history.
@@ -153,13 +155,34 @@ func ClearHistory() error {
 }
 
 // Copy puts data on this person's clipboard through the server, which hands
-// it to their daemons. A command cannot keep it there itself: on X11 and
-// Wayland a copy lasts only while the program that made it runs, and a
-// command exits at once. The daemons run on.
-func Copy(t types.MIME, data []byte) error {
+// it to their devices, and returns its number in the history. A command
+// cannot keep it there itself: on X11 and Wayland a copy lasts only while the
+// program that made it runs, and a command exits at once. The daemons run on.
+func Copy(t types.MIME, data []byte) (uint64, error) {
 	in := types.PutToUniversalClipboardInput{ClipboardData: types.ClipboardData{Type: t, Data: string(data)}}
 	if t == types.MIMEImagePNG {
 		in.Data = base64.StdEncoding.EncodeToString(data)
 	}
-	return call(http.MethodPost, types.EndpointClipboard(), &in, nil)
+	var out types.PutToUniversalClipboardOutput
+	err := call(http.MethodPost, types.EndpointClipboard(), &in, &out)
+	return out.Seq, err
+}
+
+// Clipboard is this person's clipboard: the newest copy, from one of their
+// devices or from what the server holds. ErrNoDevice when there is neither.
+func Clipboard() (types.MIME, []byte, error) {
+	var out types.ClipboardData
+	if err := call(http.MethodGet, types.EndpointClipboard(), nil, &out); err != nil {
+		return "", nil, err
+	}
+	return decode(out)
+}
+
+// decode is the bytes of a copy as the API encodes it: an image in base64.
+func decode(d types.ClipboardData) (types.MIME, []byte, error) {
+	if d.Type == types.MIMEImagePNG {
+		b, err := base64.StdEncoding.DecodeString(d.Data)
+		return d.Type, b, err
+	}
+	return d.Type, []byte(d.Data), nil
 }

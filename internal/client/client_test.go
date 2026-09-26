@@ -165,16 +165,39 @@ func TestHistory(t *testing.T) {
 func TestCopy(t *testing.T) {
 	var got types.PutToUniversalClipboardInput
 	server(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/midgard/api/v1/clipboard" {
+		switch r.Method + " " + r.URL.Path {
+		case "POST /midgard/api/v1/clipboard":
+			json.NewDecoder(r.Body).Decode(&got)
+			json.NewEncoder(w).Encode(types.PutToUniversalClipboardOutput{Message: "copied", Seq: 57})
+		case "GET /midgard/api/v1/clipboard":
+			json.NewEncoder(w).Encode(types.ClipboardData{Type: types.MIMEImagePNG, Data: base64.StdEncoding.EncodeToString([]byte("png"))})
+		default:
 			t.Errorf("request %s %s", r.Method, r.URL.Path)
 		}
-		json.NewDecoder(r.Body).Decode(&got)
-		json.NewEncoder(w).Encode(types.PutToUniversalClipboardOutput{Message: "saved"})
 	})
-	if err := Copy(types.MIMEPlainText, []byte("a link")); err != nil || got.Type != types.MIMEPlainText || got.Data != "a link" {
-		t.Fatalf("Copy(text) sent %+v, %v", got, err)
+	seq, err := Copy(types.MIMEPlainText, []byte("a link"))
+	if err != nil || seq != 57 || got.Type != types.MIMEPlainText || got.Data != "a link" {
+		t.Fatalf("Copy(text) = %d, %v; sent %+v", seq, err, got)
 	}
-	if err := Copy(types.MIMEImagePNG, []byte("png")); err != nil || got.Data != base64.StdEncoding.EncodeToString([]byte("png")) {
+	if _, err := Copy(types.MIMEImagePNG, []byte("png")); err != nil || got.Data != base64.StdEncoding.EncodeToString([]byte("png")) {
 		t.Fatalf("Copy(image) sent %+v, %v; want it base64", got, err)
+	}
+	if typ, data, err := Clipboard(); err != nil || typ != types.MIMEImagePNG || string(data) != "png" {
+		t.Fatalf("Clipboard() = %v, %q, %v; want the decoded image", typ, data, err)
+	}
+}
+
+// TestNoDevice: a read the server cannot answer, with none of the person's
+// devices online, is an error of its own, for mg to exit with its own code.
+func TestNoDevice(t *testing.T) {
+	server(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{"msg": "none of your devices is online"})
+	})
+	if _, _, err := Clipboard(); !errors.Is(err, ErrNoDevice) {
+		t.Fatalf("Clipboard() with no device online: %v, want ErrNoDevice", err)
+	}
+	if _, err := History(); !errors.Is(err, ErrNoDevice) {
+		t.Fatalf("History() with no device online: %v, want ErrNoDevice", err)
 	}
 }

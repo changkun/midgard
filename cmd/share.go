@@ -59,26 +59,25 @@ func share(name, srcpath string) {
 	if srcpath != "" {
 		b, err := os.ReadFile(srcpath)
 		if err != nil {
-			errorf("cannot read %s: %v", srcpath, err)
-			os.Exit(1)
+			fail(exitFailed, "cannot read %s: %v", srcpath, err)
 		}
 		if len(b) == 0 {
 			// no data means "the clipboard" to the server
-			errorf("%s is empty, there is nothing to share", srcpath)
-			os.Exit(1)
+			fail(exitUsage, "%s is empty, there is nothing to share", srcpath)
 		}
 		data, filename = b, filepath.Base(srcpath)
 	}
 
 	sh, err := client.Share(name, data, filename, expires)
-	if err != nil {
-		errorf("cannot share: %v", err)
-		os.Exit(1)
+	exitOn(err, "share")
+	if jsonOut {
+		printJSON(sh)
+	} else {
+		fmt.Println(sh.URL)
 	}
-	fmt.Println(sh.URL)
 	// Through the server, so the daemons keep it: on X11 and Wayland a copy
 	// this command made would go when it exits (see client.Copy).
-	if err := client.Copy(types.MIMEPlainText, []byte(sh.URL)); err != nil {
+	if _, err := client.Copy(types.MIMEPlainText, []byte(sh.URL)); err != nil {
 		errorf("the link is not on your clipboard: %v", err)
 		return
 	}
@@ -96,6 +95,10 @@ var sharesCmd = &cobra.Command{
 		case len(args) == 0:
 			shares, err := client.Shares()
 			exitOn(err, "list your shares")
+			if jsonOut {
+				printJSON(types.SharesOutput{Shares: shares})
+				return
+			}
 			if len(shares) == 0 {
 				errorf("you have shared nothing.")
 				return
@@ -114,14 +117,12 @@ var sharesCmd = &cobra.Command{
 		case len(args) == 2 && args[0] == "rm":
 			err := client.DeleteShare(args[1])
 			if errors.Is(err, client.ErrNotFound) {
-				errorf("you have no share %s", args[1])
-				os.Exit(1)
+				fail(exitNotFound, "you have no share %s", args[1])
 			}
 			exitOn(err, "revoke it")
 			errorf("revoked; its links no longer work.")
 		default:
-			errorf("usage: mg shares [rm <id>]")
-			os.Exit(2)
+			fail(exitUsage, "usage: mg shares [rm <id>]")
 		}
 	},
 }
