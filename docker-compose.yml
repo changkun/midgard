@@ -12,6 +12,7 @@ services:
       - ./data:/app/data
       # the configuration, with the server password, stays out of the image
       - ./config.yml:/app/config.yml:ro
+    env_file: .env # AUTH_URL and AUTH_ALLOWED_PRINCIPALS; see .env.template
     environment:
       MIDGARD_SERVER_ADDR: midgard:80
     cap_add:

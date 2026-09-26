@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"changkun.de/x/midgard/internal/store"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -87,7 +88,7 @@ type Credentials map[string]string
 
 // appTokens finds whom an app token acts for; *store.Store is one.
 type appTokens interface {
-	CheckAppToken(ctx context.Context, tok string) (owner, name string, ok bool)
+	CheckAppToken(ctx context.Context, tok string) (store.TokenHolder, bool)
 }
 
 // Keys the middleware sets on an authenticated request. The owner is whose
@@ -98,9 +99,13 @@ const (
 )
 
 // BasicAuthWithAttemptsControl offers basic auth with maximum failure control.
-// It also accepts an app token, sent as "Bearer <token>"; a failed token
-// counts against the address like a wrong password. tokens may be nil.
-func BasicAuthWithAttemptsControl(creds Credentials, tokens appTokens) gin.HandlerFunc {
+// It also accepts, sent as "Bearer <token>", an app token or a token from
+// auth.latere.ai; a failed one counts against the address like a wrong
+// password. tokens and latere may be nil.
+//
+// Once sign-in replaces the password, an app token is honoured only while its
+// owner is on the allowlist, so removing someone removes their Shortcuts too.
+func BasicAuthWithAttemptsControl(creds Credentials, tokens appTokens, latere *latereAuth) gin.HandlerFunc {
 	realm := "Basic realm=" + strconv.Quote("Authorization Required")
 	pairs := processCreds(creds)
 	return func(c *gin.Context) {
@@ -134,10 +139,23 @@ func BasicAuthWithAttemptsControl(creds Credentials, tokens appTokens) gin.Handl
 		header := c.Request.Header.Get("Authorization")
 		user, found := pairs.searchCredential(header)
 		owner, device := user, ""
-		if bearer, ok := strings.CutPrefix(header, "Bearer "); ok && tokens != nil {
-			if o, name, ok := tokens.CheckAppToken(c.Request.Context(), bearer); ok {
-				user, found = "device:"+name, true
-				owner, device = o, name
+		if bearer, ok := strings.CutPrefix(header, "Bearer "); ok {
+			switch {
+			case strings.HasPrefix(bearer, store.TokenPrefix):
+				if tokens == nil {
+					break
+				}
+				h, ok := tokens.CheckAppToken(c.Request.Context(), bearer)
+				// Without an allowlist, sign-in is not set up yet and the
+				// password still stands; tokens work as they did.
+				if ok && (latere == nil || latere.permits(h.Owner, h.Email)) {
+					user, found = "device:"+h.Name, true
+					owner, device = h.Owner, h.Name
+				}
+			default:
+				if sub, ok := latere.identify(c.Request); ok {
+					user, found, owner = sub, true, sub
+				}
 			}
 		}
 		if !found {

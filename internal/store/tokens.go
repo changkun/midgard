@@ -32,9 +32,17 @@ type AppToken struct {
 // ErrNotFound is returned when there is nothing under the name asked for.
 var ErrNotFound = errors.New("store: not found")
 
+// TokenHolder is whom an app token acts for.
+type TokenHolder struct {
+	Owner string // the principal id
+	Email string // the owner's email, when it was known at issue
+	Name  string // the token's name
+}
+
 // IssueAppToken issues a token named name for owner and returns it. It is
-// shown only this once; the store keeps its hash.
-func (s *Store) IssueAppToken(ctx context.Context, owner, name string) (string, error) {
+// shown only this once; the store keeps its hash. email, which may be empty,
+// is the owner's, for an allowlist that names people by email.
+func (s *Store) IssueAppToken(ctx context.Context, owner, email, name string) (string, error) {
 	if owner == "" {
 		return "", errors.New("store: an app token needs an owner")
 	}
@@ -48,8 +56,8 @@ func (s *Store) IssueAppToken(ctx context.Context, owner, name string) (string, 
 	tok := TokenPrefix + base64.RawURLEncoding.EncodeToString(raw[:])
 	h := sha256.Sum256([]byte(tok))
 	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO app_tokens (owner, name, hash, created) VALUES (?, ?, ?, ?)`,
-		owner, name, h[:], time.Now().Unix())
+		`INSERT INTO app_tokens (owner, email, name, hash, created) VALUES (?, ?, ?, ?, ?)`,
+		owner, email, name, h[:], time.Now().Unix())
 	if err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed: app_tokens.owner, app_tokens.name") {
 		return "", fmt.Errorf("%q already has a token; revoke it first", name)
 	}
@@ -95,17 +103,18 @@ func (s *Store) RevokeAppToken(ctx context.Context, owner, name string) error {
 // CheckAppToken finds whom tok acts for. It is the one lookup that takes no
 // owner, because finding the owner is what it is for. The hash is looked up,
 // not compared in Go, so how long a check takes says nothing about the token.
-func (s *Store) CheckAppToken(ctx context.Context, tok string) (owner, name string, ok bool) {
+func (s *Store) CheckAppToken(ctx context.Context, tok string) (TokenHolder, bool) {
+	var h TokenHolder
 	if !strings.HasPrefix(tok, TokenPrefix) {
-		return "", "", false
+		return h, false
 	}
-	h := sha256.Sum256([]byte(tok))
+	sum := sha256.Sum256([]byte(tok))
 	err := s.db.QueryRowContext(ctx,
-		`SELECT owner, name FROM app_tokens WHERE hash = ?`, h[:]).Scan(&owner, &name)
+		`SELECT owner, email, name FROM app_tokens WHERE hash = ?`, sum[:]).Scan(&h.Owner, &h.Email, &h.Name)
 	if err != nil { // sql.ErrNoRows among them
-		return "", "", false
+		return TokenHolder{}, false
 	}
-	return owner, name, true
+	return h, true
 }
 
 // validName accepts names that read well in a listing: letters, digits, and

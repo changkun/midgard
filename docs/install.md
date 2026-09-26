@@ -108,6 +108,14 @@ configuration at all.
 
 ## Midgard Server
 
+People sign in through [auth.latere.ai](https://auth.latere.ai). The server
+takes its settings from the environment, as changkun.de's other services do:
+`AUTH_ALLOWED_PRINCIPALS` lists who may use it, by email or principal id, and
+`AUTH_URL` names the issuer (auth.latere.ai by default). Copy
+[.env.template](../.env.template) to `.env`, which `docker-compose.yml` reads.
+A token is accepted only if it was minted for midgard, by that issuer, for
+someone on the list; app tokens stop working when their owner leaves it.
+
 Docker:
 
 ```

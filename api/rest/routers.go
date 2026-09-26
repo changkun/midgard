@@ -37,7 +37,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 
 	v1auth := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
 		config.S().Auth.User: config.S().Auth.Pass,
-	}, m.appTokens()))
+	}, m.appTokens(), m.latere))
 	{
 		v1auth.GET("/clipboard", m.GetFromUniversalClipboard)
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)

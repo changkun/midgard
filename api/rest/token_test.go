@@ -33,7 +33,7 @@ func TestAppTokenLogin(t *testing.T) {
 	s := withStore(t, m)
 	ctx := context.Background()
 
-	tok, err := s.IssueAppToken(ctx, "alice", "phone")
+	tok, err := s.IssueAppToken(ctx, "alice", "", "phone")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,10 +79,10 @@ func TestLoginNamesTheOwner(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	tok, _ := s.IssueAppToken(context.Background(), "alice", "phone")
+	tok, _ := s.IssueAppToken(context.Background(), "alice", "", "phone")
 
 	r := gin.New()
-	r.Use(BasicAuthWithAttemptsControl(Credentials{"midgard": "password"}, s))
+	r.Use(BasicAuthWithAttemptsControl(Credentials{"midgard": "password"}, s, nil))
 	var owner, device string
 	r.GET("/", func(c *gin.Context) { owner, device = c.GetString(ctxOwner), c.GetString(ctxDevice) })
 
