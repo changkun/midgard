@@ -2,185 +2,331 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="same-origin">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0b1437">
 <link rel="icon" href="data:,">
-<title>midgard</title>
+<title>Midgard</title>
 <style nonce="{{.Nonce}}">
 :root {
-  --bg: #f7f7f5; --card: #fff; --fg: #1d1d1f; --muted: #6e6e73; --line: #e3e3e0;
-  --accent: #2f6fdb; --accent-fg: #fff; --danger: #c0392b; --code: #f0f0ed;
+  --bg: #f4f6fb; --card: #ffffff; --ink: #0f172a; --muted: #64748b; --faint: #94a3b8;
+  --line: #e5e9f2; --soft: #f1f4fa; --brand: #1f47b8; --brand-ink: #ffffff; --brand-soft: #e8eefc;
+  --gold: #e8a015; --ok: #16a34a; --warn: #d97706; --bad: #dc2626;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .06);
+  --radius: 16px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #141415; --card: #1d1d1f; --fg: #ececec; --muted: #9a9aa0; --line: #2e2e31;
-    --accent: #5b8ff0; --accent-fg: #0b0b0c; --danger: #ef6f5e; --code: #26262a;
+    --bg: #0a0f1f; --card: #111a2e; --ink: #e6eaf2; --muted: #9aa6bd; --faint: #6b7890;
+    --line: #1e2a44; --soft: #16213a; --brand: #6f9bff; --brand-ink: #0a0f1f; --brand-soft: #1a2a52;
+    --gold: #f3b53a; --ok: #34d399; --warn: #fbbf24; --bad: #f87171;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
     color-scheme: dark;
   }
 }
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-header, main { max-width: 760px; margin: 0 auto; padding: 0 16px; }
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 20px; padding-bottom: 8px; }
-header h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
-header .who { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; text-align: right; }
-header .who a { color: inherit; }
-section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 12px 0; }
-section h2 { font-size: 15px; margin: 0 0 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 8px; }
-section h2 small { font-weight: normal; color: var(--muted); font-size: 13px; }
-p { margin: 0 0 12px; }
-.muted { color: var(--muted); }
-.error { color: var(--danger); }
-.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
-button, .button {
-  font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--line); background: var(--card); color: var(--fg); text-decoration: none;
-}
-button.primary, .button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
-button.danger { color: var(--danger); }
-button:disabled { opacity: .5; cursor: default; }
-input[type=text], select, textarea {
-  font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px;
-  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
-}
-input[type=text] { flex: 1 1 160px; min-width: 0; }
-textarea { width: 100%; min-height: 72px; resize: vertical; }
-pre, code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
-pre { background: var(--code); border-radius: 8px; padding: 10px 12px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; }
-code.secret { display: block; background: var(--code); border-radius: 8px; padding: 10px 12px; overflow-wrap: anywhere; user-select: all; }
-img.clip { max-width: 100%; max-height: 320px; border-radius: 8px; border: 1px solid var(--line); display: block; }
-ul.list { list-style: none; margin: 0; padding: 0; }
-ol.steps { margin: 0; padding-left: 20px; }
-ol.steps li { margin-bottom: 12px; }
-ol.steps p { margin: 0 0 6px; }
+a { color: var(--brand); }
 [hidden] { display: none !important; }
-ul.list > li { border-top: 1px solid var(--line); padding: 10px 0; }
-ul.list > li:first-child { border-top: 0; padding-top: 0; }
-.meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
-.meta a { color: var(--accent); }
-.item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-.item-head .row { margin-top: 0; }
+/* the icons' sprite: out of sight, and rendered, or Chrome paints the logo
+   without its gradients and clip */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* the bar at the top */
+.bar { position: sticky; top: 0; z-index: 5; backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--line); }
+.bar-in { max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 17px; letter-spacing: -.01em; color: var(--ink); text-decoration: none; }
+.brand svg { width: 30px; height: 30px; flex: none; }
+.bar .spacer { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 550; padding: 4px 10px; border-radius: 999px;
+  background: var(--soft); color: var(--muted); white-space: nowrap; }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.pill.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.pill.ok i { background: var(--ok); }
+.who { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; min-width: 0; }
+.who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.who a { white-space: nowrap; }
+
+/* the page */
+main { max-width: 1120px; margin: 0 auto; padding: 22px 20px 40px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.col { display: grid; gap: 20px; min-width: 0; }
+@media (max-width: 880px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; min-width: 0; }
+.card h2 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.head small { color: var(--muted); font-size: 13px; font-weight: 450; }
+.muted { color: var(--muted); }
+.note { font-size: 13px; color: var(--muted); margin: 10px 0 0; min-height: 1em; }
+.note.error, .error { color: var(--bad); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* controls */
+button, .button {
+  font: inherit; font-size: 14px; font-weight: 550; padding: 8px 14px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 7px; line-height: 1.2; transition: background .15s, border-color .15s;
+}
+button:hover, .button:hover { background: var(--soft); }
+button.primary, .button.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+button.primary:hover, .button.primary:hover { filter: brightness(1.08); }
+button.danger { color: var(--bad); }
+button.icon { padding: 6px; border-radius: 8px; border-color: transparent; background: transparent; color: var(--muted); }
+button.icon:hover { background: var(--soft); color: var(--ink); }
+button:disabled { opacity: .45; cursor: default; }
+button svg, .button svg { width: 16px; height: 16px; flex: none; }
+input[type=text], input[type=search], select, textarea {
+  font: inherit; font-size: 14px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--soft); color: var(--ink); outline: none; min-width: 0;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--brand); background: var(--card); }
+textarea { width: 100%; min-height: 84px; resize: vertical; }
+input[type=text], input[type=search] { flex: 1 1 160px; }
+code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+code.secret { display: block; background: var(--soft); border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; user-select: all; margin: 8px 0; }
+
+/* the clipboard */
+.clip { border-radius: 12px; background: var(--soft); padding: 16px; min-height: 96px; position: relative; overflow: hidden; }
+.clip pre { margin: 0; font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 280px; overflow: auto; }
+.clip img { max-width: 100%; max-height: 320px; border-radius: 8px; display: block; margin: 0 auto; }
+.clip .empty { color: var(--muted); text-align: center; padding: 20px 0; }
+.clip-meta { font-size: 13px; color: var(--muted); margin: 8px 2px 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+.composer { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px; }
+.composer.drop textarea { border-color: var(--brand); background: var(--brand-soft); }
+
+/* lists */
+.tabs { display: flex; gap: 4px; background: var(--soft); padding: 3px; border-radius: 10px; }
+.tabs button { border: 0; background: transparent; padding: 5px 10px; font-size: 13px; color: var(--muted); border-radius: 8px; }
+.tabs button[aria-pressed=true] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+ul.items { list-style: none; margin: 0; padding: 0; }
+ul.items > li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 8px; border-radius: 12px; }
+ul.items > li:hover { background: var(--soft); }
+ul.items > li.empty { color: var(--muted); justify-content: center; padding: 26px 8px; }
+ul.items > li.empty:hover { background: transparent; }
+.tile { width: 40px; height: 40px; flex: none; border-radius: 10px; background: var(--brand-soft); color: var(--brand);
+  display: grid; place-items: center; overflow: hidden; }
+.tile svg { width: 19px; height: 19px; }
+.tile img { width: 100%; height: 100%; object-fit: cover; }
+.body { flex: 1; min-width: 0; }
+.title { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.title.img { color: var(--muted); }
+.meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.meta a { color: var(--brand); }
+.acts { display: flex; gap: 2px; opacity: .0; transition: opacity .15s; }
+ul.items > li:hover .acts, ul.items > li:focus-within .acts { opacity: 1; }
+@media (hover: none) { .acts { opacity: 1; } }
+@media (max-width: 600px) {
+  ul.items > li { flex-wrap: wrap; }
+  ul.items > li > .body { flex: 1 1 calc(100% - 52px); }
+  ul.items > li > .acts { opacity: 1; width: 100%; padding-left: 50px; margin-top: -2px; }
+  .who span { display: none; }
+  .bar-in { padding: 10px 16px; }
+  main { padding: 16px 12px 32px; }
+  .card { padding: 16px; }
+}
 .preview { margin-top: 8px; }
-.note { font-size: 13px; color: var(--muted); margin-top: 8px; }
-.signin { text-align: center; padding: 32px 16px; }
-footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12px; color: var(--muted); }
+.preview pre { margin: 0; background: var(--soft); border-radius: 8px; padding: 10px; font: 13px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: auto; }
+.preview img { max-width: 100%; border-radius: 8px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); margin-right: 6px; vertical-align: 1px; }
+.dot.on { background: var(--ok); }
+.badge { font-size: 11.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
+
+/* iPhone */
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 26px 1fr; gap: 10px; }
+ol.steps > li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; background: var(--brand-soft); color: var(--brand);
+  font-weight: 650; font-size: 13px; display: grid; place-items: center; }
+ol.steps p { margin: 2px 0 8px; }
+
+/* sign-in */
+.hero { max-width: 820px; margin: 8vh auto; text-align: center; padding: 0 20px; }
+.hero h1, .hero > p { max-width: 560px; margin-left: auto; margin-right: auto; }
+.hero svg.logo { width: 96px; height: 96px; }
+.hero h1 { font-size: 32px; letter-spacing: -.02em; margin: 18px 0 8px; }
+.hero p { color: var(--muted); font-size: 17px; margin: 0 0 22px; }
+.hero .button.primary { font-size: 16px; padding: 11px 22px; }
+.points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 44px; text-align: left; }
+.points div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; font-size: 13.5px; color: var(--muted); }
+.points b { display: block; color: var(--ink); font-size: 14px; margin-bottom: 4px; }
+@media (max-width: 600px) { .points { grid-template-columns: 1fr; } }
+footer { max-width: 1120px; margin: 0 auto; padding: 0 20px 36px; font-size: 12.5px; color: var(--faint); display: flex; gap: 14px; flex-wrap: wrap; }
+footer a { color: var(--faint); }
 </style>
 </head>
 <body>
-<header>
-  <h1>midgard</h1>
-  {{if .Email}}<div class="who">{{.Email}} · <a href="{{.Logout}}">Sign out</a></div>{{end}}
-</header>
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M5 17l4.5-4.5 3 3 2.5-2.5L19 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 8H5V4M5.5 8A8 8 0 1 1 4 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="logo" viewBox="0 0 1024 1024">
+    <defs>
+      <linearGradient id="lsky" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0a1233"/><stop offset=".6" stop-color="#1a3584"/><stop offset="1" stop-color="#2c66d4"/></linearGradient>
+      <linearGradient id="ldusk" x1="0" y1="250" x2="0" y2="830" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#16307a"/><stop offset="1" stop-color="#3f7fe0"/></linearGradient>
+      <linearGradient id="lring" x1="220" y1="250" x2="804" y2="830" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#ee9d12"/></linearGradient>
+      <clipPath id="lworld"><circle cx="512" cy="540" r="290"/></clipPath>
+    </defs>
+    <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#lsky)"/>
+    <g clip-path="url(#lworld)">
+      <rect x="200" y="240" width="624" height="600" fill="url(#ldusk)"/>
+      <path d="M140 900L360 456L580 900Z" fill="#cfdcf3"/><path d="M360 456L580 900L424 900Z" fill="#94acd9"/>
+      <path d="M470 900L700 440L930 900Z" fill="#cfdcf3"/><path d="M700 440L930 900L770 900Z" fill="#94acd9"/>
+      <path d="M280 900L540 318L800 900Z" fill="#f4f7fd"/><path d="M540 318L800 900L606 900Z" fill="#a9bde4"/>
+    </g>
+    <circle cx="512" cy="540" r="290" fill="none" stroke="url(#lring)" stroke-width="48"/>
+  </symbol>
+</svg>
+
+<header class="bar"><div class="bar-in">
+  <a class="brand" href="{{.Page}}"><svg><use href="#logo"/></svg>Midgard</a>
+  <span class="spacer"></span>
+  {{if and .Email .Allowed}}<span class="pill" id="devices"><i></i>Connecting…</span>{{end}}
+  {{if .Email}}<span class="who"><span>{{.Email}}</span><a href="{{.Logout}}">Sign out</a></span>{{end}}
+</div></header>
+
 <main id="app" data-api="{{.API}}" data-csrf="{{.CSRF}}"{{if and .Email .Allowed}} data-signed-in="1"{{end}}>
-{{if .AuthError}}<section><p class="error">Signing in failed ({{.AuthError}}). Please try again.</p></section>{{end}}
+{{if .AuthError}}<div class="card error">Signing in failed ({{.AuthError}}). Please try again.</div>{{end}}
 {{if .NoSignIn}}
-  <section class="signin">
-    <p>Signing in from a browser is not set up on this server.</p>
-    <p class="muted">The <code>mg</code> command works as before.</p>
-  </section>
+  <div class="hero">
+    <svg class="logo"><use href="#logo"/></svg>
+    <h1>Midgard</h1>
+    <p>Signing in from a browser is not set up on this server. The Midgard app and <code>mg</code> work as before.</p>
+  </div>
 {{else if not .Email}}
-  <section class="signin">
-    <p>Your clipboard, across your devices.</p>
+  <div class="hero">
+    <svg class="logo"><use href="#logo"/></svg>
+    <h1>Your clipboard, on all your devices</h1>
+    <p>Copy on one, paste on another, and find what you copied yesterday on any of them.</p>
     <a class="button primary" href="{{.Login}}">Sign in</a>
-  </section>
+    <div class="points">
+      <div><b>Your copies stay yours</b>They live on your devices. This server passes them between them, and keeps none.</div>
+      <div><b>Every device</b>A Mac app in the menu bar, a daemon for Linux and Windows, Shortcuts on the iPhone, and this page.</div>
+      <div><b>One history</b>The same list, in the same order, on each of your devices, and links to share.</div>
+    </div>
+  </div>
 {{else if not .Allowed}}
-  <section class="signin">
-    <p>{{.Email}} may not use this server.</p>
+  <div class="hero">
+    <svg class="logo"><use href="#logo"/></svg>
+    <h1>Not on the list</h1>
+    <p>{{.Email}} may not use this server. Ask whoever runs it to add you.</p>
     <a class="button" href="{{.Logout}}">Sign out</a>
-  </section>
+  </div>
 {{else}}
-  <section id="clipboard">
-    <h2>Clipboard <small id="devices"></small></h2>
-    <div id="clip"><p class="muted">Loading…</p></div>
-    <div class="row">
-      <button id="clip-copy">Copy to this device</button>
-      <button id="clip-share">Share at a link</button>
-    </div>
-    <div class="row">
-      <textarea id="send-text" placeholder="Type or paste, then send it to your devices"></textarea>
-    </div>
-    <div class="row">
-      <button class="primary" id="send">Send to my devices</button>
-      <button id="send-local">Send this device's clipboard</button>
-    </div>
-    <p class="note" id="clip-status" role="status"></p>
-  </section>
-
-  <section id="history">
-    <h2>History <small>newest first</small></h2>
-    <ul class="list" id="history-list"></ul>
-    <div class="row"><button class="danger" id="history-clear">Clear history</button></div>
-  </section>
-
-  <section id="queue">
-    <h2>On its way <small>held until each of your devices has it</small></h2>
-    <ul class="list" id="queue-list"></ul>
-    <p class="note" id="queue-status" role="status"></p>
-  </section>
-
-  <section id="devices-section">
-    <h2>Devices <small>where your clipboard and history are</small></h2>
-    <ul class="list" id="device-list"></ul>
-  </section>
-
-  <section id="shares">
-    <h2>Shares <small>anyone with a link can open it</small></h2>
-    <ul class="list" id="share-list"></ul>
-    <div class="row">
-      <input type="file" id="share-file">
-    </div>
-    <div class="row">
-      <input type="text" id="share-name" placeholder="Name, optional: notes/today" autocomplete="off">
-      <select id="share-expires" aria-label="Expires">
-        <option value="0">Never expires</option>
-        <option value="3600">1 hour</option>
-        <option value="86400">1 day</option>
-        <option value="604800">1 week</option>
-        <option value="2592000">30 days</option>
-      </select>
-      <button class="primary" id="share-create">Share file</button>
-    </div>
-    <p class="note" id="share-status" role="status"></p>
-  </section>
-
-  <section id="iphone">
-    <h2>Your iPhone <small>two Shortcuts, set up in a minute</small></h2>
-    <ol class="steps">
-      <li>
-        <p>Issue a token for this iPhone. It is copied for you, to paste in step 3.</p>
-        <div class="row"><button class="primary" id="iphone-token">Issue a token</button></div>
-        <code class="secret" id="iphone-token-value" hidden></code>
-      </li>
-      <li>
-        <p>Add the Shortcuts, on the iPhone:</p>
+  <div class="grid">
+    <div class="col">
+      <section class="card" id="clipboard">
+        <div class="head"><h2>Your clipboard</h2><small id="clip-when"></small></div>
+        <div class="clip" id="clip"><div class="empty">Loading…</div></div>
         <div class="row">
-          <a class="button" href="shortcuts/get-from-midgard.shortcut">Add “Get from Midgard”</a>
-          <a class="button" href="shortcuts/send-to-midgard.shortcut">Add “Send to Midgard”</a>
+          <button id="clip-copy"><svg><use href="#i-copy"/></svg>Copy to this device</button>
+          <button id="clip-share"><svg><use href="#i-link"/></svg>Share at a link</button>
         </div>
-      </li>
-      <li><p>When Shortcuts asks, keep the server, and paste the token.</p></li>
-    </ol>
-    <p class="note">“Get” puts your newest copy on the iPhone’s clipboard; “Send” sends what you share to it, or the clipboard, to your devices. Add them to the Home Screen, or to Back Tap in Accessibility.</p>
-    <p class="note" id="iphone-status" role="status"></p>
-  </section>
+        <div class="composer" id="composer">
+          <textarea id="send-text" placeholder="Type, paste or drop an image here, then send it to your devices"></textarea>
+          <div class="row" id="composer-row">
+            <button class="primary" id="send"><svg><use href="#i-send"/></svg>Send to my devices</button>
+            <button id="send-local">Send this device’s clipboard</button>
+          </div>
+          <p class="note" id="clip-status" role="status"></p>
+        </div>
+      </section>
 
-  <section id="tokens">
-    <h2>App tokens <small>for Shortcuts and devices that cannot sign in</small></h2>
-    <ul class="list" id="token-list"></ul>
-    <div class="row">
-      <input type="text" id="token-name" placeholder="Name: phone-shortcut" autocomplete="off">
-      <button class="primary" id="token-issue">Issue</button>
+      <section class="card" id="history">
+        <div class="head">
+          <h2>History</h2>
+          <div class="tabs" role="group" aria-label="Show">
+            <button data-kind="all" aria-pressed="true">All</button>
+            <button data-kind="text" aria-pressed="false">Text</button>
+            <button data-kind="image" aria-pressed="false">Images</button>
+          </div>
+        </div>
+        <div class="row"><input type="search" id="history-search" placeholder="Search your history" autocomplete="off"></div>
+        <ul class="items" id="history-list"></ul>
+        <div class="row"><button class="danger" id="history-clear"><svg><use href="#i-trash"/></svg>Clear history</button></div>
+      </section>
     </div>
-    <div id="token-new"></div>
-    <p class="note" id="token-status" role="status"></p>
-  </section>
+
+    <div class="col">
+      <section class="card" id="devices-section">
+        <div class="head"><h2>Devices</h2><small>where your history is</small></div>
+        <ul class="items" id="device-list"></ul>
+      </section>
+
+      <section class="card" id="queue">
+        <div class="head"><h2>On its way</h2><small>held until each device has it</small></div>
+        <ul class="items" id="queue-list"></ul>
+        <p class="note" id="queue-status" role="status"></p>
+      </section>
+
+      <section class="card" id="iphone">
+        <div class="head"><h2>Your iPhone</h2><small>two Shortcuts, a minute</small></div>
+        <ol class="steps">
+          <li><div>
+            <p>Issue a token for the iPhone. It is copied, for step 3.</p>
+            <button class="primary" id="iphone-token">Issue a token</button>
+            <code class="secret" id="iphone-token-value" hidden></code>
+          </div></li>
+          <li><div>
+            <p>On the iPhone, add the Shortcuts:</p>
+            <div class="row">
+              <a class="button" href="shortcuts/get-from-midgard.shortcut">Get from Midgard</a>
+              <a class="button" href="shortcuts/send-to-midgard.shortcut">Send to Midgard</a>
+            </div>
+          </div></li>
+          <li><div><p>When Shortcuts asks, keep the server and paste the token. Put them on the Home Screen, or on Back Tap.</p></div></li>
+        </ol>
+        <p class="note" id="iphone-status" role="status"></p>
+      </section>
+
+      <section class="card" id="shares">
+        <div class="head"><h2>Shares</h2><small>anyone with a link can open it</small></div>
+        <ul class="items" id="share-list"></ul>
+        <div class="row"><input type="file" id="share-file"></div>
+        <div class="row">
+          <input type="text" id="share-name" placeholder="Name, optional: notes/today" autocomplete="off">
+          <select id="share-expires" aria-label="Expires">
+            <option value="0">Never expires</option>
+            <option value="3600">1 hour</option>
+            <option value="86400">1 day</option>
+            <option value="604800">1 week</option>
+            <option value="2592000">30 days</option>
+          </select>
+          <button class="primary" id="share-create">Share file</button>
+        </div>
+        <p class="note" id="share-status" role="status"></p>
+      </section>
+
+      <section class="card" id="tokens">
+        <div class="head"><h2>App tokens</h2><small>for Shortcuts, scripts, agents</small></div>
+        <ul class="items" id="token-list"></ul>
+        <div class="row">
+          <input type="text" id="token-name" placeholder="Name: build-box" autocomplete="off">
+          <button id="token-issue">Issue</button>
+        </div>
+        <div id="token-new"></div>
+        <p class="note" id="token-status" role="status"></p>
+      </section>
+    </div>
+  </div>
 {{end}}
 </main>
-<footer>Copies a password manager marks as secret never leave the device they were made on.</footer>
+<footer>
+  <span>Midgard keeps your copies on your devices. Copies a password manager marks as secret never leave the device they were made on.</span>
+  <a href="https://github.com/changkun/midgard">GitHub</a>
+</footer>
 <script nonce="{{.Nonce}}">
 "use strict";
 (() => {
@@ -188,19 +334,29 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
   if (!app.dataset.signedIn) return;
   const API = app.dataset.api, CSRF = app.dataset.csrf;
   const $ = (id) => document.getElementById(id);
+  const SVG = "http://www.w3.org/2000/svg";
 
   // el builds an element; strings become text, never markup.
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
     for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === undefined || v === null || v === false) continue;
       if (k === "class") e.className = v;
       else if (k === "text") e.textContent = v;
       else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
       else e.setAttribute(k, v);
     }
-    for (const k of kids) e.append(k);
+    for (const k of kids) if (k !== null && k !== undefined && k !== "") e.append(k);
     return e;
   }
+  function icon(name) {
+    const s = document.createElementNS(SVG, "svg");
+    const u = document.createElementNS(SVG, "use");
+    u.setAttribute("href", "#" + name);
+    s.append(u);
+    return s;
+  }
+  const iconButton = (name, label, onclick, cls) => el("button", { class: "icon " + (cls || ""), title: label, "aria-label": label, onclick }, icon(name));
 
   async function call(method, path, body) {
     const opts = { method, headers: {}, credentials: "same-origin" };
@@ -224,13 +380,7 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     }
     return data;
   }
-
-  // offline is a failed read that means no device of yours is online, which
-  // is how things are, not an error.
   const offline = (e) => e.status === 503;
-  const failure = (e) => el("li", offline(e)
-    ? { class: "muted", text: "None of your devices is online right now; your history is on them." }
-    : { class: "error", text: e.message });
 
   function status(id, text, bad) {
     const p = $(id);
@@ -239,14 +389,32 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
   }
 
   const size = (n) => n < 1024 ? n + " B" : n < 1 << 20 ? (n / 1024).toFixed(1) + " KB" : (n / (1 << 20)).toFixed(1) + " MB";
+  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto", style: "short" });
+  function ago(t) {
+    const s = (new Date(t) - new Date()) / 1000;
+    const a = Math.abs(s);
+    if (a < 45) return "just now";
+    for (const [u, n] of [["minute", 60], ["hour", 3600], ["day", 86400], ["week", 604800]]) {
+      if (a < n * (u === "minute" ? 60 : u === "hour" ? 24 : u === "day" ? 7 : 5)) return rtf.format(Math.round(s / n), u);
+    }
+    return new Date(t).toLocaleDateString();
+  }
   const when = (t) => new Date(t).toLocaleString();
-  const kind = (t) => t === "text" ? "text" : t;
+  const short = (name) => (name || "").replace(/\.local$/, "");
   const link = (url) => location.origin + url;
+  const isLink = (s) => /^https?:\/\/\S+$/.test((s || "").trim());
+
+  function tile(kind, preview, thumb) {
+    const t = el("div", { class: "tile" });
+    if (thumb) t.append(el("img", { src: thumb, alt: "" }));
+    else t.append(icon(kind === "image/png" ? "i-image" : isLink(preview) ? "i-link" : "i-text"));
+    return t;
+  }
 
   // view shows a copy: text as text, an image as an image.
   function view(d) {
-    if (!d || !d.data) return el("p", { class: "muted", text: "Empty." });
-    if (d.type === "image/png") return el("img", { class: "clip", src: "data:image/png;base64," + d.data, alt: "an image" });
+    if (!d || !d.data) return el("div", { class: "empty", text: "Your clipboard is empty." });
+    if (d.type === "image/png") return el("img", { src: "data:image/png;base64," + d.data, alt: "an image" });
     return el("pre", { text: d.data });
   }
 
@@ -259,16 +427,19 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     }
   }
 
-  // Clipboard
+  // The clipboard
   let current = null;
   async function loadClipboard() {
     try {
       current = await call("GET", "/clipboard");
-      $("clip").replaceChildren(current && current.data ? view(current) : el("p", { class: "muted", text: "Your clipboard is empty." }));
+      $("clip").replaceChildren(view(current));
+      const h = history.find((c) => c.id) || null;
+      $("clip-when").textContent = h ? ago(h.created) + " · " + short(h.device) : "";
     } catch (e) {
       current = null;
-      $("clip").replaceChildren(el("p", { class: offline(e) ? "muted" : "error",
+      $("clip").replaceChildren(el("div", { class: "empty",
         text: offline(e) ? "None of your devices is online, and nothing is on its way." : e.message }));
+      $("clip-when").textContent = "";
     }
   }
   $("clip-copy").addEventListener("click", async () => {
@@ -280,20 +451,64 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     try {
       const sh = await call("POST", "/shares", {});
       status("clip-status", "Shared at " + link(sh.url));
-      try { await navigator.clipboard.writeText(link(sh.url)); status("clip-status", "Shared at " + link(sh.url) + ", link copied."); } catch (_) {}
+      try { await navigator.clipboard.writeText(link(sh.url)); status("clip-status", "Shared at " + link(sh.url) + ". The link is copied."); } catch (_) {}
       loadShares();
     } catch (e) { status("clip-status", e.message, true); }
   });
-  async function send(data) {
-    if (!data) return status("clip-status", "Nothing to send.", true);
+
+  async function send(body, text) {
     try {
-      const r = await call("POST", "/clipboard", { type: "text", data });
-      remember({ seq: r.seq, text: data, at: Date.now() });
+      const r = await call("POST", "/clipboard", body);
+      if (text) remember({ seq: r.seq, text, at: Date.now() });
       status("clip-status", "Sent to your devices.");
       $("send-text").value = "";
-      loadClipboard(); loadHistory(); loadQueue();
+      refreshAll();
     } catch (e) { status("clip-status", e.message, true); }
   }
+  const sendText = (data) => data ? send({ type: "text", data }, data) : status("clip-status", "Nothing to send.", true);
+  $("send").addEventListener("click", () => sendText($("send-text").value));
+  $("send-local").addEventListener("click", async () => {
+    try { sendText(await navigator.clipboard.readText()); }
+    catch (e) { status("clip-status", "This browser would not read its clipboard: " + e.message, true); }
+  });
+
+  // An image pasted or dropped into the composer is sent as a PNG.
+  const base64 = (blob) => new Promise((ok, fail) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).slice(String(r.result).indexOf(",") + 1));
+    r.onerror = () => fail(r.error);
+    r.readAsDataURL(blob);
+  });
+  async function asPNG(blob) {
+    if (blob.type === "image/png") return blob;
+    const img = await createImageBitmap(blob);
+    const c = document.createElement("canvas");
+    c.width = img.width; c.height = img.height;
+    c.getContext("2d").drawImage(img, 0, 0);
+    return await new Promise((ok) => c.toBlob(ok, "image/png"));
+  }
+  async function sendImage(blob) {
+    try {
+      const png = await asPNG(blob);
+      if (png.size > 32 << 20) return status("clip-status", "An image holds at most 32 MB.", true);
+      send({ type: "image/png", data: await base64(png) });
+    } catch (e) { status("clip-status", "Cannot send that image: " + e.message, true); }
+  }
+  $("send-text").addEventListener("paste", (e) => {
+    const file = [...(e.clipboardData?.files || [])].find((f) => f.type.startsWith("image/"));
+    if (file) { e.preventDefault(); sendImage(file); }
+  });
+  const composer = $("composer");
+  composer.addEventListener("dragover", (e) => { e.preventDefault(); composer.classList.add("drop"); });
+  composer.addEventListener("dragleave", () => composer.classList.remove("drop"));
+  composer.addEventListener("drop", (e) => {
+    e.preventDefault();
+    composer.classList.remove("drop");
+    const file = [...(e.dataTransfer?.files || [])][0];
+    if (!file) return;
+    if (file.type.startsWith("image/")) sendImage(file);
+    else { $("share-file").files = e.dataTransfer.files; status("clip-status", "Not an image: share it as a file below, under Shares."); }
+  });
 
   // What this page sent, kept in the browser until a device has it: the
   // server holds copies in memory only, and a restart loses what no device
@@ -306,146 +521,168 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     try { localStorage.setItem(SENT, JSON.stringify(list)); } catch (_) {}
   }
   const remember = (item) => keepSent(sentList().concat([item]).slice(-50));
-  $("send").addEventListener("click", () => send($("send-text").value));
-  $("send-local").addEventListener("click", async () => {
-    try { send(await navigator.clipboard.readText()); }
-    catch (e) { status("clip-status", "This browser would not read its clipboard: " + e.message, true); }
-  });
+  const forget = (seq) => keepSent(sentList().filter((s) => s.seq !== seq));
 
   // History
+  let history = [];
+  let kind = "all";
+  const thumbs = new Map();
   async function loadHistory() {
-    const list = $("history-list");
     try {
-      const h = (await call("GET", "/history")).history || [];
-      if (!h.length) return list.replaceChildren(el("li", { class: "muted", text: "No copies yet." }));
-      list.replaceChildren(...h.map((c) => {
-        const preview = el("div", { class: "preview" });
-        const li = el("li", {},
-          el("div", { class: "item-head" },
-            el("div", { class: "meta", text: when(c.created) + " · " + c.device + " · " + kind(c.type) + " · " + size(c.size) }),
-            el("div", { class: "row" },
-              el("button", { text: "Show", onclick: async () => {
-                if (preview.childElementCount) return preview.replaceChildren();
-                try { preview.replaceChildren(view(await call("GET", "/history/" + c.id))); }
-                catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
-              } }),
-              el("button", { text: "Use", title: "Make it your clipboard again, on every device", onclick: async () => {
-                try { await call("POST", "/clipboard", await call("GET", "/history/" + c.id)); loadClipboard(); loadHistory(); }
-                catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
-              } }),
-              el("button", { class: "danger", text: "Delete", onclick: async () => {
-                try { await call("DELETE", "/history/" + c.id); loadHistory(); loadClipboard(); }
-                catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
-              } }))),
-          preview);
-        return li;
-      }));
+      history = (await call("GET", "/history")).history || [];
+      renderHistory();
     } catch (e) {
-      list.replaceChildren(failure(e));
+      history = [];
+      $("history-list").replaceChildren(el("li", { class: "empty",
+        text: offline(e) ? "None of your devices is online right now; your history is on them." : e.message }));
     }
   }
+  function renderHistory() {
+    const q = $("history-search").value.trim().toLowerCase();
+    const shown = history.filter((c) =>
+      (kind === "all" || (kind === "image") === (c.type === "image/png")) &&
+      (!q || (c.preview || "").toLowerCase().includes(q) || short(c.device).toLowerCase().includes(q)));
+    if (!shown.length) {
+      return $("history-list").replaceChildren(el("li", { class: "empty",
+        text: history.length ? "No copy matches." : "Nothing copied yet. Copy something on any of your devices." }));
+    }
+    let images = 0;
+    $("history-list").replaceChildren(...shown.map((c) => {
+      const isImage = c.type === "image/png";
+      const preview = el("div", { class: "preview" });
+      const t = tile(c.type, c.preview, thumbs.get(c.id));
+      if (isImage && !thumbs.has(c.id) && images++ < 12) {
+        call("GET", "/history/" + c.id).then((d) => {
+          thumbs.set(c.id, "data:image/png;base64," + d.data);
+          t.replaceChildren(el("img", { src: thumbs.get(c.id), alt: "" }));
+        }).catch(() => {});
+      }
+      const show = async () => {
+        if (preview.childElementCount) return preview.replaceChildren();
+        try { preview.replaceChildren(view(await call("GET", "/history/" + c.id))); }
+        catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
+      };
+      return el("li", {},
+        t,
+        el("div", { class: "body" },
+          el("div", { class: "title" + (isImage ? " img" : ""), text: isImage ? "Image · " + size(c.size) : (c.preview || "Text").trim() }),
+          el("div", { class: "meta", text: ago(c.created) + " · " + short(c.device) + (isImage ? "" : " · " + size(c.size)) }),
+          preview),
+        el("div", { class: "acts" },
+          isImage ? null : iconButton("i-eye", "Show it whole", show),
+          iconButton("i-copy", "Copy to this device", async () => {
+            try { await toThisDevice(await call("GET", "/history/" + c.id)); status("clip-status", "Copied to this device."); }
+            catch (e) { status("clip-status", e.message, true); }
+          }),
+          iconButton("i-back", "Make it your clipboard on every device", async () => {
+            try { await call("POST", "/clipboard", await call("GET", "/history/" + c.id)); refreshAll(); }
+            catch (e) { status("clip-status", e.message, true); }
+          }),
+          iconButton("i-trash", "Delete, on every device", async () => {
+            try { await call("DELETE", "/history/" + c.id); loadHistory(); }
+            catch (e) { status("clip-status", e.message, true); }
+          }, "danger")));
+    }));
+  }
+  $("history-search").addEventListener("input", renderHistory);
+  for (const b of document.querySelectorAll(".tabs button")) {
+    b.addEventListener("click", () => {
+      kind = b.dataset.kind;
+      for (const o of document.querySelectorAll(".tabs button")) o.setAttribute("aria-pressed", String(o === b));
+      renderHistory();
+    });
+  }
   $("history-clear").addEventListener("click", async () => {
-    if (!confirm("Delete every copy in your history, on every device?")) return;
-    try { await call("DELETE", "/history"); loadHistory(); loadClipboard(); } catch (e) { alert(e.message); }
+    if (!confirm("Delete every copy in your history, on every device? What is on your clipboards stays.")) return;
+    try { await call("DELETE", "/history"); refreshAll(); } catch (e) { alert(e.message); }
   });
 
   // On its way, and the devices
   async function loadQueue() {
     let q;
-    try {
-      q = await call("GET", "/queue");
-    } catch (e) {
-      $("queue-list").replaceChildren(failure(e));
-      return;
-    }
+    try { q = await call("GET", "/queue"); }
+    catch (e) { $("queue-list").replaceChildren(el("li", { class: "empty", text: e.message })); return; }
     const names = {};
-    for (const d of q.devices) names[d.id] = d.name;
+    for (const d of q.devices) names[d.id] = short(d.name);
     const online = q.devices.filter((d) => d.online);
-    $("devices").textContent = online.length ? "online: " + online.map((d) => d.name).join(", ") : "no device online";
+    const pill = $("devices");
+    pill.className = "pill" + (online.length ? " ok" : "");
+    pill.replaceChildren(el("i"), online.length === 1 ? "1 device online" : online.length ? online.length + " devices online" : "no device online");
+    pill.title = online.map((d) => short(d.name)).join(", ");
 
     const held = new Set(q.queue.map((e) => e.seq));
     const has = (seq) => q.devices.some((d) => d.counted && d.acked >= seq);
-    // what this page sent: waiting, delivered, or lost
     const sent = sentList();
     const lost = sent.filter((s) => !held.has(s.seq) && !has(s.seq));
     keepSent(sent.filter((s) => held.has(s.seq) || lost.includes(s)));
 
     const items = q.queue.map((e) => {
-      const what = {
-        copy: kind(e.type) + " · " + size(e.size),
-        void: "taken back",
-        delete: "deleting a copy",
-        clear: "clearing the history",
-      }[e.kind] || e.kind;
+      const what = { copy: (e.type === "image/png" ? "Image" : "Text") + " · " + size(e.size), void: "taken back",
+        delete: "deleting a copy", clear: "clearing the history" }[e.kind] || e.kind;
       const waiting = e.waiting.map((id) => names[id] || id).join(", ");
-      const row = el("div", { class: "row" });
-      if (e.kind === "copy" && !online.length) {
-        row.append(el("button", { text: "Take back", onclick: async () => {
-          try { await call("DELETE", "/queue/" + e.seq); forget(e.seq); loadQueue(); }
-          catch (err) { status("queue-status", err.message, true); }
-        } }));
-      }
-      return el("li", {}, el("div", { class: "item-head" },
-        el("div", { class: "meta", text: when(e.created) + " · from " + e.origin + " · " + what +
-          (waiting ? " · waiting for " + waiting : "") }), row));
+      return el("li", {},
+        el("div", { class: "tile" }, icon("i-clock")),
+        el("div", { class: "body" },
+          el("div", { class: "title", text: what }),
+          el("div", { class: "meta", text: ago(e.created) + " · from " + short(e.origin) + (waiting ? " · waiting for " + waiting : "") })),
+        e.kind === "copy" && !online.length ? el("div", { class: "acts" },
+          el("button", { text: "Take back", onclick: async () => {
+            try { await call("DELETE", "/queue/" + e.seq); forget(e.seq); loadQueue(); }
+            catch (err) { status("queue-status", err.message, true); }
+          } })) : null);
     });
     for (const s of lost) {
-      items.push(el("li", {}, el("div", { class: "item-head" },
-        el("div", { class: "meta error", text: "Lost before any device had it: “" + s.text.slice(0, 60) + "”" }),
-        el("div", { class: "row" },
-          el("button", { text: "Send again", onclick: () => { forget(s.seq); send(s.text); } }),
-          el("button", { text: "Dismiss", onclick: () => { forget(s.seq); loadQueue(); } })))));
+      items.push(el("li", {},
+        el("div", { class: "tile" }, icon("i-text")),
+        el("div", { class: "body" },
+          el("div", { class: "title error", text: "Lost before any device had it" }),
+          el("div", { class: "meta", text: "“" + s.text.slice(0, 80) + "”" })),
+        el("div", { class: "acts" },
+          el("button", { text: "Send again", onclick: () => { forget(s.seq); sendText(s.text); } }),
+          iconButton("i-trash", "Dismiss", () => { forget(s.seq); loadQueue(); }))));
     }
-    $("queue-list").replaceChildren(...(items.length ? items : [el("li", { class: "muted", text: "Nothing; every device has everything." })]));
+    $("queue-list").replaceChildren(...(items.length ? items : [el("li", { class: "empty", text: "Nothing; every device has everything." })]));
 
     $("device-list").replaceChildren(...(q.devices.length ? q.devices.map((d) => el("li", {},
-      el("div", { class: "item-head" },
-        el("div", { class: "meta", text: d.name + " · " + (d.online ? "online" : "last seen " + when(d.last_seen)) +
-          (d.counted ? "" : " · forgotten") }),
-        el("div", { class: "row" }, d.online || !d.counted ? "" : el("button", { class: "danger", text: "Forget", onclick: async () => {
-          if (!confirm("Forget " + d.name + "? The server stops holding copies for it, until it connects again.")) return;
+      el("div", { class: "body" },
+        el("div", { class: "title" }, el("span", { class: "dot" + (d.online ? " on" : "") }), short(d.name),
+          d.counted ? null : el("span", { class: "badge", text: "forgotten" })),
+        el("div", { class: "meta", text: d.online ? "online" : "last seen " + ago(d.last_seen) })),
+      d.online || !d.counted ? null : el("div", { class: "acts" },
+        el("button", { class: "danger", text: "Forget", onclick: async () => {
+          if (!confirm("Forget " + short(d.name) + "? Copies stop waiting for it, until it connects again.")) return;
           try { await call("DELETE", "/devices/" + encodeURIComponent(d.id)); loadQueue(); }
           catch (err) { status("queue-status", err.message, true); }
-        } }))))) : [el("li", { class: "muted", text: "No devices yet. Run midgard on a computer to add one." })]));
+        } })))) : [el("li", { class: "empty", text: "No devices yet. Install Midgard on a computer." })]));
   }
-  const forget = (seq) => keepSent(sentList().filter((s) => s.seq !== seq));
 
   // Shares
   async function loadShares() {
-    const list = $("share-list");
     try {
       const s = (await call("GET", "/shares")).shares || [];
-      if (!s.length) return list.replaceChildren(el("li", { class: "muted", text: "You have shared nothing." }));
-      list.replaceChildren(...s.map((sh) => {
+      $("share-list").replaceChildren(...(s.length ? s.map((sh) => {
         const expired = sh.expires && new Date(sh.expires) < new Date();
-        const exp = sh.expires ? (expired ? "expired " : "expires ") + when(sh.expires) : "never expires";
+        const exp = sh.expires ? (expired ? "expired " : "expires ") + ago(sh.expires) : "never expires";
         return el("li", {},
-          el("div", { class: "item-head" },
-            el("div", { class: "meta" },
-              el("a", { href: sh.url, target: "_blank", rel: "noopener", text: link(sh.url) }),
-              el("br"),
-              document.createTextNode(when(sh.created) + " · " + exp + " · " + kind(sh.type) + " · " + size(sh.size))),
-            el("div", { class: "row" },
-              el("button", { text: "Copy link", onclick: async () => {
-                try { await navigator.clipboard.writeText(link(sh.url)); status("share-status", "Link copied."); }
-                catch (e) { status("share-status", e.message, true); }
-              } }),
-              el("button", { class: "danger", text: "Revoke", onclick: async () => {
-                if (!confirm("Revoke this share? Its links stop working.")) return;
-                try { await call("DELETE", "/shares/" + encodeURIComponent(sh.slug)); loadShares(); }
-                catch (e) { status("share-status", e.message, true); }
-              } }))));
-      }));
+          tile(sh.type, "", null),
+          el("div", { class: "body" },
+            el("div", { class: "title" }, el("a", { href: sh.url, target: "_blank", rel: "noopener", text: link(sh.url).replace(/^https?:\/\//, "") })),
+            el("div", { class: "meta", text: ago(sh.created) + " · " + exp + " · " + size(sh.size) })),
+          el("div", { class: "acts" },
+            iconButton("i-copy", "Copy the link", async () => {
+              try { await navigator.clipboard.writeText(link(sh.url)); status("share-status", "Link copied."); }
+              catch (e) { status("share-status", e.message, true); }
+            }),
+            iconButton("i-trash", "Revoke", async () => {
+              if (!confirm("Revoke this share? Its links stop working.")) return;
+              try { await call("DELETE", "/shares/" + encodeURIComponent(sh.slug)); loadShares(); }
+              catch (e) { status("share-status", e.message, true); }
+            }, "danger")));
+      }) : [el("li", { class: "empty", text: "You have shared nothing." })]));
     } catch (e) {
-      list.replaceChildren(el("li", { class: "error", text: e.message }));
+      $("share-list").replaceChildren(el("li", { class: "empty error", text: e.message }));
     }
   }
-  const base64 = (file) => new Promise((ok, fail) => {
-    const r = new FileReader();
-    r.onload = () => ok(String(r.result).slice(String(r.result).indexOf(",") + 1));
-    r.onerror = () => fail(r.error);
-    r.readAsDataURL(file);
-  });
   $("share-create").addEventListener("click", async () => {
     const file = $("share-file").files[0];
     if (!file) return status("share-status", "Pick a file first.", true);
@@ -466,60 +703,70 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
 
   // App tokens
   async function loadTokens() {
-    const list = $("token-list");
     try {
       const t = (await call("GET", "/tokens")).tokens || [];
-      if (!t.length) return list.replaceChildren(el("li", { class: "muted", text: "No app tokens." }));
-      list.replaceChildren(...t.map((tok) => el("li", {},
-        el("div", { class: "item-head" },
-          el("div", { class: "meta", text: tok.name + " · issued " + when(tok.created) }),
-          el("div", { class: "row" },
-            el("button", { class: "danger", text: "Revoke", onclick: async () => {
-              if (!confirm("Revoke " + tok.name + "? What uses it is signed out.")) return;
-              try { await call("DELETE", "/tokens/" + encodeURIComponent(tok.name)); loadTokens(); }
-              catch (e) { status("token-status", e.message, true); }
-            } }))))));
+      $("token-list").replaceChildren(...(t.length ? t.map((tok) => el("li", {},
+        el("div", { class: "body" },
+          el("div", { class: "title", text: tok.name }),
+          el("div", { class: "meta", text: "issued " + ago(tok.created) })),
+        el("div", { class: "acts" },
+          iconButton("i-trash", "Revoke", async () => {
+            if (!confirm("Revoke " + tok.name + "? What uses it is signed out.")) return;
+            try { await call("DELETE", "/tokens/" + encodeURIComponent(tok.name)); loadTokens(); }
+            catch (e) { status("token-status", e.message, true); }
+          }, "danger")))) : [el("li", { class: "empty", text: "No app tokens." })]));
     } catch (e) {
-      list.replaceChildren(el("li", { class: "error", text: e.message }));
+      $("token-list").replaceChildren(el("li", { class: "empty error", text: e.message }));
     }
+  }
+  async function issue(name) {
+    const t = await call("POST", "/tokens", { name });
+    loadTokens();
+    return t;
   }
   $("token-issue").addEventListener("click", async () => {
     const name = $("token-name").value.trim();
     if (!name) return status("token-status", "Give it a name.", true);
     try {
-      const t = await call("POST", "/tokens", { name });
+      const t = await issue(name);
       $("token-name").value = "";
       $("token-new").replaceChildren(
-        el("p", { class: "note", text: "The token for " + t.name + ". It is shown only now; send it as “Authorization: Bearer <token>”." }),
+        el("p", { class: "note", text: "The token for " + t.name + ", shown only now. Send it as “Authorization: Bearer <token>”, or put it in config.yml." }),
         el("code", { class: "secret", text: t.token }),
-        el("div", { class: "row" }, el("button", { text: "Copy token", onclick: async () => {
-          try { await navigator.clipboard.writeText(t.token); status("token-status", "Copied."); } catch (e) { status("token-status", e.message, true); }
-        } }), el("button", { text: "Done", onclick: () => $("token-new").replaceChildren() })));
+        el("div", { class: "row" },
+          el("button", { text: "Copy token", onclick: async () => {
+            try { await navigator.clipboard.writeText(t.token); status("token-status", "Copied."); } catch (e) { status("token-status", e.message, true); }
+          } }),
+          el("button", { text: "Done", onclick: () => $("token-new").replaceChildren() })));
       status("token-status", "");
-      loadTokens();
     } catch (e) { status("token-status", e.message, true); }
   });
 
   // Your iPhone: a token for it, copied, for the Shortcuts to ask for
   $("iphone-token").addEventListener("click", async () => {
     try {
-      const name = "iphone-" + new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
-      const t = await call("POST", "/tokens", { name });
+      const t = await issue("iphone-" + new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-"));
       const code = $("iphone-token-value");
       code.textContent = t.token;
       code.hidden = false;
       try { await navigator.clipboard.writeText(t.token); status("iphone-status", "The token is copied. Now add the Shortcuts."); }
       catch (_) { status("iphone-status", "Copy the token above, then add the Shortcuts."); }
-      loadTokens();
     } catch (e) { status("iphone-status", e.message, true); }
   });
+  // on an iPhone, its setup comes first
+  if (/iPhone|iPad/.test(navigator.userAgent)) {
+    const grid = document.querySelector(".grid");
+    grid.prepend($("iphone"));
+  }
 
-  loadClipboard(); loadHistory(); loadQueue(); loadShares(); loadTokens();
+  async function refreshAll() {
+    await loadHistory();
+    loadClipboard(); loadQueue();
+  }
+  refreshAll(); loadShares(); loadTokens();
   // What is on its way changes as devices come and go.
   setInterval(() => { if (!document.hidden) loadQueue(); }, 5000);
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) { loadClipboard(); loadHistory(); loadQueue(); }
-  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshAll(); });
 })();
 </script>
 </body>

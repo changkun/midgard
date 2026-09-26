@@ -200,6 +200,7 @@ type page struct {
 	Allowed   bool   // whether they may use this server
 	NoSignIn  bool   // this server has no web sign-in set up
 	AuthError string // why the last sign-in failed, if it did
+	Page      string
 	Login     string
 	Logout    string
 	API       string
@@ -212,6 +213,7 @@ func (m *Midgard) WebPage(c *gin.Context) {
 		Nonce:     nonce(),
 		NoSignIn:  m.web == nil,
 		AuthError: c.Query("auth_error"),
+		Page:      webPage,
 		Login:     webLogin,
 		Logout:    webLogout,
 		API:       "/midgard/api/v1",
