@@ -30,11 +30,13 @@ type Midgard struct {
 
 	mu    sync.Mutex
 	users *list.List
+
+	keepalive keepalive // how dead daemons are noticed
 }
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{users: list.New()}
+	return &Midgard{users: list.New(), keepalive: defaultKeepalive}
 }
 
 // Serve serves Midgard RESTful APIs.

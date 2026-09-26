@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"changkun.de/x/midgard/internal/clipboard"
 	"changkun.de/x/midgard/internal/types"
@@ -24,12 +25,31 @@ import (
 
 var uid atomic.Uint64 // atomic, incremental
 
+// keepalive is how the server notices daemons that went away without closing
+// their connection.
+type keepalive struct {
+	// ping is how often the server pings each daemon; a daemon answers
+	// from its read loop, including daemons built before they sent pings
+	// of their own.
+	ping time.Duration
+	// wait is how long a daemon may stay silent before the server drops
+	// it. Without it a dead daemon stayed listed forever, and every
+	// broadcast kept writing to it.
+	wait time.Duration
+	// write bounds a single write, so one stuck daemon cannot hold up a
+	// broadcast to all the others.
+	write time.Duration
+}
+
+var defaultKeepalive = keepalive{ping: 30 * time.Second, wait: 90 * time.Second, write: 10 * time.Second}
+
 // user represents a daemon subscriber
 type user struct {
 	sync.Mutex
 	index uint64
 	id    string
 	conn  *websocket.Conn
+	write time.Duration // bounds each send
 }
 
 func (d *user) send(msg *types.WebsocketMessage) error {
@@ -39,6 +59,7 @@ func (d *user) send(msg *types.WebsocketMessage) error {
 	if d.conn == nil {
 		return errors.New("sender connection was closed")
 	}
+	d.conn.SetWriteDeadline(time.Now().Add(d.write))
 	return d.conn.WriteMessage(websocket.BinaryMessage, msg.Encode())
 }
 
@@ -98,16 +119,17 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 
 		// register to the subscribers
 		idx := uid.Add(1)
-		u = &user{index: idx, id: wsm.UserID, conn: conn}
+		u = &user{index: idx, id: wsm.UserID, conn: conn, write: m.keepalive.write}
 		e = m.users.PushBack(u)
 		slog.Info("a daemon subscribed", "subscribers", m.users.Len())
 		m.mu.Unlock()
 
-		// send confirmation
-		err := conn.WriteMessage(
-			websocket.BinaryMessage, (&types.WebsocketMessage{
-				Action: types.ActionHandshakeReady, UserID: u.id,
-			}).Encode())
+		// send confirmation. From here on every write goes through
+		// u.send: a broadcast can be writing to this connection at the same
+		// time, and gorilla/websocket allows one writer at a time.
+		err := u.send(&types.WebsocketMessage{
+			Action: types.ActionHandshakeReady, UserID: u.id,
+		})
 		if err != nil {
 			slog.Error("cannot complete the register handshake", "err", err)
 			return
@@ -122,6 +144,37 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		return
 	}
 
+	// Anything the daemon sends proves it is still there; pings go out
+	// on their own, as control frames may be written alongside u.send.
+	ka := m.keepalive
+	alive := func() { conn.SetReadDeadline(time.Now().Add(ka.wait)) }
+	alive()
+	conn.SetPongHandler(func(string) error { alive(); return nil })
+	conn.SetPingHandler(func(data string) error {
+		alive()
+		err := conn.WriteControl(websocket.PongMessage, []byte(data), time.Now().Add(ka.write))
+		if errors.Is(err, websocket.ErrCloseSent) {
+			return nil
+		}
+		return err
+	})
+	stopPing := make(chan struct{})
+	defer close(stopPing)
+	go func() {
+		t := time.NewTicker(ka.ping)
+		defer t.Stop()
+		for {
+			select {
+			case <-stopPing:
+				return
+			case <-t.C:
+				if conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(ka.write)) != nil {
+					return
+				}
+			}
+		}
+	}()
+
 	// start looping
 	for {
 		_, msg, err := conn.ReadMessage()
@@ -134,16 +187,17 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 			conn.Close()
 			return
 		}
+		alive()
 
 		wsm := &types.WebsocketMessage{}
 		err = wsm.Decode(msg)
 		if err != nil {
 			// send a bad format message
 			// we con't care about the error here (?)
-			conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+			u.send(&types.WebsocketMessage{
 				Action:  types.ActionTerminate,
 				Message: "bad message format",
-			}).Encode())
+			})
 			conn.Close()
 			return
 		}
@@ -170,11 +224,11 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 	}
 }
 
-func terminate(conn *websocket.Conn, err error) error {
-	conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+func terminate(u *user, err error) error {
+	u.send(&types.WebsocketMessage{
 		Action:  types.ActionTerminate,
 		Message: "bad action data",
-	}).Encode())
+	})
 	return fmt.Errorf("bad action: %w", err)
 }
 
@@ -183,7 +237,7 @@ func (m *Midgard) handleListDaemons(conn *websocket.Conn, u *user, data []byte) 
 	defer m.mu.Unlock()
 	defer func() {
 		if err != nil {
-			err = terminate(conn, err)
+			err = terminate(u, err)
 		}
 	}()
 
@@ -195,20 +249,20 @@ func (m *Midgard) handleListDaemons(conn *websocket.Conn, u *user, data []byte) 
 		fmt.Fprintf(&resp, "%d\t%s\n", u.index, u.id)
 	}
 
-	return conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+	return u.send(&types.WebsocketMessage{
 		Action: types.ActionListDaemonsResponse,
 		Data:   utils.StringToBytes(resp.String()),
-	}).Encode())
+	})
 }
 
 func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data []byte) error {
 	b := &types.PutToUniversalClipboardInput{}
 	err := json.Unmarshal(data, b)
 	if err != nil {
-		_ = conn.WriteMessage(websocket.BinaryMessage, (&types.WebsocketMessage{
+		_ = u.send(&types.WebsocketMessage{
 			Action:  types.ActionTerminate,
 			Message: "bad action data",
-		}).Encode())
+		})
 		return types.ErrBadAction
 	}
 	var raw []byte

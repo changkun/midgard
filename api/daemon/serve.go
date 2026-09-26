@@ -17,20 +17,18 @@ import (
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
 	"changkun.de/x/midgard/internal/utils"
-	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 )
 
 // Daemon is the midgard daemon that interact with midgard server.
 type Daemon struct {
-	sync.Mutex
+	ID      string
+	s       *grpc.Server
+	readChs sync.Map                     // {string: chan *types.WebsocketMessage}
+	writeCh chan *types.WebsocketMessage // writeCh is used for sending message along ws.
+	url     string                       // the server's websocket, when not the configured one
 
-	ID          string
-	forceUpdate chan struct{}
-	s           *grpc.Server
-	ws          *websocket.Conn
-	readChs     sync.Map                     // {string: chan *types.WebsocketMessage}
-	writeCh     chan *types.WebsocketMessage // writeCh is used for sending message along ws.
+	keepalive keepalive // how the connection to the server is kept alive
 
 	proto.UnimplementedMidgardServer
 }
@@ -45,9 +43,9 @@ func NewDaemon() *Daemon {
 		}
 	}
 	return &Daemon{
-		ID:          id,
-		forceUpdate: make(chan struct{}, 1),
-		writeCh:     make(chan *types.WebsocketMessage, 10),
+		ID:        id,
+		writeCh:   make(chan *types.WebsocketMessage, 10),
+		keepalive: defaultKeepalive,
 	}
 }
 
@@ -88,8 +86,7 @@ func (m *Daemon) Serve(ctx context.Context) {
 	})
 	wg.Go(func() {
 		defer slog.Info("the websocket is terminated")
-		m.wsConnect()
-		m.handleIO(ctx)
+		m.stayConnected(ctx)
 	})
 	wg.Go(func() {
 		defer slog.Info("the clipboard watcher is terminated")
