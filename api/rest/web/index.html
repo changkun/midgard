@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="same-origin">
+<link rel="icon" href="data:,">
+<title>midgard</title>
+<style nonce="{{.Nonce}}">
+:root {
+  --bg: #f7f7f5; --card: #fff; --fg: #1d1d1f; --muted: #6e6e73; --line: #e3e3e0;
+  --accent: #2f6fdb; --accent-fg: #fff; --danger: #c0392b; --code: #f0f0ed;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141415; --card: #1d1d1f; --fg: #ececec; --muted: #9a9aa0; --line: #2e2e31;
+    --accent: #5b8ff0; --accent-fg: #0b0b0c; --danger: #ef6f5e; --code: #26262a;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+header, main { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 20px; padding-bottom: 8px; }
+header h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+header .who { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; text-align: right; }
+header .who a { color: inherit; }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 12px 0; }
+section h2 { font-size: 15px; margin: 0 0 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 8px; }
+section h2 small { font-weight: normal; color: var(--muted); font-size: 13px; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); }
+.error { color: var(--danger); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+button, .button {
+  font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--card); color: var(--fg); text-decoration: none;
+}
+button.primary, .button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+button.danger { color: var(--danger); }
+button:disabled { opacity: .5; cursor: default; }
+input[type=text], select, textarea {
+  font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+}
+input[type=text] { flex: 1 1 160px; min-width: 0; }
+textarea { width: 100%; min-height: 72px; resize: vertical; }
+pre, code { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+pre { background: var(--code); border-radius: 8px; padding: 10px 12px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; }
+code.secret { display: block; background: var(--code); border-radius: 8px; padding: 10px 12px; overflow-wrap: anywhere; user-select: all; }
+img.clip { max-width: 100%; max-height: 320px; border-radius: 8px; border: 1px solid var(--line); display: block; }
+ul.list { list-style: none; margin: 0; padding: 0; }
+ul.list > li { border-top: 1px solid var(--line); padding: 10px 0; }
+ul.list > li:first-child { border-top: 0; padding-top: 0; }
+.meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.meta a { color: var(--accent); }
+.item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.item-head .row { margin-top: 0; }
+.preview { margin-top: 8px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.signin { text-align: center; padding: 32px 16px; }
+footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>midgard</h1>
+  {{if .Email}}<div class="who">{{.Email}} · <a href="{{.Logout}}">Sign out</a></div>{{end}}
+</header>
+<main id="app" data-api="{{.API}}" data-csrf="{{.CSRF}}"{{if and .Email .Allowed}} data-signed-in="1"{{end}}>
+{{if .AuthError}}<section><p class="error">Signing in failed ({{.AuthError}}). Please try again.</p></section>{{end}}
+{{if .NoSignIn}}
+  <section class="signin">
+    <p>Signing in from a browser is not set up on this server.</p>
+    <p class="muted">The <code>mg</code> command works as before.</p>
+  </section>
+{{else if not .Email}}
+  <section class="signin">
+    <p>Your clipboard, across your devices.</p>
+    <a class="button primary" href="{{.Login}}">Sign in</a>
+  </section>
+{{else if not .Allowed}}
+  <section class="signin">
+    <p>{{.Email}} may not use this server.</p>
+    <a class="button" href="{{.Logout}}">Sign out</a>
+  </section>
+{{else}}
+  <section id="clipboard">
+    <h2>Clipboard <small id="devices"></small></h2>
+    <div id="clip"><p class="muted">Loading…</p></div>
+    <div class="row">
+      <button id="clip-copy">Copy to this device</button>
+      <button id="clip-share">Share at a link</button>
+    </div>
+    <div class="row">
+      <textarea id="send-text" placeholder="Type or paste, then send it to your devices"></textarea>
+    </div>
+    <div class="row">
+      <button class="primary" id="send">Send to my devices</button>
+      <button id="send-local">Send this device's clipboard</button>
+    </div>
+    <p class="note" id="clip-status" role="status"></p>
+  </section>
+
+  <section id="history">
+    <h2>History <small>newest first</small></h2>
+    <ul class="list" id="history-list"></ul>
+    <div class="row"><button class="danger" id="history-clear">Clear history</button></div>
+  </section>
+
+  <section id="shares">
+    <h2>Shares <small>anyone with a link can open it</small></h2>
+    <ul class="list" id="share-list"></ul>
+    <div class="row">
+      <input type="file" id="share-file">
+    </div>
+    <div class="row">
+      <input type="text" id="share-name" placeholder="Name, optional: notes/today" autocomplete="off">
+      <select id="share-expires" aria-label="Expires">
+        <option value="0">Never expires</option>
+        <option value="3600">1 hour</option>
+        <option value="86400">1 day</option>
+        <option value="604800">1 week</option>
+        <option value="2592000">30 days</option>
+      </select>
+      <button class="primary" id="share-create">Share file</button>
+    </div>
+    <p class="note" id="share-status" role="status"></p>
+  </section>
+
+  <section id="tokens">
+    <h2>App tokens <small>for Shortcuts and devices that cannot sign in</small></h2>
+    <ul class="list" id="token-list"></ul>
+    <div class="row">
+      <input type="text" id="token-name" placeholder="Name: phone-shortcut" autocomplete="off">
+      <button class="primary" id="token-issue">Issue</button>
+    </div>
+    <div id="token-new"></div>
+    <p class="note" id="token-status" role="status"></p>
+  </section>
+{{end}}
+</main>
+<footer>Copies a password manager marks as secret never leave the device they were made on.</footer>
+<script nonce="{{.Nonce}}">
+"use strict";
+(() => {
+  const app = document.getElementById("app");
+  if (!app.dataset.signedIn) return;
+  const API = app.dataset.api, CSRF = app.dataset.csrf;
+  const $ = (id) => document.getElementById(id);
+
+  // el builds an element; strings become text, never markup.
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v);
+    }
+    for (const k of kids) e.append(k);
+    return e;
+  }
+
+  async function call(method, path, body) {
+    const opts = { method, headers: {}, credentials: "same-origin" };
+    if (method !== "GET") opts.headers["X-CSRF-Token"] = CSRF;
+    if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(API + path, opts);
+    if (res.status === 401) {
+      location.reload(); // signed out: the page offers to sign in again
+      throw new Error("signed out");
+    }
+    if (res.status === 204) return null;
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok) throw new Error((data && data.msg) || "the server answered " + res.status);
+    return data;
+  }
+
+  function status(id, text, bad) {
+    const p = $(id);
+    p.textContent = text || "";
+    p.className = bad ? "note error" : "note";
+  }
+
+  const size = (n) => n < 1024 ? n + " B" : n < 1 << 20 ? (n / 1024).toFixed(1) + " KB" : (n / (1 << 20)).toFixed(1) + " MB";
+  const when = (t) => new Date(t).toLocaleString();
+  const kind = (t) => t === "text" ? "text" : t;
+  const link = (url) => location.origin + url;
+
+  // view shows a copy: text as text, an image as an image.
+  function view(d) {
+    if (!d || !d.data) return el("p", { class: "muted", text: "Empty." });
+    if (d.type === "image/png") return el("img", { class: "clip", src: "data:image/png;base64," + d.data, alt: "an image" });
+    return el("pre", { text: d.data });
+  }
+
+  async function toThisDevice(d) {
+    if (d.type === "image/png") {
+      const blob = await (await fetch("data:image/png;base64," + d.data)).blob();
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    } else {
+      await navigator.clipboard.writeText(d.data);
+    }
+  }
+
+  // Clipboard
+  let current = null;
+  async function loadClipboard() {
+    try {
+      current = await call("GET", "/clipboard");
+      $("clip").replaceChildren(current && current.data ? view(current) : el("p", { class: "muted", text: "Your clipboard is empty." }));
+    } catch (e) {
+      $("clip").replaceChildren(el("p", { class: "error", text: e.message }));
+    }
+    try {
+      const d = await call("GET", "/devices");
+      const names = (d.devices || []).map((x) => x.name);
+      $("devices").textContent = names.length ? "connected: " + names.join(", ") : "no device connected";
+    } catch (_) {}
+  }
+  $("clip-copy").addEventListener("click", async () => {
+    if (!current || !current.data) return status("clip-status", "Nothing to copy.", true);
+    try { await toThisDevice(current); status("clip-status", "Copied to this device."); }
+    catch (e) { status("clip-status", "This browser would not copy: " + e.message, true); }
+  });
+  $("clip-share").addEventListener("click", async () => {
+    try {
+      const sh = await call("POST", "/shares", {});
+      status("clip-status", "Shared at " + link(sh.url));
+      try { await navigator.clipboard.writeText(link(sh.url)); status("clip-status", "Shared at " + link(sh.url) + ", link copied."); } catch (_) {}
+      loadShares();
+    } catch (e) { status("clip-status", e.message, true); }
+  });
+  async function send(data) {
+    if (!data) return status("clip-status", "Nothing to send.", true);
+    try {
+      await call("POST", "/clipboard", { type: "text", data });
+      status("clip-status", "Sent to your devices.");
+      $("send-text").value = "";
+      loadClipboard(); loadHistory();
+    } catch (e) { status("clip-status", e.message, true); }
+  }
+  $("send").addEventListener("click", () => send($("send-text").value));
+  $("send-local").addEventListener("click", async () => {
+    try { send(await navigator.clipboard.readText()); }
+    catch (e) { status("clip-status", "This browser would not read its clipboard: " + e.message, true); }
+  });
+
+  // History
+  async function loadHistory() {
+    const list = $("history-list");
+    try {
+      const h = (await call("GET", "/history")).history || [];
+      if (!h.length) return list.replaceChildren(el("li", { class: "muted", text: "No copies yet." }));
+      list.replaceChildren(...h.map((c) => {
+        const preview = el("div", { class: "preview" });
+        const li = el("li", {},
+          el("div", { class: "item-head" },
+            el("div", { class: "meta", text: when(c.created) + " · " + c.device + " · " + kind(c.type) + " · " + size(c.size) }),
+            el("div", { class: "row" },
+              el("button", { text: "Show", onclick: async () => {
+                if (preview.childElementCount) return preview.replaceChildren();
+                try { preview.replaceChildren(view(await call("GET", "/history/" + c.id))); }
+                catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
+              } }),
+              el("button", { text: "Use", title: "Make it your clipboard again, on every device", onclick: async () => {
+                try { await call("POST", "/clipboard", await call("GET", "/history/" + c.id)); loadClipboard(); loadHistory(); }
+                catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
+              } }),
+              el("button", { class: "danger", text: "Delete", onclick: async () => {
+                try { await call("DELETE", "/history/" + c.id); loadHistory(); loadClipboard(); }
+                catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
+              } }))),
+          preview);
+        return li;
+      }));
+    } catch (e) {
+      list.replaceChildren(el("li", { class: "error", text: e.message }));
+    }
+  }
+  $("history-clear").addEventListener("click", async () => {
+    if (!confirm("Delete every copy in your history, on every device?")) return;
+    try { await call("DELETE", "/history"); loadHistory(); loadClipboard(); } catch (e) { alert(e.message); }
+  });
+
+  // Shares
+  async function loadShares() {
+    const list = $("share-list");
+    try {
+      const s = (await call("GET", "/shares")).shares || [];
+      if (!s.length) return list.replaceChildren(el("li", { class: "muted", text: "You have shared nothing." }));
+      list.replaceChildren(...s.map((sh) => {
+        const expired = sh.expires && new Date(sh.expires) < new Date();
+        const exp = sh.expires ? (expired ? "expired " : "expires ") + when(sh.expires) : "never expires";
+        return el("li", {},
+          el("div", { class: "item-head" },
+            el("div", { class: "meta" },
+              el("a", { href: sh.url, target: "_blank", rel: "noopener", text: link(sh.url) }),
+              el("br"),
+              document.createTextNode(when(sh.created) + " · " + exp + " · " + kind(sh.type) + " · " + size(sh.size))),
+            el("div", { class: "row" },
+              el("button", { text: "Copy link", onclick: async () => {
+                try { await navigator.clipboard.writeText(link(sh.url)); status("share-status", "Link copied."); }
+                catch (e) { status("share-status", e.message, true); }
+              } }),
+              el("button", { class: "danger", text: "Revoke", onclick: async () => {
+                if (!confirm("Revoke this share? Its links stop working.")) return;
+                try { await call("DELETE", "/shares/" + encodeURIComponent(sh.slug)); loadShares(); }
+                catch (e) { status("share-status", e.message, true); }
+              } }))));
+      }));
+    } catch (e) {
+      list.replaceChildren(el("li", { class: "error", text: e.message }));
+    }
+  }
+  const base64 = (file) => new Promise((ok, fail) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).slice(String(r.result).indexOf(",") + 1));
+    r.onerror = () => fail(r.error);
+    r.readAsDataURL(file);
+  });
+  $("share-create").addEventListener("click", async () => {
+    const file = $("share-file").files[0];
+    if (!file) return status("share-status", "Pick a file first.", true);
+    if (file.size > 32 << 20) return status("share-status", "A share holds at most 32 MB.", true);
+    try {
+      let name = $("share-name").value.trim();
+      const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+      if (name && ext && !name.endsWith(ext)) name += ext; // the link opens as what it is
+      const sh = await call("POST", "/shares", {
+        data: await base64(file), type: file.type || "application/octet-stream",
+        name: name || undefined, expires_in: Number($("share-expires").value) || undefined,
+      });
+      status("share-status", "Shared at " + link(sh.url));
+      $("share-file").value = ""; $("share-name").value = "";
+      loadShares();
+    } catch (e) { status("share-status", e.message, true); }
+  });
+
+  // App tokens
+  async function loadTokens() {
+    const list = $("token-list");
+    try {
+      const t = (await call("GET", "/tokens")).tokens || [];
+      if (!t.length) return list.replaceChildren(el("li", { class: "muted", text: "No app tokens." }));
+      list.replaceChildren(...t.map((tok) => el("li", {},
+        el("div", { class: "item-head" },
+          el("div", { class: "meta", text: tok.name + " · issued " + when(tok.created) }),
+          el("div", { class: "row" },
+            el("button", { class: "danger", text: "Revoke", onclick: async () => {
+              if (!confirm("Revoke " + tok.name + "? What uses it is signed out.")) return;
+              try { await call("DELETE", "/tokens/" + encodeURIComponent(tok.name)); loadTokens(); }
+              catch (e) { status("token-status", e.message, true); }
+            } }))))));
+    } catch (e) {
+      list.replaceChildren(el("li", { class: "error", text: e.message }));
+    }
+  }
+  $("token-issue").addEventListener("click", async () => {
+    const name = $("token-name").value.trim();
+    if (!name) return status("token-status", "Give it a name.", true);
+    try {
+      const t = await call("POST", "/tokens", { name });
+      $("token-name").value = "";
+      $("token-new").replaceChildren(
+        el("p", { class: "note", text: "The token for " + t.name + ". It is shown only now; send it as “Authorization: Bearer <token>”." }),
+        el("code", { class: "secret", text: t.token }),
+        el("div", { class: "row" }, el("button", { text: "Copy token", onclick: async () => {
+          try { await navigator.clipboard.writeText(t.token); status("token-status", "Copied."); } catch (e) { status("token-status", e.message, true); }
+        } }), el("button", { text: "Done", onclick: () => $("token-new").replaceChildren() })));
+      status("token-status", "");
+      loadTokens();
+    } catch (e) { status("token-status", e.message, true); }
+  });
+
+  loadClipboard(); loadHistory(); loadShares(); loadTokens();
+})();
+</script>
+</body>
+</html>

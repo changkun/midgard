@@ -32,12 +32,19 @@ func (m *Midgard) routers() (r *gin.Engine) {
 
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
+	mg.GET("/", m.WebPage)
+	if m.web != nil {
+		mg.GET("/.auth/login", m.web.login)
+		mg.GET("/.auth/callback", m.web.callback)
+		mg.GET("/.auth/logout", m.web.logout)
+		mg.POST("/.auth/logout", m.web.logout)
+	}
 
-	v1auth := mg.Group("/api/v1", signIn(m.appTokens(), m.latere))
+	v1auth := mg.Group("/api/v1", signIn(m.appTokens(), m.latere, m.web))
 	{
 		v1auth.GET("/clipboard", m.GetFromUniversalClipboard)
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
-		v1auth.GET("/ws", m.Subscribe)
+		v1auth.GET("/ws", notFromTheWeb, m.Subscribe)
 		v1auth.GET("/devices", m.Devices)
 		v1auth.POST("/shares", m.CreateShare)
 		v1auth.GET("/shares", m.Shares)
@@ -46,11 +53,15 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.DELETE("/history", m.ClearHistory)
 		v1auth.GET("/history/:id", m.HistoryEntry)
 		v1auth.DELETE("/history/:id", m.DeleteHistoryEntry)
+		v1auth.GET("/tokens", byAPerson, m.Tokens)
+		v1auth.POST("/tokens", byAPerson, m.IssueToken)
+		v1auth.DELETE("/tokens/:name", byAPerson, m.RevokeToken)
 	}
 
 	// The profiles include a heap dump, which holds the clipboard and the
-	// credentials, so they are behind the login like everything else.
-	profile(v1auth)
+	// credentials, so they are behind the login like everything else, and
+	// not for the web page's cookie.
+	profile(v1auth.Group("", notFromTheWeb))
 	return
 }
 

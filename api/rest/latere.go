@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"latere.ai/x/pkg/authkit"
 	"latere.ai/x/pkg/authkit/jwt"
 )
 
@@ -67,20 +68,20 @@ func principalSet(s string) map[string]bool {
 
 // identify reports the principal a latere token in r belongs to, when it is
 // one for midgard from someone the allowlist admits. The owner of everything
-// they store is the principal id, which, unlike an email, never changes.
-func (a *latereAuth) identify(r *http.Request) (owner string, ok bool) {
+// they store is its principal id, Sub, which, unlike an email, never changes.
+func (a *latereAuth) identify(r *http.Request) (id authkit.Identity, ok bool) {
 	if a == nil {
-		return "", false
+		return id, false
 	}
 	id, err := a.auth.Authenticate(r)
 	if err != nil || id.Sub == "" {
-		return "", false
+		return id, false
 	}
 	if !a.permits(id.Sub, id.Email) {
 		slog.Warn("latere principal not allowed", "sub", id.Sub, "email", id.Email)
-		return "", false
+		return id, false
 	}
-	return id.Sub, true
+	return id, true
 }
 
 // permits reports whether the allowlist admits the principal sub, known by

@@ -116,3 +116,21 @@ type HistoryEntry struct {
 type HistoryOutput struct {
 	History []HistoryEntry `json:"history"`
 }
+
+// TokenInput asks for an app token named Name.
+type TokenInput struct {
+	Name string `json:"name"`
+}
+
+// TokenInfo describes an app token. Token is the token itself, and only in
+// the answer that issued it; it is never shown again.
+type TokenInfo struct {
+	Name    string    `json:"name"`
+	Created time.Time `json:"created"`
+	Token   string    `json:"token,omitempty"`
+}
+
+// TokensOutput is the answer to GET /tokens.
+type TokensOutput struct {
+	Tokens []TokenInfo `json:"tokens"`
+}

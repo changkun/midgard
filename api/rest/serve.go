@@ -30,6 +30,7 @@ type Midgard struct {
 
 	keepalive keepalive   // how dead daemons are noticed
 	latere    *latereAuth // sign-in through auth.latere.ai; nil when not set up
+	web       *webAuth    // sign-in from a browser, for the web page; nil when not set up
 }
 
 // appTokens is what the login checks app tokens against: the store, when
@@ -43,7 +44,7 @@ func (m *Midgard) appTokens() appTokens {
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{users: list.New(), keepalive: defaultKeepalive, latere: newLatereAuth()}
+	return &Midgard{users: list.New(), keepalive: defaultKeepalive, latere: newLatereAuth(), web: newWebAuth()}
 }
 
 // Serve serves Midgard RESTful APIs.

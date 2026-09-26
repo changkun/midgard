@@ -62,22 +62,37 @@ type appTokens interface {
 }
 
 // Keys the middleware sets on an authenticated request. The owner is whose
-// data the request may reach, and the only place handlers take it from.
+// data the request may reach, and the only place handlers take it from; the
+// email is theirs, when known; via is how they signed in.
 const (
 	ctxOwner  = "midgard_owner"
+	ctxEmail  = "midgard_email"
 	ctxDevice = "midgard_device"
+	ctxVia    = "midgard_via"
+)
+
+// The ways a request is signed in.
+const (
+	viaLatere   = "latere"    // a token auth.latere.ai minted for midgard
+	viaAppToken = "app-token" // an app token
+	viaSession  = "session"   // the web page's session cookie
 )
 
 // signIn admits a request that carries, as "Bearer <token>", a token
-// auth.latere.ai minted for midgard or an app token, either belonging to
-// someone on the allowlist, and records whose data it may reach. Anything
-// else counts against the address, and enough failures block it for a while.
-// latere may be nil, and then no one is admitted; tokens may be nil.
+// auth.latere.ai minted for midgard or an app token, or else the web page's
+// session cookie, belonging to someone on the allowlist, and records whose
+// data it may reach. Anything else counts against the address, and enough
+// failures block it for a while. latere may be nil, and then no one is
+// admitted; tokens and web may be nil.
+//
+// A cookie is sent with every request to the site, whoever made the page
+// that sends it, so a request the cookie signs in may change nothing unless
+// it also carries the page's CSRF token.
 //
 // There is no password any more: sign-in names a person, and an app token
 // names its owner, so an app token is only as good as its owner's place on
 // the allowlist, and removing someone removes their Shortcuts too.
-func signIn(tokens appTokens, latere *latereAuth) gin.HandlerFunc {
+func signIn(tokens appTokens, latere *latereAuth, web *webAuth) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// check if the IP failure attempts are too much
 		// if so, direct abort the request without checking credentials
@@ -104,21 +119,26 @@ func signIn(tokens appTokens, latere *latereAuth) gin.HandlerFunc {
 
 		}
 
-		var owner, device string
+		var owner, email, device, via string
 		found := false
-		if bearer, ok := strings.CutPrefix(c.Request.Header.Get("Authorization"), "Bearer "); ok {
+		auth := c.Request.Header.Get("Authorization")
+		if bearer, ok := strings.CutPrefix(auth, "Bearer "); ok {
 			switch {
 			case strings.HasPrefix(bearer, store.TokenPrefix):
 				if tokens == nil {
 					break
 				}
 				if h, ok := tokens.CheckAppToken(c.Request.Context(), bearer); ok && latere.permits(h.Owner, h.Email) {
-					owner, device, found = h.Owner, h.Name, true
+					owner, email, device, via, found = h.Owner, h.Email, h.Name, viaAppToken, true
 				}
 			default:
-				if sub, ok := latere.identify(c.Request); ok {
-					owner, found = sub, true
+				if id, ok := latere.identify(c.Request); ok {
+					owner, email, via, found = id.Sub, id.Email, viaLatere, true
 				}
+			}
+		} else if auth == "" {
+			if sub, mail, ok := web.session(c.Writer, c.Request); ok && latere.permits(sub, mail) {
+				owner, email, device, via, found = sub, mail, "web", viaSession, true
 			}
 		}
 		if !found {
@@ -145,7 +165,36 @@ func signIn(tokens appTokens, latere *latereAuth) gin.HandlerFunc {
 			return
 		}
 
+		if via == viaSession && !safeMethod(c.Request.Method) && !web.checkCSRF(c.Request) {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"msg": "the request lacks the page's CSRF token; reload the page"})
+			return
+		}
 		c.Set(ctxOwner, owner)
+		c.Set(ctxEmail, email)
 		c.Set(ctxDevice, device)
+		c.Set(ctxVia, via)
+	}
+}
+
+// safeMethod reports whether a request with method changes nothing.
+func safeMethod(method string) bool {
+	return method == http.MethodGet || method == http.MethodHead || method == http.MethodOptions
+}
+
+// notFromTheWeb refuses a request the web page's cookie signed in. The
+// websocket and the profiles are for daemons and their operator; the page
+// needs neither, and a page elsewhere on the site must not reach them with
+// a visitor's cookie.
+func notFromTheWeb(c *gin.Context) {
+	if c.GetString(ctxVia) == viaSession {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"msg": "sign in with a token, not the web page's session"})
+	}
+}
+
+// byAPerson refuses a request an app token signed in: only a person, signed
+// in, may issue and revoke app tokens, or one leaked token could mint more.
+func byAPerson(c *gin.Context) {
+	if c.GetString(ctxVia) == viaAppToken {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"msg": "an app token cannot manage app tokens; sign in"})
 	}
 }
