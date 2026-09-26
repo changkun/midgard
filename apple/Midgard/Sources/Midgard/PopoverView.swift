@@ -12,7 +12,6 @@ struct PopoverView: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
     @State private var search = ""
-    @State private var hovered: HistoryItem.ID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -33,7 +32,10 @@ struct PopoverView: View {
             footer
         }
         .frame(width: 360, height: 480)
-        .onAppear { model.refresh() }
+        .onAppear {
+            model.refresh()
+            model.checkLoginItem()
+        }
     }
 
     private var header: some View {
@@ -79,19 +81,7 @@ struct PopoverView: View {
             ScrollView {
                 LazyVStack(spacing: 2) {
                     ForEach(items) { item in
-                        ItemRow(item: item, model: model)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 7)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(hovered == item.id ? Color.accentColor.opacity(0.14) : .clear))
-                            .onHover { hovered = $0 ? item.id : (hovered == item.id ? nil : hovered) }
-                            .onTapGesture { model.use(item) }
-                            .contextMenu {
-                                Button("Copy") { model.use(item) }.disabled(item.waiting)
-                                Button("Delete", role: .destructive) { model.delete(item) }.disabled(item.waiting)
-                            }
-                            .help(item.waiting ? "Waiting to reach the server" : "Click to put it on the clipboard")
+                        PopoverRow(item: item, model: model)
                     }
                 }
                 .padding(.horizontal, 6)
@@ -142,6 +132,31 @@ struct PopoverView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
+    }
+}
+
+/// A row of the popover's list, lit under the pointer. It keeps whether it
+/// is itself: as the list scrolls under the pointer, that changes every few
+/// frames, and then only this row draws again, not the popover.
+private struct PopoverRow: View {
+    let item: HistoryItem
+    @ObservedObject var model: Model
+    @State private var hovered = false
+
+    var body: some View {
+        ItemRow(item: item, model: model)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(hovered ? Color.accentColor.opacity(0.14) : .clear))
+            .onHover { hovered = $0 }
+            .onTapGesture { model.use(item) }
+            .contextMenu {
+                Button("Copy") { model.use(item) }.disabled(item.waiting)
+                Button("Delete", role: .destructive) { model.delete(item) }.disabled(item.waiting)
+            }
+            .help(item.waiting ? "Waiting to reach the server" : "Click to put it on the clipboard")
     }
 }
 

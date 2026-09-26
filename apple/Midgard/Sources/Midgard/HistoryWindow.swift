@@ -98,11 +98,24 @@ struct HistoryWindow: View {
 private struct Detail: View {
     let item: HistoryItem
     @ObservedObject var model: Model
+    @State private var shown: Shown?
+
+    /// A copy as the pane shows it, made once when it is selected, not each
+    /// time the pane draws.
+    enum Shown {
+        case image(NSImage)
+        case text(String, cut: Bool)
+    }
+
+    /// The most of a text the pane shows: a Text of more takes seconds to lay
+    /// out. Copy copies all of it.
+    private static let most = 100_000
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .task(id: item.id) { shown = await load() }
             Divider()
             VStack(alignment: .leading, spacing: 10) {
                 Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 4) {
@@ -128,26 +141,44 @@ private struct Detail: View {
     }
 
     @ViewBuilder private var content: some View {
-        if let (mime, data) = item.waiting ? nil : Engine.get(item.seq) {
-            if mime == "image/png", let image = NSImage(data: data) {
-                Image(nsImage: image).resizable().scaledToFit()
-                    .padding(20)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(nsColor: .textBackgroundColor))
-            } else {
-                ScrollView {
-                    Text(String(decoding: data, as: UTF8.self))
+        switch shown {
+        case .image(let image):
+            Image(nsImage: image).resizable().scaledToFit()
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(nsColor: .textBackgroundColor))
+        case .text(let text, let cut):
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(text)
                         .font(.system(.body, design: .monospaced))
                         .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-                        .padding(20)
+                    if cut {
+                        Text("The first \(Self.most.formatted()) characters. Copy copies all of it.")
+                            .font(.callout).foregroundStyle(.secondary)
+                    }
                 }
-                .background(Color(nsColor: .textBackgroundColor))
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(20)
             }
-        } else {
+            .background(Color(nsColor: .textBackgroundColor))
+        case nil:
             Text(item.preview ?? "")
                 .textSelection(.enabled)
                 .padding(20)
         }
+    }
+
+    /// Fetches the copy away from the main thread, and makes it what the
+    /// pane shows.
+    private func load() async -> Shown? {
+        guard !item.waiting else { return nil }
+        let seq = item.seq
+        guard let (mime, data) = await Task.detached(priority: .userInitiated, operation: { Engine.get(seq) }).value else { return nil }
+        if mime == "image/png" {
+            return NSImage(data: data).map { .image($0) }
+        }
+        let text = String(decoding: data, as: UTF8.self)
+        return text.count > Self.most ? .text(String(text.prefix(Self.most)), cut: true) : .text(text, cut: false)
     }
 }

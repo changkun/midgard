@@ -3,6 +3,7 @@
 // license that can be found in the LICENSE file.
 
 import AppKit
+import ImageIO
 import ServiceManagement
 
 /// A device's name as people say it: without the .local a Mac adds.
@@ -14,11 +15,11 @@ func shortName(_ name: String) -> String {
 /// clipboard does with them.
 @MainActor
 final class Model: ObservableObject {
-    @Published internal(set) var status = Status()
-    @Published internal(set) var history: [HistoryItem] = []
-    @Published internal(set) var problem: String?   // why it is not syncing, in words
+    @Published var status = Status()
+    @Published var history: [HistoryItem] = []
+    @Published var problem: String?   // why it is not syncing, in words
     @Published private(set) var signInLink: URL?    // while a sign-in waits for approval
-    @Published internal(set) var lastShare: URL?
+    @Published var lastShare: URL?
     /// The copy just put back on the clipboard, for a moment, to show it.
     @Published private(set) var justCopied: String?
 
@@ -54,6 +55,7 @@ final class Model: ObservableObject {
             Task { @MainActor in self?.refresh() }
         }
         startEngine()
+        checkLoginItem()
     }
 
     private func startEngine() {
@@ -74,17 +76,23 @@ final class Model: ObservableObject {
     /// preview of sample data must not.
     var live = true
 
+    /// Asks the engine what changed. It runs every 2 seconds, so it sets only
+    /// what differs: setting a published value, even to what it was, draws
+    /// every view of the model again.
     func refresh() {
         guard live else { return }
-        status = Engine.status()
-        if status.running {
-            history = Engine.history()
-            if problem == nil || problem?.hasPrefix("Cannot") == false, status.configured, !status.signedIn {
-                problem = "Sign in to sync."
-            } else if status.signedIn, problem == "Sign in to sync." {
-                problem = nil
-            }
+        let s = Engine.status()
+        if s != status { status = s }
+        guard s.running else { return }
+        let h = Engine.history()
+        if h != history { history = h }
+        var p = problem
+        if problem == nil || problem?.hasPrefix("Cannot") == false, s.configured, !s.signedIn {
+            p = "Sign in to sync."
+        } else if s.signedIn, problem == "Sign in to sync." {
+            p = nil
         }
+        if p != problem { problem = p }
     }
 
     /// Sets the server, and starts.
@@ -162,12 +170,25 @@ final class Model: ObservableObject {
 
     private let thumbnails = NSCache<NSNumber, NSImage>()
 
-    /// A small image of a copy that is one, made once.
-    func thumbnail(_ item: HistoryItem) -> NSImage? {
+    /// A small image of a copy that is one, made once, away from the main
+    /// thread: decoding a screenshot takes longer than a frame of scrolling.
+    func thumbnail(_ item: HistoryItem) async -> NSImage? {
         guard item.isImage, !item.waiting else { return nil }
-        if let cached = thumbnails.object(forKey: NSNumber(value: item.seq)) { return cached }
-        guard let (_, data) = Engine.get(item.seq), let image = NSImage(data: data) else { return nil }
-        thumbnails.setObject(image, forKey: NSNumber(value: item.seq))
+        let key = NSNumber(value: item.seq)
+        if let cached = thumbnails.object(forKey: key) { return cached }
+        let seq = item.seq
+        let small = await Task.detached(priority: .userInitiated) { () -> CGImage? in
+            guard let (_, data) = Engine.get(seq),
+                  let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+            return CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: 128, // a list's tile, on a Retina screen
+            ] as CFDictionary)
+        }.value
+        guard let small else { return nil }
+        let image = NSImage(cgImage: small, size: .zero)
+        thumbnails.setObject(image, forKey: key)
         return image
     }
 
@@ -203,16 +224,29 @@ final class Model: ObservableObject {
         refresh()
     }
 
-    /// Whether the app starts when you log in.
+    /// Whether the app starts when you log in. Asking macOS is a round trip
+    /// to another process, of tens of milliseconds, too slow for a view to do
+    /// each time it draws: it is asked in checkLoginItem, and kept.
     var startsAtLogin: Bool {
-        get { SMAppService.mainApp.status == .enabled }
+        get { loginItem }
         set {
             do {
                 if newValue { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             } catch {
                 problem = "Cannot change starting at login: \(error.localizedDescription)"
             }
-            objectWillChange.send()
+            checkLoginItem()
+        }
+    }
+    @Published private var loginItem = false
+
+    /// Asks macOS whether the app starts at login, as one can change that in
+    /// System Settings too; the views ask when they appear.
+    func checkLoginItem() {
+        guard live else { return }
+        Task {
+            let on = await Task.detached(priority: .utility) { SMAppService.mainApp.status == .enabled }.value
+            if on != loginItem { loginItem = on }
         }
     }
 

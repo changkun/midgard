@@ -34,10 +34,15 @@ struct StatusPill: View {
 
 /// How long ago, as people say it: "2 min. ago".
 func ago(_ date: Date) -> String {
+    date.timeIntervalSinceNow > -30 ? "just now" : agoFormatter.localizedString(for: date, relativeTo: Date())
+}
+
+/// One for all the rows: making a formatter takes longer than using one.
+private let agoFormatter: RelativeDateTimeFormatter = {
     let f = RelativeDateTimeFormatter()
     f.unitsStyle = .abbreviated
-    return date.timeIntervalSinceNow > -30 ? "just now" : f.localizedString(for: date, relativeTo: Date())
-}
+    return f
+}()
 
 /// One copy in a list: what it is, and where and when it came from.
 struct ItemRow: View {
@@ -90,12 +95,13 @@ struct ItemTile: View {
     let item: HistoryItem
     @ObservedObject var model: Model
     var size: CGFloat
+    @State private var image: NSImage?
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.24, style: .continuous)
                 .fill(Color.accentColor.opacity(0.12))
-            if let image = model.thumbnail(item) {
+            if let image {
                 Image(nsImage: image).resizable().scaledToFill()
                     .frame(width: size, height: size)
                     .clipShape(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous))
@@ -106,6 +112,7 @@ struct ItemTile: View {
             }
         }
         .frame(width: size, height: size)
+        .task(id: item.seq) { image = await model.thumbnail(item) }
     }
 
     private var looksLikeLink: Bool {

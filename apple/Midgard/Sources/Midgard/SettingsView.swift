@@ -32,6 +32,7 @@ private struct General: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear { model.checkLoginItem() }
     }
 }
 
