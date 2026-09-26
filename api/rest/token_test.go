@@ -33,7 +33,7 @@ func TestAppTokenLogin(t *testing.T) {
 	s := withStore(t, m)
 	ctx := context.Background()
 
-	tok, err := s.IssueAppToken(ctx, "alice", "", "phone")
+	tok, err := s.IssueAppToken(ctx, testUser, testEmail, "phone")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,12 +49,21 @@ func TestAppTokenLogin(t *testing.T) {
 	if code := bearer(tok, "192.0.2.1:1"); code != http.StatusOK {
 		t.Fatalf("an issued token got %d, want 200", code)
 	}
-	// the password keeps working alongside, until sign-in replaces it
+	// signing in keeps working alongside
 	if w := do(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", true); w.Code != http.StatusOK {
-		t.Fatalf("basic auth got %d, want 200", w.Code)
+		t.Fatalf("a signed-in request got %d, want 200", w.Code)
+	}
+	// and there is no password any more
+	req := httptest.NewRequest(http.MethodGet, "/midgard/api/v1/clipboard", nil)
+	req.SetBasicAuth("midgard", "password")
+	req.RemoteAddr = "192.0.2.9:1"
+	w := httptest.NewRecorder()
+	m.routers().ServeHTTP(w, req)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("basic auth got %d, want 401: the password is gone", w.Code)
 	}
 
-	if err := s.RevokeAppToken(ctx, "alice", "phone"); err != nil {
+	if err := s.RevokeAppToken(ctx, testUser, "phone"); err != nil {
 		t.Fatal(err)
 	}
 	if code := bearer(tok, "192.0.2.1:1"); code != http.StatusUnauthorized {
@@ -79,10 +88,10 @@ func TestLoginNamesTheOwner(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	tok, _ := s.IssueAppToken(context.Background(), "alice", "", "phone")
+	tok, _ := s.IssueAppToken(context.Background(), testUser, testEmail, "phone")
 
 	r := gin.New()
-	r.Use(BasicAuthWithAttemptsControl(Credentials{"midgard": "password"}, s, nil))
+	r.Use(signIn(s, newLatereAuth()))
 	var owner, device string
 	r.GET("/", func(c *gin.Context) { owner, device = c.GetString(ctxOwner), c.GetString(ctxDevice) })
 
@@ -90,7 +99,7 @@ func TestLoginNamesTheOwner(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+tok)
 	req.RemoteAddr = "192.0.2.3:1"
 	r.ServeHTTP(httptest.NewRecorder(), req)
-	if owner != "alice" || device != "phone" {
-		t.Fatalf("owner, device = %q, %q; want alice, phone", owner, device)
+	if owner != testUser || device != "phone" {
+		t.Fatalf("owner, device = %q, %q; want %s, phone", owner, device, testUser)
 	}
 }

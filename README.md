@@ -19,21 +19,15 @@ Android's Tasker.
 **1. The server.** On a machine with a public address:
 
 ```sh
-$ cp config.example.yml config.yml   # set domain and server.auth.pass
+$ cp config.example.yml config.yml   # set domain
+$ cp .env.template .env              # set AUTH_ALLOWED_PRINCIPALS: who may sign in
 $ make build && make up              # or run: mg server
 ```
 
 `docker-compose.yml` joins an existing traefik network; see
 [Installation](./docs/install.md) to put midgard behind your own reverse proxy.
 
-**2. A token for each device.** On the server, from the directory it runs in:
-
-```sh
-$ mg server token add laptop --owner you
-mgt_...
-```
-
-**3. Each device.** Download `mg` from the
+**2. Each device.** Download `mg` from the
 [releases](https://github.com/changkun/midgard/releases) (or
 `go install changkun.de/x/midgard@latest`, which names it `midgard`), then
 put this in `~/.config/midgard/config.yml` on Linux,
@@ -42,16 +36,20 @@ put this in `~/.config/midgard/config.yml` on Linux,
 
 ```yaml
 domain: example.com   # or http://your-server:8456
-token: mgt_...        # from step 2
 ```
 
 ```sh
+$ mg login            # sign in through auth.latere.ai, once
 $ mg daemon install   # as yourself, no sudo
 $ mg daemon start
 $ mg status
 server status: OK
 daemon status: OK
 ```
+
+A device that cannot open a browser to sign in, and an iOS Shortcut, can use
+an app token instead: `mg server token add <name> --owner <you>` on the server
+(see [Usage](./docs/usage.md)).
 
 Now copy something on one device and paste it on another. `mg alloc` turns the
 clipboard into a public link; see [Usage](./docs/usage.md).

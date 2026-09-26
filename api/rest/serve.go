@@ -48,7 +48,7 @@ func NewMidgard() *Midgard {
 
 // Serve serves Midgard RESTful APIs.
 func (m *Midgard) Serve() {
-	requirements()
+	m.requirements()
 	st, err := store.Open(config.DBPath)
 	if err != nil {
 		fatal("cannot open the database", "path", config.DBPath, "err", err)
@@ -93,20 +93,13 @@ func (m *Midgard) serveHTTP() {
 	}
 }
 
-// examplePassword is the placeholder password in config.example.yml.
-const examplePassword = "change-me"
-
-// weakPassword reports whether p is a password nobody should serve with: none
-// at all, or the published placeholder, which anyone can read.
-func weakPassword(p string) bool { return p == "" || p == examplePassword }
-
 // requirements checks what the server needs from the system it runs on. It
 // runs when the server starts rather than at package init, because every mg
 // command links this package and only the server needs these.
-func requirements() {
-	if weakPassword(config.S().Auth.Pass) {
-		fatal("set server.auth.pass in config.yml: the server refuses to run " +
-			"with an empty password or the one from config.example.yml")
+func (m *Midgard) requirements() {
+	if m.latere == nil {
+		fatal("set AUTH_ALLOWED_PRINCIPALS to who may use this server, by email " +
+			"or principal id: with no one allowed, no one could sign in (see .env.template)")
 	}
 }
 

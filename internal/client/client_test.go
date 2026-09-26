@@ -38,8 +38,9 @@ func TestAllocate(t *testing.T) {
 		if r.Method != http.MethodPut || r.URL.Path != "/midgard/api/v1/allocate" {
 			t.Errorf("request %s %s", r.Method, r.URL.Path)
 		}
-		if r.Header.Get("Authorization") != config.Authorization() {
-			t.Errorf("the request carries no credentials")
+		// testdata/config.yml gives the device an app token
+		if got := r.Header.Get("Authorization"); got != "Bearer "+config.Get().Token {
+			t.Errorf("Authorization = %q, want the device's token", got)
 		}
 		json.NewDecoder(r.Body).Decode(&got)
 		json.NewEncoder(w).Encode(types.AllocateURLOutput{URL: "/midgard/notes/a.png"})

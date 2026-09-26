@@ -83,7 +83,7 @@ Usage:
 
 ## 配置
 
-midgard 从 `config.yml` 读取配置。请以 [config.example.yml](../config.example.yml)（列出了全部选项）为模板，并且不要把自己的配置提交到 git：其中包含服务端密码。midgard 按以下顺序使用找到的第一个 `config.yml`：
+midgard 从 `config.yml` 读取配置。请以 [config.example.yml](../config.example.yml)（列出了全部选项）为模板，并且不要把自己的配置提交到 git：设备的配置中可能包含应用令牌。midgard 按以下顺序使用找到的第一个 `config.yml`：
 
 1. 环境变量 `MIDGARD_CONF` 指定的文件，例如 `MIDGARD_CONF=/path/to/your/config.yml`；
 2. 运行 `mg` 时所在目录下的 `config.yml`；

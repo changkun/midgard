@@ -1,15 +1,14 @@
-# Configuration for the tests. The credentials are placeholders, not a real
-# account; see config.yml for a deployment.
+# Configuration for the tests. The token is a placeholder, not a real one; see
+# config.example.yml for a deployment. Client tests send it, so they need no
+# sign-in; the server's tests sign in through a stub issuer instead.
 
 ---
 title: "midgard test"
 domain: localhost:8080
+token: mgt_test-token
 
 server:
   addr: localhost:8080
   mode: test
   store:
     prefix: /midgard
-  auth:
-    user: midgard-test
-    pass: midgard-test-password

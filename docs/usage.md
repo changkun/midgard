@@ -15,10 +15,22 @@ server status: OK
 daemon status: OK
 ```
 
+## Sign In
+
+Each device signs in once, through auth.latere.ai:
+
+```sh
+$ mg login    # prints a link and a code; approve in any browser
+$ mg logout
+```
+
+The server lets in only the people on its `AUTH_ALLOWED_PRINCIPALS`, and each
+person reaches only their own clipboard.
+
 ## App Tokens
 
-Give each device, or each iOS Shortcut, its own token instead of the server's
-password. A token acts for one person, its owner, and reaches only their data;
+For a client that cannot sign in, such as an iOS Shortcut or a device without a
+browser, issue an app token. A token acts for one person, its owner, and reaches only their data;
 revoke one and only that client loses access. On the server's machine, in the
 directory the server runs from:
 
@@ -28,8 +40,8 @@ $ mg server token ls --owner <owner>           # the owner's tokens
 $ mg server token rm laptop --owner <owner>    # revoke it; takes effect at once
 ```
 
-On the device, put the token in its `config.yml` and leave out
-`server.auth`:
+On the device, put the token in its `config.yml` instead of running
+`mg login`:
 
 ```yaml
 domain: example.com
@@ -37,8 +49,9 @@ token: mgt_...
 ```
 
 Anything else that talks to the server, such as an iOS Shortcut, can send it
-as `Authorization: Bearer mgt_...`. The server's user name and password keep
-working too, until sign-in through auth.latere.ai replaces them.
+as `Authorization: Bearer mgt_...`. A token only works while its owner is on
+the server's `AUTH_ALLOWED_PRINCIPALS`; issue it with `--email` if the list
+names people by email.
 
 ## List Active Daemons
 
