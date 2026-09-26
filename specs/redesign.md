@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12) |
+| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12); §11, end-to-end encryption, designed 2026-09-26 |
 | **Decided** | 2026-09-26, with changkun: clipboards belong to individuals, behind a hard barrier; history is shared across one's own devices; login through auth.latere.ai; code2img and the GitHub backup go; the API stays `/v1` and changes in place |
 | **Revised** | 2026-09-26, with changkun: the server keeps no copy of anyone's clipboard, only relays and orders them; history lives on the devices, in one order on all of them; a tray app is what people use, `mg` stays for agents and scripts; end-to-end encryption is a must, after this |
 | **Builds on** | #35–#53 (Phase 0 and 1: safe, and easy to run) |
@@ -291,23 +291,126 @@ Migration: import the shares; the plaintext clipboard history in
 clipboard data now, and it may hold passwords copied before sensitive copies
 were marked. Retire the old checkout.
 
-## 11. After this
+## 11. End-to-end encryption
 
-**End-to-end encryption (#31) is a must, and comes next.** A person's devices
-share a key, and the server passes ciphertext it cannot read. §6–§8 are built
-for it: the server reads only a copy's envelope, never its bytes:
+Decided 2026-09-26 with changkun (#31): the server passes copies it cannot
+read. A person's devices share one key; everything of a copy but its envelope
+is sealed with it before it leaves a device, and opened only on another. The
+browser may hold the key too, and the iPhone gets a way in both ways: the web
+page on its Home Screen, encrypted, and the Shortcuts through a bridge that is
+off until you switch it on, in the clear.
 
-- the envelope: `seq`, `time`, the origin device, the kind of event, and for
-  each format its MIME type and size;
-- the bytes: opaque, relayed as they are.
+### What it protects, and from whom
 
-What changes then: the web page, `mg` and Shortcuts can read and send copies
-only with the key, so each needs pairing with a device (a code or QR shown by
-the tray app); a share is decrypted on the device and published in the clear,
-since a link is for people without the key.
+**From the server**, and anyone who reaches it: its host, its memory, its
+logs. It cannot read a copy's bytes, and cannot make a copy the devices
+accept.
 
-**Not now:** a native mobile app (the web page covers phones), and
-peer-to-peer sync on a LAN without the server.
+**What it still sees**: each event's envelope (`seq`, `time`, the device it
+came from, its kind, and each format's MIME type and size), which devices are
+online, and when. And what it can still do, as it numbers every event: drop,
+delay, reorder, or replay a sealed event it has seen, and refuse service.
+
+**Not covered**:
+
+- a device itself: its history stays on it in the clear, readable by its
+  person alone, as before;
+- shares, published in the clear by design (§9);
+- the web page, which the server serves: a key in a browser is as safe as the
+  JavaScript the server sends, and as the rest of changkun.de, which shares
+  the page's origin (§10). The Mac app, `mg daemon` and `mg` are protected
+  whatever the server sends; a browser only while the server is honest;
+- the Shortcuts bridge, while switched on (below).
+
+### The key
+
+- One key per person: 256 random bits, made by the person's first device to
+  run with encryption. Its id, `kid`, is the first 16 hex digits of
+  SHA-256("midgard key id" ‖ key).
+- The server keeps the `kid`, never the key: the first device registers it,
+  and only when none is set, so two devices cannot both make one. A device
+  whose key has another `kid`, or which has none, is told to pair.
+- A device keeps the key beside its sign-in (`key.json`, readable by its
+  person alone); a browser keeps it in IndexedDB, as a WebCrypto key it cannot
+  export.
+
+### What is sealed
+
+The bytes of every copy, and of every preview or copy a device answers with,
+to a peer catching up or to a reader such as the web page. Sealing is
+AES-256-GCM with a random 96-bit nonce; its additional data is the `kid`,
+what the bytes are (a copy or a preview), and the formats (MIME types and
+sizes), so the server cannot pass one off as another. The sealed bytes are
+the nonce, then the ciphertext and its tag; the envelope says the `kid`.
+
+AES-GCM because the browser holds the key too, and WebCrypto has it; at a
+clipboard's pace, random nonces stay far from their limit.
+
+Once a person has a `kid`, the relay refuses a copy that is not sealed, or is
+sealed under another `kid`.
+
+### Pairing a device
+
+1. A paired device shows a pairing code: 128 random bits, as 26 letters and
+   digits, and as a QR of `https://<server>/midgard/#pair=<code>`. The part
+   after `#` never leaves the browser.
+2. It seals the key under a key derived from the code (HKDF-SHA-256) and posts
+   it to a mailbox on the server, named by a hash of the code. The mailbox
+   keeps it for 10 minutes, for one fetch.
+3. The new device, given the code (typed, pasted, or the QR opened on a phone),
+   fetches the box and opens it.
+
+The server holds a box it cannot open without the code, and 128 bits are too
+many to guess. The Mac app shows a code and QR in its Settings; `mg pair`
+shows one on a paired machine, and `mg pair <code>` joins; the web page shows
+one once paired, and joins by the link or the code.
+
+### Each client
+
+- **Devices** (the Mac app, `mg daemon`) seal what they send and open what
+  they receive. The history on a device stays in the clear, as before.
+- **`mg`** seals `mg copy` and opens `mg paste` and `mg history show`. Without
+  the key it exits with a code of its own, 6, and says to pair.
+- **The web page** seals and opens in the browser. Unpaired, it shows the
+  devices, the queue, shares and tokens, and asks to pair.
+- **Shares** are made by a client that holds the key: it opens the copy and
+  publishes its bytes in the clear, as a link is for people without the key.
+  The server no longer asks a device for the newest copy to share: **a device
+  never hands out its bytes in the clear because the server asked**, or the
+  server could have anything it asked for.
+- **The iPhone**: the web page on its Home Screen, with Get and Send.
+- **The Shortcuts bridge**, off by default. A device where you switch it on
+  (the Mac app's Settings, or `plain_bridge: true` in a daemon's
+  `config.yml`) pushes the newest copy to the server in the clear, held in
+  memory, for Get from Midgard; and takes what Send to Midgard posts, in the
+  clear, and seals it into the history as a copy of its own. The server reads
+  both, and could send copies of its own through the bridge; the setting and
+  the page say so. The Shortcuts call `/api/v1/plain/clipboard`, which
+  answers 503 when no bridge is online. The bridge pushes: nothing asks it.
+
+### What changes in the API (§8)
+
+- A copy's `data`, in `POST /clipboard`, `GET /clipboard`, `GET /history`
+  (as previews) and `GET /history/{seq}`, is sealed, in base64, with its
+  `kid`.
+- `GET /key`, and `PUT /key` to register the first `kid` (409 once one is
+  set).
+- `POST /pair`, a box for 10 minutes; `GET /pair/{id}`, once.
+- `PUT` and `GET /plain/clipboard`, the bridge's copy in the clear;
+  `POST /plain/clipboard`, from the Shortcuts to the bridge.
+- `POST /shares` needs the bytes.
+
+### Moving to it
+
+Devices keep their histories as they are. The first device to run this makes
+the key and registers it; each other device pairs once. Until a person has a
+key, copies pass as before. Once they have one, an older app or daemon has its
+copies refused, and needs updating.
+
+**Not now**: a new key when a device is forgotten. Forgetting a device does
+not take the key from it; a new one, sent to the remaining devices by
+pairing, would. Also not now: a native mobile app (the web page covers
+phones), and peer-to-peer sync on a LAN without the server.
 
 ## 12. Plan
 
@@ -345,4 +448,9 @@ Each step is its own PR, with its tests, merged when green.
     stable exit codes. *Done: `mg copy`, `mg paste`, `mg history show`,
     `--json`, exit codes 0–5 (docs/usage.md).*
 11. Deploy on changkun.de, migrate, and retire the old checkout.
-12. End-to-end encryption (§11).
+12. End-to-end encryption (§11): the key, sealing and pairing
+    (`internal/e2e`); the device engine seals and opens; the relay registers
+    the `kid`, refuses what is not sealed, and keeps the pairing mailbox;
+    shares made by the client; `mg pair` and exit code 6; pairing in the Mac
+    app; the web page with WebCrypto, and on an iPhone's Home Screen; the
+    Shortcuts bridge; the end-to-end harness; the docs.
