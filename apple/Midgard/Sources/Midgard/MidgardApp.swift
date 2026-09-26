@@ -5,7 +5,7 @@
 import AppKit
 import SwiftUI
 
-/// midgard on the Mac: in the menu bar, with a window for the history. It is
+/// Midgard on the Mac: in the menu bar, with a window for the history. It is
 /// what mg daemon is elsewhere, and replaces it here: one of them syncs a
 /// device at a time.
 @main
@@ -13,13 +13,15 @@ struct MidgardApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
 
     var body: some Scene {
-        MenuBarExtra("midgard", systemImage: "doc.on.clipboard") {
+        MenuBarExtra {
             MenuView(model: delegate.model)
+        } label: {
+            MenuBarIcon()
         }
         Window("History", id: "history") {
             HistoryView(model: delegate.model).frame(minWidth: 640, minHeight: 420)
         }
-        Window("midgard Settings", id: "settings") {
+        Window("Midgard Settings", id: "settings") {
             SettingsView(model: delegate.model)
         }
         .windowResizability(.contentSize)
@@ -38,7 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
                                   styleMask: [.titled, .closable], backing: .buffered, defer: false)
             window.contentView = NSHostingView(rootView: SettingsView(model: model))
-            window.title = "Welcome to midgard"
+            window.title = "Welcome to Midgard"
             window.isReleasedWhenClosed = false
             window.center()
             window.makeKeyAndOrderFront(nil)
@@ -49,5 +51,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_: Notification) {
         Engine.stop()
+    }
+}
+
+/// The ring and the peaks of the app's icon, in one colour, which the system
+/// tints for a light or a dark menu bar. Built with swift build alone, the
+/// app has no such image, and shows a symbol instead.
+struct MenuBarIcon: View {
+    var body: some View {
+        if let image = NSImage(named: "MenuBarIcon") {
+            let _ = (image.isTemplate = true)
+            Image(nsImage: image)
+        } else {
+            Image(systemName: "doc.on.clipboard")
+        }
     }
 }

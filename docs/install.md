@@ -140,14 +140,14 @@ is new. Once the old links work, `data/repo` can go.
 
 ## The Mac App
 
-On a Mac, midgard is an app in the menu bar. It keeps the Mac's clipboard in
+On a Mac, Midgard is an app in the menu bar. It keeps the Mac's clipboard in
 sync and its history, as `mg daemon` does elsewhere, and runs the same sync
 engine: the app is Swift, for the menu, the window, the clipboard and the
 hotkey, and links midgard's Go engine as a library.
 
 ```sh
 $ make mac                   # needs Go and Xcode's command line tools
-$ open apple/build/midgard.app
+$ open apple/build/Midgard.app
 ```
 
 The first time, it asks for your server and signs you in, in the browser. It

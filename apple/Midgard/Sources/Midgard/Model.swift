@@ -54,7 +54,7 @@ final class Model: ObservableObject {
             try Engine.start()
             problem = nil
         } catch Engine.StartError.noServer {
-            problem = "Set your midgard server to start."
+            problem = "Set your Midgard server to start."
         } catch Engine.StartError.running {
             problem = "mg daemon already syncs this Mac. Stop it (mg daemon stop, then mg daemon uninstall) to use the app instead."
         } catch {

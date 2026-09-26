@@ -49,7 +49,7 @@ struct MenuView: View {
             NSApp.activate(ignoringOtherApps: true)
         }
         Divider()
-        Button("Quit midgard") { NSApp.terminate(nil) }.keyboardShortcut("q")
+        Button("Quit Midgard") { NSApp.terminate(nil) }.keyboardShortcut("q")
     }
 
     private func label(_ item: HistoryItem) -> String {
@@ -95,7 +95,7 @@ struct HistoryView: View {
                     .disabled(model.history.isEmpty)
             }
         }
-        .navigationTitle("midgard")
+        .navigationTitle("Midgard")
         .onAppear { model.refresh() }
     }
 
@@ -169,7 +169,7 @@ struct SettingsView: View {
                     .onSubmit { model.setServer(server) }
                 Button("Save") { model.setServer(server) }.disabled(server.isEmpty)
             } header: {
-                Text("Your midgard server")
+                Text("Your Midgard server")
             } footer: {
                 Text("Where your devices meet. It passes copies between them and keeps none.")
                     .font(.caption).foregroundStyle(.secondary)

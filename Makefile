@@ -22,7 +22,7 @@ up:
 	docker-compose up -d
 down:
 	docker-compose down
-mac: # the Mac app, into apple/build/midgard.app
+mac: # the Mac app, into apple/build/Midgard.app
 	./apple/build.sh
 clean: down
 	rm -rf $(BINARY)

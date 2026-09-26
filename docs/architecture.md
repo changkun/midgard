@@ -9,7 +9,7 @@ and keeps none of it.
 ```mermaid
 flowchart LR
     subgraph you["Your computers: where copies live"]
-        A["Mac<br/>midgard app · history"]
+        A["Mac<br/>Midgard app · history"]
         B["Linux, Windows<br/>mg daemon · history"]
     end
     subgraph other["Other ways in"]

@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>midgard</string>
+	<string>Midgard</string>
 	<key>CFBundleDisplayName</key>
-	<string>midgard</string>
+	<string>Midgard</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>de.changkun.midgard</string>
 	<key>CFBundleExecutable</key>

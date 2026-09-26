@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18">
+  <!-- Midgard in the menu bar: the icon's ring and peaks, in one colour, as
+       a template image the system tints for a light or dark menu bar. -->
+  <defs>
+    <clipPath id="world"><circle cx="9" cy="9" r="6.6"/></clipPath>
+  </defs>
+  <circle cx="9" cy="9" r="7.4" fill="none" stroke="#000" stroke-width="1.6"/>
+  <g clip-path="url(#world)" fill="#000">
+    <path d="M 2 17 L 6.1 8.4 L 10.2 17 Z" opacity="0.65"/>
+    <path d="M 8.4 17 L 12.6 8 L 16.8 17 Z" opacity="0.65"/>
+    <path d="M 4.6 17 L 9.1 5.2 L 13.6 17 Z"/>
+  </g>
+</svg>

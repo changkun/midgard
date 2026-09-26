@@ -7,7 +7,7 @@ midgard 让你所有设备上的剪贴板保持一致。你复制的内容只保
 ```mermaid
 flowchart LR
     subgraph you["你的电脑：复制的内容保存在这里"]
-        A["Mac<br/>midgard 应用 · 历史记录"]
+        A["Mac<br/>Midgard 应用 · 历史记录"]
         B["Linux、Windows<br/>mg daemon · 历史记录"]
     end
     subgraph other["其他访问方式"]

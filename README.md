@@ -55,7 +55,7 @@ $ make build && make up              # or run: mg server
 [Installation](./docs/install.md) to put midgard behind your own reverse proxy.
 
 **2. A Mac.** Build the app with `make mac` (Xcode's command line tools and
-Go), and open `apple/build/midgard.app`. It asks for your server, signs you
+Go), and open `apple/build/Midgard.app`. It asks for your server, signs you
 in, and lives in the menu bar: recent copies to put back, the history in a
 window, **Ctrl+Option+S** to share the clipboard at a link. It replaces
 `mg daemon` on a Mac; see [The Mac App](./docs/install.md#the-mac-app).

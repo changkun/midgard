@@ -109,11 +109,11 @@ owner 是主体 ID，与应用令牌相同。隐藏文件（例如旧 git 备份
 
 ## Mac 应用
 
-在 Mac 上，midgard 是一个常驻菜单栏的应用。它像其他平台上的 `mg daemon` 一样同步 Mac 的剪贴板并保存历史记录，而且运行的是同一个同步引擎：应用本身用 Swift 编写（菜单、窗口、剪贴板和快捷键），并以库的形式链接 midgard 的 Go 引擎。
+在 Mac 上，Midgard 是一个常驻菜单栏的应用。它像其他平台上的 `mg daemon` 一样同步 Mac 的剪贴板并保存历史记录，而且运行的是同一个同步引擎：应用本身用 Swift 编写（菜单、窗口、剪贴板和快捷键），并以库的形式链接 midgard 的 Go 引擎。
 
 ```sh
 $ make mac                   # 需要 Go 和 Xcode 命令行工具
-$ open apple/build/midgard.app
+$ open apple/build/Midgard.app
 ```
 
 首次启动时，它会询问你的服务端地址，并在浏览器中引导你登录。之后菜单中提供：
