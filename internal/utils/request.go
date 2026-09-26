@@ -32,7 +32,7 @@ func Request(method, api string, data any) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(config.Get().Server.Auth.User, config.Get().Server.Auth.Pass)
+	req.Header.Set("Authorization", config.Authorization())
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.Do(req)
 	if err != nil {

@@ -58,9 +58,7 @@ func (m *Daemon) subscribeURL() string {
 // dial connects to the midgard server and registers the daemon. It returns
 // the connection once the server has confirmed the registration.
 func (m *Daemon) dial(ctx context.Context) (*websocket.Conn, error) {
-	creds := config.Get().Server.Auth.User + ":" + config.Get().Server.Auth.Pass
-	token := base64.StdEncoding.EncodeToString(utils.StringToBytes(creds))
-	h := http.Header{"Authorization": {"Basic " + token}}
+	h := http.Header{"Authorization": {config.Authorization()}}
 
 	api := m.subscribeURL()
 	slog.Info("connecting to the midgard server", "api", api)

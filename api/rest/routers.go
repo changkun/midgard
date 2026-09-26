@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,7 +39,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 
 	v1auth := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
 		config.S().Auth.User: config.S().Auth.Pass,
-	}))
+	}, token.Open(config.TokensPath)))
 	{
 		v1auth.GET("/clipboard", m.GetFromUniversalClipboard)
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
