@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
-| **Decided** | 2026-09-26, with changkun: clipboards belong to individuals, behind a hard barrier; history is shared across one's own devices; login through auth.latere.ai; code2img and the GitHub backup go |
+| **Status** | Accepted |
+| **Decided** | 2026-09-26, with changkun: clipboards belong to individuals, behind a hard barrier; history is shared across one's own devices; login through auth.latere.ai; code2img and the GitHub backup go; the API stays `/v1` and changes in place |
 | **Builds on** | #35–#53 (Phase 0 and 1: safe, and easy to run) |
 
 ## 1. What midgard is for
@@ -131,7 +131,9 @@ consistently with `sqlite3 .backup`.
 
 ## 8. Protocol
 
-A new `/midgard/api/v2`, since no v1 client survives the change of sign-in:
+The API stays at `/midgard/api/v1` and changes in place. No old client
+survives the change of sign-in anyway, so a second version would only keep a
+path nothing calls:
 
 - `GET/PUT /clipboard`, `GET /history`, `DELETE /history/{id}`
 - `POST /shares`, `GET /shares`, `DELETE /shares/{slug}`
@@ -139,8 +141,9 @@ A new `/midgard/api/v2`, since no v1 client survives the change of sign-in:
 - `GET /sync`: the websocket. Typed JSON messages carrying a version; payloads
   go as binary frames, not base64 inside JSON inside base64 as today.
 
-v1 and its endpoints are removed. Existing Shortcuts are recreated with app
-tokens, and daemons reinstalled with `mg login`.
+Endpoints that no longer fit are removed rather than kept beside the new
+ones. Existing Shortcuts are recreated with app tokens, and daemons signed in
+again with `mg login`.
 
 ## 9. Shares
 
@@ -180,7 +183,7 @@ Each step is its own PR, with its tests, merged when green.
 3. Storage: the SQLite schema and store, with the isolation tests.
 4. Identity: JWT verification with the allowlist on the server; `mg login` and
    actor tokens on the device; basic auth removed. Needs §4's registration.
-5. Sync v2: rooms per person, history, `mg history`.
-6. Shares v2, and `mg server import` for the existing ones.
+5. Sync: rooms per person, history, `mg history`.
+6. Shares, and `mg server import` for the existing ones.
 7. The web page, with browser login and app tokens.
 8. Deploy on changkun.de, migrate, and retire the old checkout.
