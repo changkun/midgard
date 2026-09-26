@@ -146,7 +146,11 @@ $ mg daemon uninstall
   compositor that does not, such as sway or Hyprland, add
   `exec systemctl --user start midgard-daemon` to its configuration after
   importing `WAYLAND_DISPLAY` into systemd.
-- **Windows:** run PowerShell as administrator to install.
+- **Windows:** added to the programs Windows starts when you log in
+  (`HKCU\...\CurrentVersion\Run`); no administrator needed. An older
+  install registered a Windows service instead, which runs in a session of its
+  own and cannot see your clipboard; `mg daemon uninstall`, in a PowerShell
+  run as administrator, removes it.
 
 An older `mg daemon install` put a system-wide service in `/etc`, which ran as
 root and could not reach anyone's clipboard. `sudo mg daemon uninstall`

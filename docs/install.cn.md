@@ -131,7 +131,7 @@ $ mg daemon uninstall
 
 - **macOS：** 安装为 `~/Library/LaunchAgents` 中的 LaunchAgent。
 - **Linux：** 安装为 `~/.config/systemd/user` 中的 systemd 用户单元，随图形会话启动；没有 systemd 时，安装为 `~/.config/autostart` 中的自启动项。GNOME 与 KDE 会自动启动图形会话；sway、Hyprland 等合成器需要在导入 `WAYLAND_DISPLAY` 之后，于其配置中加入 `exec systemctl --user start midgard-daemon`。
-- **Windows：** 需要以管理员身份运行 PowerShell 进行安装。
+- **Windows：** 加入登录时启动的程序（`HKCU\...\CurrentVersion\Run`），无需管理员权限。旧版安装会注册为 Windows 服务，它运行在独立的会话中，看不到你的剪贴板；以管理员身份运行 PowerShell 执行 `mg daemon uninstall` 即可移除。
 
 旧版 `mg daemon install` 会在 `/etc` 中安装以 root 运行的系统服务，它无法访问任何人的剪贴板。`sudo mg daemon uninstall` 可将其移除。
 
