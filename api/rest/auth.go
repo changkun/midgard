@@ -5,6 +5,7 @@
 package rest
 
 import (
+	"crypto/subtle"
 	"encoding/base64"
 	"log/slog"
 	"net/http"
@@ -31,7 +32,9 @@ func (a authPairs) searchCredential(authValue string) (string, bool) {
 		return "", false
 	}
 	for _, pair := range a {
-		if pair.value == authValue {
+		// Compare in constant time, so how long a wrong guess takes
+		// says nothing about how much of it was right.
+		if subtle.ConstantTimeCompare([]byte(pair.value), []byte(authValue)) == 1 {
 			return pair.user, true
 		}
 	}
@@ -40,11 +43,34 @@ func (a authPairs) searchCredential(authValue string) (string, bool) {
 
 // blocklist holds the ip that should be blocked for further requests.
 //
-// FIXME: this map may keep grow without releasing memory because of
-// continuously attempts. we also do not persist this type of block info
-// to the disk, which means if we reboot the service then all the blocker
-// are gone and they can attack the server again.
-var blocklist sync.Map // map[string]*blockinfo{}
+// It lives in memory only, so a restart forgets every block. It is swept
+// of addresses whose block has run out once it holds sweepAbove of them,
+// so failures from many addresses cannot grow it without bound.
+//
+// FIXME: persist it, so that restarting the server does not lift blocks.
+var (
+	blocklist     sync.Map // map[string]*blockinfo{}
+	blocklistSize atomic.Int64
+)
+
+// sweepAbove is how many addresses the blocklist holds before it is swept.
+const sweepAbove = 1024
+
+// sweep forgets every address whose last failure, and the block it earned,
+// are both over.
+func sweep(now time.Time) {
+	blocklist.Range(func(k, v any) bool {
+		info := v.(*blockinfo)
+		last := info.lastFail.Load().(time.Time)
+		bloc := info.blockTime.Load().(time.Duration)
+		if now.After(last.Add(bloc)) {
+			if _, loaded := blocklist.LoadAndDelete(k); loaded {
+				blocklistSize.Add(-1)
+			}
+		}
+		return true
+	})
+}
 
 type blockinfo struct {
 	failCount int64
@@ -97,7 +123,11 @@ func BasicAuthWithAttemptsControl(creds Credentials) gin.HandlerFunc {
 				info.lastFail.Store(time.Now().UTC())
 				info.blockTime.Store(time.Second * 10)
 
-				blocklist.Store(ip, info)
+				if _, loaded := blocklist.LoadOrStore(ip, info); !loaded {
+					if blocklistSize.Add(1) > sweepAbove {
+						sweep(time.Now().UTC())
+					}
+				}
 			} else {
 				info := i.(*blockinfo)
 				atomic.AddInt64(&info.failCount, 1)

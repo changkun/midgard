@@ -5,7 +5,6 @@
 package rest
 
 import (
-	"fmt"
 	"io/fs"
 	"net/http"
 	"net/http/pprof"
@@ -21,6 +20,16 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	gin.SetMode(config.S().Mode)
 
 	r = gin.Default()
+	// Believe X-Forwarded-For only from a proxy. gin believes it from
+	// anyone by default, which let a client pick the address that failed
+	// logins are counted against, and so never be blocked.
+	proxies := config.S().TrustedProxies
+	if len(proxies) == 0 {
+		proxies = defaultTrustedProxies
+	}
+	if err := r.SetTrustedProxies(proxies); err != nil {
+		fatal("invalid server.trusted_proxies", "err", err)
+	}
 	r.NoRoute(staticHandler(config.S().Store.Prefix, config.RepoPath))
 
 	mg := r.Group("/midgard")
@@ -38,8 +47,16 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.POST("/code2img", m.Code2img)
 	}
 
-	profile(mg.Group("/api/v1"))
+	// The profiles include a heap dump, which holds the clipboard and the
+	// credentials, so they are behind the login like everything else.
+	profile(v1auth)
 	return
+}
+
+// defaultTrustedProxies are loopback and the private networks.
+var defaultTrustedProxies = []string{
+	"127.0.0.0/8", "::1/128",
+	"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7",
 }
 
 func staticHandler(prefix, root string) gin.HandlerFunc {
@@ -101,17 +118,7 @@ func FixPath(p string) string {
 //     go tool pprof localhost:8080/midgard/api/v1/debug/pprof/trace?seconds=5
 func profile(r *gin.RouterGroup) {
 	pprofHandler := func(h http.HandlerFunc) gin.HandlerFunc {
-		handler := http.HandlerFunc(h)
-		return func(c *gin.Context) {
-
-			fmt.Println(c.Request.Host)
-			if !strings.Contains(c.Request.Host, "localhost") {
-				c.AbortWithStatus(http.StatusUnauthorized)
-				return
-			}
-
-			handler.ServeHTTP(c.Writer, c.Request)
-		}
+		return gin.WrapF(h)
 	}
 	rr := r.Group("/debug/pprof")
 	{

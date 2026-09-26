@@ -27,6 +27,9 @@ server:
     # to start while the password is empty or still this placeholder.
     user: midgard
     pass: change-me
+  # networks whose X-Forwarded-For header is believed, for a reverse proxy in
+  # front of midgard. Empty means loopback and the private networks.
+  trusted_proxies: []
 
 # midgard daemon settings
 # these settings are only used in daemon mode (run under `mg daemon run`)
