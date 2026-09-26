@@ -30,7 +30,7 @@ var statusCmd = &cobra.Command{
 
 		// check server status
 		res, err := utils.Request(http.MethodGet,
-			config.Get().Domain+"/midgard/ping", nil)
+			config.ServerURL()+"/midgard/ping", nil)
 		if err != nil {
 			s += fmt.Sprintf("server status: %s, %v\n",
 				term.Red("request error"), err)

@@ -56,7 +56,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 		if out.URL == "" {
 			msg = out.Message
 		} else {
-			msg = config.Get().Domain + out.URL
+			msg = config.ServerURL() + out.URL
 		}
 	})
 

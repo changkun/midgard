@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 
 	"changkun.de/x/midgard/internal/config"
 )
@@ -25,14 +24,6 @@ func Request(method, api string, data any) ([]byte, error) {
 		body, err = json.Marshal(data)
 		if err != nil {
 			return nil, err
-		}
-	}
-
-	if !strings.HasPrefix(api, "https://") || !strings.HasPrefix(api, "http://") {
-		if strings.Contains(config.Get().Domain, "localhost") {
-			api = "http://" + api
-		} else {
-			api = "https://" + api
 		}
 	}
 

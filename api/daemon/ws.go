@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"changkun.de/x/midgard/internal/clipboard"
@@ -53,11 +52,7 @@ func (m *Daemon) subscribeURL() string {
 	if m.url != "" {
 		return m.url
 	}
-	api := types.EndpointSubscribe()
-	if strings.Contains(config.Get().Domain, "localhost") || strings.Contains(config.Get().Domain, "0.0.0.0") {
-		return "ws://" + api
-	}
-	return "wss://" + api
+	return types.EndpointSubscribe()
 }
 
 // dial connects to the midgard server and registers the daemon. It returns

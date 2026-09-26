@@ -59,8 +59,8 @@ var code2imgCmd = &cobra.Command{
 			}
 
 			errorf("your code and image urls are ready:")
-			fmt.Println(config.Get().Domain + out.CodeURL)
-			fmt.Println(config.Get().Domain + out.ImageURL)
+			fmt.Println(config.ServerURL() + out.CodeURL)
+			fmt.Println(config.ServerURL() + out.ImageURL)
 			errorf("the image url is ready for pasting.")
 		})
 	},
