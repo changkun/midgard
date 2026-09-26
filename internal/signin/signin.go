@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -87,6 +88,19 @@ func Login(ctx context.Context) error {
 		return err
 	}
 	return cli.NewDeviceCodeClient(newClient(), store).Login(ctx)
+}
+
+// LoginWith is Login for a program that shows the approval link itself, such
+// as the Mac app: open is given it, with the code filled in, and nothing is
+// printed. It returns once the sign-in is approved and kept.
+func LoginWith(ctx context.Context, open func(link string) error) error {
+	store, err := newStore()
+	if err != nil {
+		return err
+	}
+	c := cli.NewDeviceCodeClient(newClient(), store)
+	c.Output, c.OpenBrowser = io.Discard, open
+	return c.Login(ctx)
 }
 
 // Logout forgets this device's sign-in.

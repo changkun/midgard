@@ -102,6 +102,52 @@ func load() {
 	})
 }
 
+// Load finds and reads the configuration, as the first Get does, but returns
+// an error instead of ending the program: for one with no terminal to say it
+// on, such as the Mac app, which asks for the server instead.
+func Load() error {
+	path, err := find()
+	if err != nil {
+		return err
+	}
+	c, err := read(path)
+	if err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	once.Do(func() {})
+	conf = c
+	return nil
+}
+
+// Save sets the server this device uses, in the user's configuration
+// directory, keeping the rest of what is there, and uses it from now on.
+func Save(domain string) (path string, err error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	path = filepath.Join(dir, "midgard", "config.yml")
+	c, err := read(path)
+	if err != nil {
+		c = &Config{}
+	}
+	c.Domain = domain
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return "", err
+	}
+	// only its user may read it: it may hold an app token
+	if err := os.WriteFile(path, b, 0o600); err != nil {
+		return "", err
+	}
+	once.Do(func() {})
+	conf = c
+	return path, nil
+}
+
 // find returns the path of the configuration file. It looks, in order, at:
 //
 //  1. $MIDGARD_CONF, when set;

@@ -5,11 +5,12 @@
 package daemon
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
 	"testing"
+
+	"changkun.de/x/midgard/internal/device"
 )
 
 // home gives the test a home, and a configuration and data directory, of its
@@ -24,31 +25,6 @@ func home(t *testing.T) string {
 	return dir
 }
 
-// TestDeviceID: an install is one device, by an id it keeps; the host name
-// named it before, and a reinstall or a second machine of the same name was
-// the same device.
-func TestDeviceID(t *testing.T) {
-	home(t)
-	id, err := deviceID()
-	if err != nil || len(id) != 32 {
-		t.Fatalf("deviceID = %q, %v", id, err)
-	}
-	if again, _ := deviceID(); again != id {
-		t.Fatalf("the id changed: %q, then %q", id, again)
-	}
-}
-
-func TestHistoryPath(t *testing.T) {
-	dir := home(t)
-	path, err := historyPath()
-	if err != nil || !strings.HasPrefix(path, dir) || filepath.Base(path) != "history.db" {
-		t.Fatalf("historyPath = %q, %v; want it under %s", path, err, dir)
-	}
-	if runtime.GOOS == "linux" && !strings.HasPrefix(path, filepath.Join(dir, "data")) {
-		t.Errorf("on Linux the history is data: %q", path)
-	}
-}
-
 func TestNewDaemon(t *testing.T) {
 	home(t)
 	m, err := NewDaemon()
@@ -59,15 +35,12 @@ func TestNewDaemon(t *testing.T) {
 	if m.engine.ID == "" || m.engine.Name == "" {
 		t.Fatalf("the daemon is %+v", m.engine)
 	}
-	if _, err := os.Stat(filepath.Dir(mustHistoryPath(t))); err != nil {
+	path, _ := device.HistoryPath()
+	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("no history: %v", err)
 	}
-}
-
-func mustHistoryPath(t *testing.T) string {
-	p, err := historyPath()
-	if err != nil {
-		t.Fatal(err)
+	// one midgard syncs a device at a time
+	if _, err := NewDaemon(); !errors.Is(err, device.ErrRunning) {
+		t.Fatalf("a second daemon: %v, want ErrRunning", err)
 	}
-	return p
 }

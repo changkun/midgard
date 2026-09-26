@@ -32,18 +32,27 @@ type Daemon struct {
 	written [sha256.Size]byte // what the daemon last put on the clipboard
 }
 
-// NewDaemon opens the device's history and sets up its sync.
+// NewDaemon opens the device's history and sets up its sync. One midgard
+// syncs a device at a time: it fails while the Mac app, or another daemon,
+// does.
 func NewDaemon() (*Daemon, error) {
-	id, err := deviceID()
+	release, err := device.Lock()
 	if err != nil {
+		return nil, err
+	}
+	id, err := device.ID()
+	if err != nil {
+		release()
 		return nil, fmt.Errorf("cannot name this device: %w", err)
 	}
-	path, err := historyPath()
+	path, err := device.HistoryPath()
 	if err != nil {
+		release()
 		return nil, err
 	}
 	h, err := history.Open(path)
 	if err != nil {
+		release()
 		return nil, fmt.Errorf("cannot open the history: %w", err)
 	}
 	name, err := os.Hostname()
