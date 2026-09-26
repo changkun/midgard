@@ -12,12 +12,15 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	conf *Config
+	// conf is replaced whole, by Load and Save in the Mac app while its
+	// engine reads it, so it is swapped atomically.
+	conf atomic.Pointer[Config]
 	once sync.Once
 )
 
@@ -56,13 +59,13 @@ type Server struct {
 // S returns the midgard server configuration
 func S() *Server {
 	load()
-	return conf.Server
+	return conf.Load().Server
 }
 
 // Get returns the whole midgard configuration
 func Get() *Config {
 	load()
-	return conf
+	return conf.Load()
 }
 
 // ServerURL is the midgard server's base URL, such as https://example.com or
@@ -93,11 +96,12 @@ func load() {
 			slog.Error("cannot find the configuration", "err", err)
 			os.Exit(1)
 		}
-		conf, err = read(path)
+		c, err := read(path)
 		if err != nil {
 			slog.Error("cannot read the configuration", "path", path, "err", err)
 			os.Exit(1)
 		}
+		conf.Store(c)
 	})
 }
 
@@ -113,8 +117,8 @@ func Load() error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}
+	conf.Store(c)
 	once.Do(func() {})
-	conf = c
 	return nil
 }
 
@@ -142,8 +146,8 @@ func Save(domain string) (path string, err error) {
 	if err := os.WriteFile(path, b, 0o600); err != nil {
 		return "", err
 	}
+	conf.Store(c)
 	once.Do(func() {})
-	conf = c
 	return path, nil
 }
 
