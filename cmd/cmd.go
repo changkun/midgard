@@ -30,6 +30,7 @@ See https://changkun.de/s/midgard for more details.
 		versionCmd,
 		loginCmd,
 		logoutCmd,
+		historyCmd,
 		serverCmd,
 		daemonCmd,
 		allocCmd,

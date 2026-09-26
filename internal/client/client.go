@@ -8,6 +8,7 @@
 package client
 
 import (
+	"cmp"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -68,4 +69,75 @@ func Devices() ([]types.Device, error) {
 		return nil, fmt.Errorf("cannot parse the server's answer: %w", err)
 	}
 	return out.Devices, nil
+}
+
+// ErrNotFound means the server has no such thing for this person.
+var ErrNotFound = errors.New("not found")
+
+// call makes a request and turns a failure into an error, with the server's
+// reason when it gives one.
+func call(method, api string, in, out any) error {
+	status, body, err := utils.Do(method, api, in)
+	if errors.Is(err, signin.ErrSignedOut) {
+		return err
+	}
+	if err != nil {
+		return fmt.Errorf("cannot reach the midgard server: %w", err)
+	}
+	switch {
+	case status == http.StatusNotFound:
+		return ErrNotFound
+	case status >= 300:
+		var reason struct {
+			Msg string `json:"msg"`
+		}
+		json.Unmarshal(body, &reason)
+		return fmt.Errorf("the server answered %d: %s", status, cmp.Or(reason.Msg, http.StatusText(status)))
+	}
+	if out == nil || len(body) == 0 {
+		return nil
+	}
+	return json.Unmarshal(body, out)
+}
+
+// History lists this person's clipboard history, newest first.
+func History() ([]types.HistoryEntry, error) {
+	var out types.HistoryOutput
+	err := call(http.MethodGet, types.EndpointHistory(), nil, &out)
+	return out.History, err
+}
+
+// HistoryEntry returns the copy numbered id from this person's history.
+func HistoryEntry(id int64) (types.MIME, []byte, error) {
+	var out types.ClipboardData
+	if err := call(http.MethodGet, fmt.Sprintf("%s/%d", types.EndpointHistory(), id), nil, &out); err != nil {
+		return "", nil, err
+	}
+	if out.Type == types.MIMEImagePNG {
+		b, err := base64.StdEncoding.DecodeString(out.Data)
+		return out.Type, b, err
+	}
+	return out.Type, []byte(out.Data), nil
+}
+
+// DeleteHistoryEntry removes the copy numbered id from this person's history.
+func DeleteHistoryEntry(id int64) error {
+	return call(http.MethodDelete, fmt.Sprintf("%s/%d", types.EndpointHistory(), id), nil, nil)
+}
+
+// ClearHistory removes all of this person's history.
+func ClearHistory() error {
+	return call(http.MethodDelete, types.EndpointHistory(), nil, nil)
+}
+
+// Copy puts data on this person's clipboard through the server, which hands
+// it to their daemons. A command cannot keep it there itself: on X11 and
+// Wayland a copy lasts only while the program that made it runs, and a
+// command exits at once. The daemons run on.
+func Copy(t types.MIME, data []byte) error {
+	in := types.PutToUniversalClipboardInput{ClipboardData: types.ClipboardData{Type: t, Data: string(data)}}
+	if t == types.MIMEImagePNG {
+		in.Data = base64.StdEncoding.EncodeToString(data)
+	}
+	return call(http.MethodPost, types.EndpointClipboard(), &in, nil)
 }
