@@ -181,7 +181,7 @@ func TestBindError(t *testing.T) {
 		name, method, path, body string
 	}{
 		{"clipboard", http.MethodPost, "/midgard/api/v1/clipboard", "{not json"},
-		{"allocate", http.MethodPut, "/midgard/api/v1/allocate", "{not json"},
+		{"shares", http.MethodPost, "/midgard/api/v1/shares", "{not json"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			w := do(t, m, tt.method, tt.path, tt.body, true)

@@ -33,7 +33,8 @@ See https://changkun.de/s/midgard for more details.
 		historyCmd,
 		serverCmd,
 		daemonCmd,
-		allocCmd,
+		shareCmd,
+		sharesCmd,
 		statusCmd,
 	)
 	r.Execute()

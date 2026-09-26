@@ -85,32 +85,40 @@ id      name
 5       changkun-win
 ```
 
-## Allocate Global URL
+## Share a Link
 
-Allocate a global url to persist the data:
+Share a file, or your clipboard, at a link anyone can open:
 
 ```sh
-$ mg alloc /awesome/filename -f /path/to/the/file # alloc link for file
-https://changkun.de/midgard/awesome/filename
+$ mg share                          # your clipboard, at a random link
+https://changkun.de/midgard/s/fboVP8u4xNMHfvsv2EeLzL
 
-$ mg alloc /awesome/clipboard/content             # alloc for clipboard data
-https://changkun.de/midgard/awesome/clipboard/content
+$ mg share -f report.pdf            # a file
+$ mg share notes/today -f a.txt     # with a name: its link is notes/today.txt
+https://changkun.de/midgard/notes/today.txt
 
-$ mg alloc                          # alloc a random link for clipboard data
-https://changkun.de/midgard/random/fboVP8u4xNMHfvsv2EeLzL.txt
+$ mg share --expires 24h            # gone after a day
 ```
 
-Keyboard hotkey:
+The link lands on your clipboard, ready to paste. A name is first come, first
+served; each share also keeps its random link. Links are public, but only you
+can list your shares or revoke one:
+
+```sh
+$ mg shares                         # what you have shared
+$ mg shares rm fboVP8u4xNMHfvsv2EeLzL   # revoke it; its links stop working
+```
+
+The daemon's hotkey shares your clipboard the same way:
 
 - Linux: **Ctrl+Mod4+s**
 - macOS: **Ctrl+Option+s**
+- Windows: **Ctrl+Shift+s**
 
-Hint: The allocated link will be write back to the clipboard and ready for paste.
-
-### iOS, iPadOS, macOS Shortcut - Alloc
-
-- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/0964c0a651544604bd995cf1e723c573
-- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/a440412d0f12454cb4676e0ded72a9f1
+An iOS Shortcut, or anything else with an app token, can share by sending
+`POST /midgard/api/v1/shares` with `{"data": "<base64>", "type": "image/png"}`
+(no data shares your clipboard). The older "midgard-alloc" Shortcuts used an
+API that is gone, and no longer work.
 
 ## Shared Clipboard
 
@@ -118,7 +126,7 @@ Hint: The allocated link will be write back to the clipboard and ready for paste
 midgard server. Thus, a possible use case of `midgard` is:
 
 1. Take a screenhot
-2. Use `mg alloc` or Use **Ctrl+Option+s**
+2. Use `mg share` or press **Ctrl+Option+s**
 3. **Ctrl+v**
 
 This returns a public accessible URL and write back into local clipboard

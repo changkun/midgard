@@ -91,6 +91,18 @@ var migrations = []string{
 		data    BLOB    NOT NULL
 	);
 	CREATE INDEX clips_by_owner ON clips (owner, id)`,
+	// 4: shares, public by design: a random link each, and a name when
+	// asked for one; only their owner may list or revoke them.
+	`CREATE TABLE shares (
+		slug    TEXT    PRIMARY KEY,
+		path    TEXT    UNIQUE,
+		owner   TEXT    NOT NULL,
+		created INTEGER NOT NULL,
+		expires INTEGER,
+		mime    TEXT    NOT NULL,
+		data    BLOB    NOT NULL
+	);
+	CREATE INDEX shares_by_owner ON shares (owner, created)`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {

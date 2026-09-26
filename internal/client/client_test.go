@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
@@ -34,48 +35,81 @@ func server(t *testing.T, h http.HandlerFunc) {
 	t.Cleanup(func() { config.Get().Domain = saved })
 }
 
-func TestAllocate(t *testing.T) {
-	var got types.AllocateURLInput
+func TestShare(t *testing.T) {
+	var got types.ShareInput
 	server(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPut || r.URL.Path != "/midgard/api/v1/allocate" {
+		if r.Method != http.MethodPost || r.URL.Path != "/midgard/api/v1/shares" {
 			t.Errorf("request %s %s", r.Method, r.URL.Path)
 		}
 		// testdata/config.yml gives the device an app token
 		if got := r.Header.Get("Authorization"); got != "Bearer "+config.Get().Token {
 			t.Errorf("Authorization = %q, want the device's token", got)
 		}
+		got = types.ShareInput{}
 		json.NewDecoder(r.Body).Decode(&got)
-		json.NewEncoder(w).Encode(types.AllocateURLOutput{URL: "/midgard/notes/a.png"})
+		json.NewEncoder(w).Encode(types.ShareInfo{Slug: "abc", URL: "/midgard/notes/a.png"})
 	})
 
-	url, err := Allocate("notes/a", []byte("png bytes"), "shot.png")
+	sh, err := Share("notes/a", []byte("png bytes"), "shot.png", time.Hour)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := config.ServerURL() + "/midgard/notes/a.png"; url != want {
-		t.Errorf("url = %q, want %q", url, want)
+	if want := config.ServerURL() + "/midgard/notes/a.png"; sh.URL != want || sh.Slug != "abc" {
+		t.Errorf("Share = %+v, want %q", sh, want)
 	}
 	data, _ := base64.StdEncoding.DecodeString(got.Data)
-	if got.Source != types.SourceAttachment || string(data) != "png bytes" || got.URI != "notes/a.png" {
-		t.Errorf("sent %+v, want the attachment at notes/a.png", got)
+	if string(data) != "png bytes" || got.Type != types.MIMEImagePNG || got.Name != "notes/a.png" || got.ExpiresIn != 3600 {
+		t.Errorf("sent %+v, want the png at notes/a.png for an hour", got)
 	}
 
-	// no data: the server publishes the universal clipboard
-	if _, err := Allocate("", nil, ""); err != nil {
+	// no file: the name is kept as it is
+	if _, err := Share("notes/today.md", []byte("# hi"), "", 0); err != nil {
 		t.Fatal(err)
 	}
-	if got.Source != types.SourceUniversalClipboard || got.Data != "" || got.URI != "" {
-		t.Errorf("sent %+v, want the universal clipboard at a random path", got)
+	if got.Name != "notes/today.md" || got.ExpiresIn != 0 {
+		t.Errorf("sent %+v, want notes/today.md, never expiring", got)
+	}
+
+	// no data: the server shares the clipboard
+	if _, err := Share("", nil, "", 0); err != nil {
+		t.Fatal(err)
+	}
+	if got.Data != "" || got.Type != "" || got.Name != "" {
+		t.Errorf("sent %+v, want the clipboard at a random link", got)
 	}
 }
 
-func TestAllocateReportsTheServersReason(t *testing.T) {
+func TestShareReportsTheServersReason(t *testing.T) {
 	server(t, func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(types.AllocateURLOutput{Message: "the requested uri already existed."})
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]string{"msg": "taken is taken; pick another name"})
 	})
-	if _, err := Allocate("taken", []byte("x"), ""); err == nil || err.Error() != "the requested uri already existed." {
+	if _, err := Share("taken", []byte("x"), "", 0); err == nil || !strings.Contains(err.Error(), "taken is taken") {
 		t.Fatalf("err = %v, want the server's reason", err)
+	}
+}
+
+func TestShares(t *testing.T) {
+	server(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method + " " + r.URL.Path {
+		case "GET /midgard/api/v1/shares":
+			json.NewEncoder(w).Encode(types.SharesOutput{Shares: []types.ShareInfo{{Slug: "abc", URL: "/midgard/s/abc"}}})
+		case "DELETE /midgard/api/v1/shares/abc":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"msg": "you have no such share"})
+		}
+	})
+	list, err := Shares()
+	if err != nil || len(list) != 1 || list[0].URL != config.ServerURL()+"/midgard/s/abc" {
+		t.Fatalf("Shares() = %+v, %v; want full links", list, err)
+	}
+	if err := DeleteShare("abc"); err != nil {
+		t.Fatal(err)
+	}
+	if err := DeleteShare("nosuch"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("revoking a missing share: %v, want ErrNotFound", err)
 	}
 }
 

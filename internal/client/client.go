@@ -13,9 +13,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
+	"time"
 
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/signin"
@@ -23,36 +25,45 @@ import (
 	"changkun.de/x/midgard/internal/utils"
 )
 
-// Allocate publishes data at desired, a path on the server, and returns its
-// public URL. With no data it publishes the universal clipboard instead. With
-// no desired path the server picks a random one. name, the source file's name
-// if there is one, gives the published path its extension.
-func Allocate(desired string, data []byte, name string) (string, error) {
-	in := types.AllocateURLInput{Source: types.SourceUniversalClipboard}
+// Share publishes data at a link and returns it. With no data it publishes
+// this person's clipboard instead. A name, when given, is a link of its own
+// besides the random one. filename, the source file's name if there is one,
+// gives the share its type and the name its extension. A positive expires
+// retires the share after that long.
+func Share(name string, data []byte, filename string, expires time.Duration) (types.ShareInfo, error) {
+	in := types.ShareInput{ExpiresIn: int64(expires / time.Second)}
 	if len(data) > 0 {
-		in.Source = types.SourceAttachment
 		in.Data = base64.StdEncoding.EncodeToString(data)
+		in.Type = types.MIME(cmp.Or(mime.TypeByExtension(path.Ext(filename)), http.DetectContentType(data)))
 	}
-	if desired != "" {
-		// the published path takes the source's extension
-		in.URI = strings.TrimSuffix(desired, filepath.Ext(desired)) + filepath.Ext(name)
+	in.Name = name
+	if ext := path.Ext(filename); name != "" && ext != "" {
+		// the link takes the file's extension, so it opens as what it is
+		in.Name = strings.TrimSuffix(name, path.Ext(name)) + ext
 	}
+	var out types.ShareInfo
+	if err := call(http.MethodPost, types.EndpointShares(), &in, &out); err != nil {
+		return out, err
+	}
+	out.URL = config.ServerURL() + out.URL
+	return out, nil
+}
 
-	res, err := utils.Request(http.MethodPut, types.EndpointAllocateURL(), &in)
-	if errors.Is(err, signin.ErrSignedOut) {
-		return "", err // not a network problem; say what to do
+// Shares lists this person's shares, newest first, with full links.
+func Shares() ([]types.ShareInfo, error) {
+	var out types.SharesOutput
+	if err := call(http.MethodGet, types.EndpointShares(), nil, &out); err != nil {
+		return nil, err
 	}
-	if err != nil {
-		return "", fmt.Errorf("cannot reach the midgard server: %w", err)
+	for i := range out.Shares {
+		out.Shares[i].URL = config.ServerURL() + out.Shares[i].URL
 	}
-	var out types.AllocateURLOutput
-	if err := json.Unmarshal(res, &out); err != nil {
-		return "", fmt.Errorf("cannot parse the server's answer: %w", err)
-	}
-	if out.URL == "" {
-		return "", fmt.Errorf("%s", out.Message)
-	}
-	return config.ServerURL() + out.URL, nil
+	return out.Shares, nil
+}
+
+// DeleteShare revokes this person's share slug; its links stop working.
+func DeleteShare(slug string) error {
+	return call(http.MethodDelete, types.EndpointShares()+"/"+slug, nil, nil)
 }
 
 // Devices lists the daemons connected to the server.

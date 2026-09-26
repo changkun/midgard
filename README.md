@@ -51,8 +51,8 @@ A device that cannot open a browser to sign in, and an iOS Shortcut, can use
 an app token instead: `mg server token add <name> --owner <you>` on the server
 (see [Usage](./docs/usage.md)).
 
-Now copy something on one device and paste it on another. `mg alloc` turns the
-clipboard into a public link; see [Usage](./docs/usage.md).
+Now copy something on one device and paste it on another. `mg share` turns the
+clipboard, or a file, into a link; see [Usage](./docs/usage.md).
 
 ## Docs
 

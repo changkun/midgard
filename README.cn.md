@@ -39,7 +39,7 @@ daemon status: OK
 
 无法打开浏览器登录的设备以及 iOS 快捷指令，可以改用应用令牌：在服务端运行 `mg server token add <名称> --owner <你>`（详见[使用](./docs/usage.cn.md)）。
 
-现在就可以在一台设备上复制、在另一台上粘贴了。`mg alloc` 可将剪贴板内容变成公开链接，详见[使用](./docs/usage.cn.md)。
+现在就可以在一台设备上复制、在另一台上粘贴了。`mg share` 可将剪贴板内容或文件变成链接，详见[使用](./docs/usage.cn.md)。
 
 ## 文档
 

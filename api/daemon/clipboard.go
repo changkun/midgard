@@ -10,11 +10,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"time"
 
+	"changkun.de/x/midgard/internal/client"
 	"changkun.de/x/midgard/internal/clipboard"
-	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/hotkey"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
@@ -37,27 +36,12 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 		}()
 
 		slog.Info("the hotkey is triggered")
-		res, err := utils.Request(
-			http.MethodPut,
-			types.EndpointAllocateURL(),
-			&types.AllocateURLInput{
-				Source: types.SourceUniversalClipboard,
-			})
+		sh, err := client.Share("", nil, "", 0)
 		if err != nil {
-			msg = fmt.Sprintf("cannot perform allocate request, err: %v", err)
+			msg = fmt.Sprintf("cannot share the clipboard: %v", err)
 			return
 		}
-		var out types.AllocateURLOutput
-		err = json.Unmarshal(res, &out)
-		if err != nil {
-			msg = fmt.Sprintf("cannot parse requested URL, err: %v", err)
-			return
-		}
-		if out.URL == "" {
-			msg = out.Message
-		} else {
-			msg = config.ServerURL() + out.URL
-		}
+		msg = sh.URL
 	})
 
 	textCh := clipboard.Local.Watch(ctx, types.MIMEPlainText)

@@ -22,11 +22,12 @@ var (
 	once sync.Once
 )
 
-// RepoPath points to the actual storage
+// RepoPath is where an older server kept its shares, as files. They are
+// served no longer; shares live in the database.
 var RepoPath = "./data/repo"
 
 // DBPath is the server's database (see internal/store): in a directory of
-// its own in the data folder, outside RepoPath, which is published.
+// its own in the data folder.
 var DBPath = "./data/db/midgard.db"
 
 // Config is a combination of all possible midgard configuration.
