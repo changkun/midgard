@@ -28,37 +28,38 @@ id      name
 5       changkun-win
 ```
 
-## 分配全局 URL
+## 分享链接
 
-全局 URL 分配的目的是希望将一个私有的内容创建一个永久的公开连接。例如：分享剪贴板中的内容、分享本地文件中的一个内容等等（不建议作用于大型文件，并只建议文本文件或者图片）
-
-分配全局 URL 并对数据进行持久化：
+将文件或剪贴板内容分享为一个任何人都能打开的链接：
 
 ```sh
-$ mg alloc /awesome/filename -f /path/to/the/file # 为指定的文件创建一个指定的路由
-https://changkun.de/midgard/awesome/filename      # 创建后的永久链接
+$ mg share                          # 分享剪贴板，使用随机链接
+https://changkun.de/midgard/s/fboVP8u4xNMHfvsv2EeLzL
 
-$ mg alloc /awesome/clipboard/content # 为当前剪贴板中的内容创建一个指定的路由
-https://changkun.de/midgard/awesome/clipboard/content # 创建后的永久链接
+$ mg share -f report.pdf            # 分享一个文件
+$ mg share notes/today -f a.txt     # 指定名称：链接为 notes/today.txt
+https://changkun.de/midgard/notes/today.txt
 
-$ mg alloc # 当不指定路由时将创建一个随机的路由
-https://changkun.de/midgard/random/fboVP8u4xNMHfvsv2EeLzL.txt
+$ mg share --expires 24h            # 一天后失效
 ```
 
-除了使用命令行之外，还可以使用快捷键进行触发：
+链接会自动写入剪贴板，可以直接粘贴。名称先到先得；每个分享同时保留其随机链接。
+链接是公开的，但只有你本人能列出或撤销自己的分享：
+
+```sh
+$ mg shares                             # 列出你的分享
+$ mg shares rm fboVP8u4xNMHfvsv2EeLzL   # 撤销；其链接随即失效
+```
+
+守护进程的快捷键也以同样的方式分享剪贴板：
 
 - Linux: **Ctrl+Mod4+s**
 - macOS: **Ctrl+Option+s**
 - Windows: **Ctrl+Shift+s**
 
-_创建好的连接会自动写回到当前的剪贴板，可以立刻直接在其他位置进行粘贴。_
-
-### iOS, iPadOS, macOS 捷径 - Alloc
-
-请在 iOS, iPadOS, macOS 设备上访问 midgard-alloc 的捷径链接，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
-
-- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/0964c0a651544604bd995cf1e723c573
-- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/a440412d0f12454cb4676e0ded72a9f1
+iOS 捷径或其他持有应用令牌的客户端，可以发送
+`POST /midgard/api/v1/shares`，内容为 `{"data": "<base64>", "type": "image/png"}`
+（不带 data 时分享剪贴板）。旧的 midgard-alloc 捷径使用的接口已移除，无法再使用。
 
 ## 跨设备剪贴板共享
 
@@ -66,7 +67,7 @@ midgard 守护进程将自动监控剪贴板并将内容与 midgard 服务器进
 因此，配合系统截图的一个可能的使用场景为：
 
 1. 对屏幕进行截图
-2. 使用 `mg alloc` 命令或者 **Ctrl+Option+s** （macOS）或者 **Ctrl+Mod4+s** (Linux) 或者 **Ctrl+Shift+s** (Windows) 键盘快捷键
+2. 使用 `mg share` 命令或者 **Ctrl+Option+s** （macOS）或者 **Ctrl+Mod4+s** (Linux) 或者 **Ctrl+Shift+s** (Windows) 键盘快捷键
 3. 立即使用 **Ctrl+v** 进行粘贴
 
 第二步执行完后将返回一个可以公开访问的 URL，并自动回写到当前设备的剪贴板中，因此第三步可以顺利进行。

@@ -5,12 +5,10 @@
 package rest
 
 import (
-	"io/fs"
 	"net/http"
 	"net/http/pprof"
 	"path"
 	"runtime"
-	"strings"
 
 	"changkun.de/x/midgard/internal/config"
 	"github.com/gin-gonic/gin"
@@ -30,7 +28,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 	if err := r.SetTrustedProxies(proxies); err != nil {
 		fatal("invalid server.trusted_proxies", "err", err)
 	}
-	r.NoRoute(staticHandler(config.S().Store.Prefix, config.RepoPath))
+	r.NoRoute(m.serveShare)
 
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
@@ -41,11 +39,13 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
 		v1auth.GET("/ws", m.Subscribe)
 		v1auth.GET("/devices", m.Devices)
+		v1auth.POST("/shares", m.CreateShare)
+		v1auth.GET("/shares", m.Shares)
+		v1auth.DELETE("/shares/:slug", m.DeleteShare)
 		v1auth.GET("/history", m.History)
 		v1auth.DELETE("/history", m.ClearHistory)
 		v1auth.GET("/history/:id", m.HistoryEntry)
 		v1auth.DELETE("/history/:id", m.DeleteHistoryEntry)
-		v1auth.PUT("/allocate", m.AllocateURL)
 	}
 
 	// The profiles include a heap dump, which holds the clipboard and the
@@ -58,40 +58,6 @@ func (m *Midgard) routers() (r *gin.Engine) {
 var defaultTrustedProxies = []string{
 	"127.0.0.0/8", "::1/128",
 	"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7",
-}
-
-func staticHandler(prefix, root string) gin.HandlerFunc {
-	fs := visibleOnly{gin.Dir(root, false)}
-	fileServer := http.StripPrefix(prefix, http.FileServer(fs))
-
-	return func(c *gin.Context) {
-		// URL.Path, not URL.String: the latter keeps the query, so any link
-		// with ?something appended used to 404.
-		file := strings.TrimPrefix(c.Request.URL.Path, prefix)
-		// Check if file exists and/or if we have permission to access it
-		f, err := fs.Open(file)
-		if err != nil {
-			c.Writer.WriteHeader(http.StatusNotFound)
-			return
-		}
-		f.Close()
-		fileServer.ServeHTTP(c.Writer, c.Request)
-	}
-}
-
-// visibleOnly serves a store without its hidden files. The store is a git
-// clone, so without this /midgard/.git/ served the repository itself, and
-// with it the name of every published file, including the "random" ones
-// that are meant to be found only through their link.
-type visibleOnly struct{ http.FileSystem }
-
-func (v visibleOnly) Open(name string) (http.File, error) {
-	for seg := range strings.SplitSeq(path.Clean("/"+name), "/") {
-		if strings.HasPrefix(seg, ".") {
-			return nil, fs.ErrNotExist
-		}
-	}
-	return v.FileSystem.Open(name)
 }
 
 // FixPath fixes a relative path

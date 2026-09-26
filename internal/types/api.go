@@ -18,8 +18,8 @@ import (
 // EndpointClipboard is the universal clipboard.
 func EndpointClipboard() string { return config.ServerURL() + "/midgard/api/v1/clipboard" }
 
-// EndpointAllocateURL allocates a public URL.
-func EndpointAllocateURL() string { return config.ServerURL() + "/midgard/api/v1/allocate" }
+// EndpointShares publishes and lists shares.
+func EndpointShares() string { return config.ServerURL() + "/midgard/api/v1/shares" }
 
 // EndpointDevices lists the daemons connected to the server.
 func EndpointDevices() string { return config.ServerURL() + "/midgard/api/v1/devices" }
@@ -62,30 +62,31 @@ type PutToUniversalClipboardOutput struct {
 	Message string `json:"msg"`
 }
 
-// SourceType is the source type for URL allocation.
-//
-// Note: We use string for the data type because this is better
-// for post body in iOS shortcut.
-type SourceType string
-
-const (
-	// SourceUniversalClipboard indicates source from clipboard
-	SourceUniversalClipboard SourceType = "clipboard"
-	// SourceAttachment indicates source from attachment
-	SourceAttachment = "attachment"
-)
-
-// AllocateURLInput defines the input format of requested resource
-type AllocateURLInput struct {
-	Source SourceType `json:"source"`
-	URI    string     `json:"uri"`
-	Data   string     `json:"data"`
+// ShareInput asks to publish a share: Data, base64, of Type, or the
+// requester's clipboard when Data is empty. Name, when set, is a name for its
+// link besides the random one; ExpiresIn, in seconds, when set, retires it.
+type ShareInput struct {
+	Data      string `json:"data,omitempty"`
+	Type      MIME   `json:"type,omitempty"`
+	Name      string `json:"name,omitempty"`
+	ExpiresIn int64  `json:"expires_in,omitempty"`
 }
 
-// AllocateURLOutput ...
-type AllocateURLOutput struct {
-	URL     string `json:"url"`
-	Message string `json:"msg"`
+// ShareInfo describes a share. URL is the link to hand out, relative to the
+// server: its name when it has one, its random link otherwise.
+type ShareInfo struct {
+	Slug    string     `json:"slug"`
+	Name    string     `json:"name,omitempty"`
+	URL     string     `json:"url"`
+	Created time.Time  `json:"created"`
+	Expires *time.Time `json:"expires,omitempty"`
+	Type    MIME       `json:"type"`
+	Size    int        `json:"size"`
+}
+
+// SharesOutput is the answer to GET /shares, newest first.
+type SharesOutput struct {
+	Shares []ShareInfo `json:"shares"`
 }
 
 // Device is a daemon connected to the server.
