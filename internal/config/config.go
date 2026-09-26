@@ -26,9 +26,9 @@ var (
 // RepoPath points to the actual storage
 var RepoPath = "./data/repo"
 
-// TokensPath is where the server keeps the hashes of the device tokens: in
-// the data folder, but outside RepoPath, which is published.
-var TokensPath = "./data/tokens"
+// DBPath is the server's database (see internal/store): in a directory of
+// its own in the data folder, outside RepoPath, which is published.
+var DBPath = "./data/db/midgard.db"
 
 // Config is a combination of all possible midgard configuration.
 type Config struct {

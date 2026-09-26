@@ -15,17 +15,17 @@ server status: OK
 daemon status: OK
 ```
 
-## Device Tokens
+## App Tokens
 
-Give each device its own token instead of the server's password. Revoke a
-token and only that device loses access, and no device holds the password
-that runs the server. On the server's machine, in the directory the server
-runs from:
+Give each device, or each iOS Shortcut, its own token instead of the server's
+password. A token acts for one person, its owner, and reaches only their data;
+revoke one and only that client loses access. On the server's machine, in the
+directory the server runs from:
 
 ```sh
-$ mg server token add laptop   # prints the token, once
-$ mg server token ls           # devices that have a token
-$ mg server token rm laptop    # revoke it; takes effect at once
+$ mg server token add laptop --owner <owner>   # prints the token, once
+$ mg server token ls --owner <owner>           # the owner's tokens
+$ mg server token rm laptop --owner <owner>    # revoke it; takes effect at once
 ```
 
 On the device, put the token in its `config.yml` and leave out
@@ -38,7 +38,7 @@ token: mgt_...
 
 Anything else that talks to the server, such as an iOS Shortcut, can send it
 as `Authorization: Bearer mgt_...`. The server's user name and password keep
-working too.
+working too, until sign-in through auth.latere.ai replaces them.
 
 ## List Active Daemons
 
