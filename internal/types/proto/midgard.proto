@@ -22,9 +22,15 @@ message PingOutput {
     string BuildTime = 3;
 }
 
+// AllocateURLInput carries the file to publish, read by the mg command
+// rather than by the daemon: the daemon answers any local program, and must
+// not open whatever path it is handed.
 message AllocateURLInput {
     string DesiredPath = 1;
-    string SourcePath = 2;
+    reserved 2; // SourcePath
+    reserved "SourcePath";
+    bytes SourceData = 3; // empty to publish the universal clipboard
+    string SourceName = 4; // the source file's name, for its extension
 }
 
 message AllocateURLOutput {
@@ -32,10 +38,11 @@ message AllocateURLOutput {
     string Message = 2;
 }
 
+// CodeToImageInput carries the code itself, for the same reason.
 message CodeToImageInput {
-    string CodePath = 1;
-    int64 Start = 2;
-    int64 End = 3;
+    reserved 1, 2, 3; // CodePath, Start, End
+    reserved "CodePath", "Start", "End";
+    string Code = 4; // empty to render the universal clipboard
 }
 
 message CodeToImageOutput {

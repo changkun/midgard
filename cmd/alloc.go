@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/types/proto"
@@ -41,11 +42,26 @@ func init() {
 // allocate request the midgard daemon to allocate a given URL for
 // a given resource, or the content from the midgard universal clipboard.
 func allocate(dstpath, srcpath string) {
+	in := &proto.AllocateURLInput{DesiredPath: dstpath}
+	if srcpath != "" {
+		// Read the file here, as the person running mg, and send its bytes;
+		// the daemon does not open paths for its callers.
+		b, err := os.ReadFile(srcpath)
+		if err != nil {
+			errorf("cannot read %s: %v", srcpath, err)
+			os.Exit(1)
+		}
+		if len(b) == 0 {
+			// an empty source means "the clipboard" to the daemon
+			errorf("%s is empty, there is nothing to publish", srcpath)
+			os.Exit(1)
+		}
+		in.SourceData = b
+		in.SourceName = filepath.Base(srcpath)
+	}
+
 	daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
-		out, err := c.AllocateURL(ctx, &proto.AllocateURLInput{
-			DesiredPath: dstpath,
-			SourcePath:  srcpath,
-		})
+		out, err := c.AllocateURL(ctx, in)
 		if err != nil {
 			errorf("cannot interact with the midgard daemon: %v",
 				status.Convert(err).Message())
