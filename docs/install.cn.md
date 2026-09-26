@@ -44,7 +44,7 @@ $ curl https://your.domain/midgard/ping
 
 **4. 放到反向代理后面**，路径为 `/midgard`，需要允许 websocket，并且请求体上限要大于 32 MB（单次复制或分享的最大大小）。
 
-使用 traefik，与容器处于同一网络（完整示例见 [changkun/proxy](https://changkun.de/s/proxy)）：
+使用 traefik，与容器处于同一网络（changkun.de 自己的完整配置，包括 traefik，见 [changkun/web](https://github.com/changkun/web)）：
 
 ```yaml
 http:

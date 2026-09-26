@@ -62,8 +62,8 @@ tokens, and no copies. Back up `./data`; there is nothing else to back up.
 allowed, and a body limit above 32 MB, the size of the largest copy or
 share.
 
-With traefik, next to the container on its network (a complete setup is
-[changkun/proxy](https://changkun.de/s/proxy)):
+With traefik, next to the container on its network (changkun.de's own
+setup, traefik and all, is [changkun/web](https://github.com/changkun/web)):
 
 ```yaml
 http:
