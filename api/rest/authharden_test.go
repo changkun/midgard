@@ -10,8 +10,6 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"changkun.de/x/midgard/internal/config"
 )
 
 func resetBlocklist(t *testing.T) {
@@ -31,9 +29,9 @@ func login(m *Midgard, remote, xff string, good bool) int {
 		req.Header.Set("X-Forwarded-For", xff)
 	}
 	if good {
-		req.SetBasicAuth(config.S().Auth.User, config.S().Auth.Pass)
+		req.Header.Set("Authorization", bearer())
 	} else {
-		req.SetBasicAuth("nobody", "wrong")
+		req.Header.Set("Authorization", "Bearer not-a-token")
 	}
 	w := httptest.NewRecorder()
 	m.routers().ServeHTTP(w, req)

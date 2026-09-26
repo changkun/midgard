@@ -5,14 +5,12 @@
 package rest
 
 import (
-	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"github.com/gorilla/websocket"
 )
@@ -20,8 +18,7 @@ import (
 // subscribe registers a daemon named id with the server at srv.
 func subscribe(t *testing.T, srv *httptest.Server, id string) *websocket.Conn {
 	t.Helper()
-	creds := config.S().Auth.User + ":" + config.S().Auth.Pass
-	h := http.Header{"Authorization": {"Basic " + base64.StdEncoding.EncodeToString([]byte(creds))}}
+	h := http.Header{"Authorization": {bearer()}}
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/midgard/api/v1/ws"
 	c, _, err := websocket.DefaultDialer.Dial(url, h)
 	if err != nil {

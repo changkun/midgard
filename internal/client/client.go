@@ -10,12 +10,14 @@ package client
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/signin"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 )
@@ -36,6 +38,9 @@ func Allocate(desired string, data []byte, name string) (string, error) {
 	}
 
 	res, err := utils.Request(http.MethodPut, types.EndpointAllocateURL(), &in)
+	if errors.Is(err, signin.ErrSignedOut) {
+		return "", err // not a network problem; say what to do
+	}
 	if err != nil {
 		return "", fmt.Errorf("cannot reach the midgard server: %w", err)
 	}
@@ -52,6 +57,9 @@ func Allocate(desired string, data []byte, name string) (string, error) {
 // Devices lists the daemons connected to the server.
 func Devices() ([]types.Device, error) {
 	res, err := utils.Request(http.MethodGet, types.EndpointDevices(), nil)
+	if errors.Is(err, signin.ErrSignedOut) {
+		return nil, err
+	}
 	if err != nil {
 		return nil, fmt.Errorf("cannot reach the midgard server: %w", err)
 	}

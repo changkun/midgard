@@ -74,6 +74,7 @@ require (
 	golang.org/x/image v0.46.0 // indirect
 	golang.org/x/mobile v0.0.0-20260821190718-4776eadac327 // indirect
 	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect

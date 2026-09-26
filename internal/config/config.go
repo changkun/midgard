@@ -5,7 +5,6 @@
 package config
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -34,8 +33,8 @@ var DBPath = "./data/db/midgard.db"
 type Config struct {
 	Title  string `yaml:"title"`
 	Domain string `yaml:"domain"`
-	// Token is this device's token, issued with mg server token add. A
-	// device with a token needs no server.auth credentials.
+	// Token is an app token for this device, issued with mg server token
+	// add, for a device that does not sign in with mg login.
 	Token  string  `yaml:"token"`
 	Server *Server `yaml:"server"`
 }
@@ -51,10 +50,6 @@ type Server struct {
 		// what people copy includes passwords.
 		LogClipboard bool `yaml:"log_clipboard"`
 	} `yaml:"store"`
-	Auth struct {
-		User string `yaml:"user"`
-		Pass string `yaml:"pass"`
-	} `json:"auth"`
 	// TrustedProxies lists the networks whose X-Forwarded-For header is
 	// believed when working out a client's address, which the login
 	// attempt limit is keyed by. Empty means loopback and private networks,
@@ -90,20 +85,6 @@ func ServerURL() string {
 	default:
 		return "https://" + d
 	}
-}
-
-// Authorization is the Authorization header a client sends to the server:
-// this device's token when it has one, and the server's credentials
-// otherwise, as every device needed before tokens existed.
-func Authorization() string {
-	if t := Get().Token; t != "" {
-		return "Bearer " + t
-	}
-	var user, pass string
-	if s := Get().Server; s != nil {
-		user, pass = s.Auth.User, s.Auth.Pass
-	}
-	return "Basic " + base64.StdEncoding.EncodeToString([]byte(user+":"+pass))
 }
 
 // load reads the configuration the first time it is asked for, not when the

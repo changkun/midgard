@@ -17,7 +17,6 @@ import (
 	"strings"
 	"testing"
 
-	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/version"
 )
@@ -32,7 +31,7 @@ func do(t *testing.T, m *Midgard, method, path, body string, auth bool) *httptes
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if auth {
-		req.SetBasicAuth(config.S().Auth.User, config.S().Auth.Pass)
+		req.Header.Set("Authorization", bearer())
 	}
 	// the auth middleware blocks by client IP after repeated failures;
 	// give every request its own so the subtests stay independent.

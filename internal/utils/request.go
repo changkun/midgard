@@ -6,11 +6,13 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
-	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/signin"
 )
 
 // Request conducts a http request for a given method, api endpoint, and
@@ -32,7 +34,13 @@ func Request(method, api string, data any) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", config.Authorization())
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	auth, err := signin.Authorization(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", auth)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.Do(req)
 	if err != nil {

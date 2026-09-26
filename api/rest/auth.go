@@ -6,43 +6,16 @@ package rest
 
 import (
 	"context"
-	"crypto/subtle"
-	"encoding/base64"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"changkun.de/x/midgard/internal/store"
-	"changkun.de/x/midgard/internal/utils"
 	"github.com/gin-gonic/gin"
 )
-
-// BasicAuth with attempt control
-
-type authPair struct {
-	value string
-	user  string
-}
-
-type authPairs []authPair
-
-func (a authPairs) searchCredential(authValue string) (string, bool) {
-	if authValue == "" {
-		return "", false
-	}
-	for _, pair := range a {
-		// Compare in constant time, so how long a wrong guess takes
-		// says nothing about how much of it was right.
-		if subtle.ConstantTimeCompare([]byte(pair.value), []byte(authValue)) == 1 {
-			return pair.user, true
-		}
-	}
-	return "", false
-}
 
 // blocklist holds the ip that should be blocked for further requests.
 //
@@ -83,9 +56,6 @@ type blockinfo struct {
 
 const maxFailureAttempts = 5
 
-// Credentials is the basic auth authentication credentials
-type Credentials map[string]string
-
 // appTokens finds whom an app token acts for; *store.Store is one.
 type appTokens interface {
 	CheckAppToken(ctx context.Context, tok string) (store.TokenHolder, bool)
@@ -98,16 +68,16 @@ const (
 	ctxDevice = "midgard_device"
 )
 
-// BasicAuthWithAttemptsControl offers basic auth with maximum failure control.
-// It also accepts, sent as "Bearer <token>", an app token or a token from
-// auth.latere.ai; a failed one counts against the address like a wrong
-// password. tokens and latere may be nil.
+// signIn admits a request that carries, as "Bearer <token>", a token
+// auth.latere.ai minted for midgard or an app token, either belonging to
+// someone on the allowlist, and records whose data it may reach. Anything
+// else counts against the address, and enough failures block it for a while.
+// latere may be nil, and then no one is admitted; tokens may be nil.
 //
-// Once sign-in replaces the password, an app token is honoured only while its
-// owner is on the allowlist, so removing someone removes their Shortcuts too.
-func BasicAuthWithAttemptsControl(creds Credentials, tokens appTokens, latere *latereAuth) gin.HandlerFunc {
-	realm := "Basic realm=" + strconv.Quote("Authorization Required")
-	pairs := processCreds(creds)
+// There is no password any more: sign-in names a person, and an app token
+// names its owner, so an app token is only as good as its owner's place on
+// the allowlist, and removing someone removes their Shortcuts too.
+func signIn(tokens appTokens, latere *latereAuth) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// check if the IP failure attempts are too much
 		// if so, direct abort the request without checking credentials
@@ -134,27 +104,20 @@ func BasicAuthWithAttemptsControl(creds Credentials, tokens appTokens, latere *l
 
 		}
 
-		// Search user in the slice of allowed credentials, or the device
-		// tokens for a bearer.
-		header := c.Request.Header.Get("Authorization")
-		user, found := pairs.searchCredential(header)
-		owner, device := user, ""
-		if bearer, ok := strings.CutPrefix(header, "Bearer "); ok {
+		var owner, device string
+		found := false
+		if bearer, ok := strings.CutPrefix(c.Request.Header.Get("Authorization"), "Bearer "); ok {
 			switch {
 			case strings.HasPrefix(bearer, store.TokenPrefix):
 				if tokens == nil {
 					break
 				}
-				h, ok := tokens.CheckAppToken(c.Request.Context(), bearer)
-				// Without an allowlist, sign-in is not set up yet and the
-				// password still stands; tokens work as they did.
-				if ok && (latere == nil || latere.permits(h.Owner, h.Email)) {
-					user, found = "device:"+h.Name, true
-					owner, device = h.Owner, h.Name
+				if h, ok := tokens.CheckAppToken(c.Request.Context(), bearer); ok && latere.permits(h.Owner, h.Email) {
+					owner, device, found = h.Owner, h.Name, true
 				}
 			default:
 				if sub, ok := latere.identify(c.Request); ok {
-					user, found, owner = sub, true, sub
+					owner, found = sub, true
 				}
 			}
 		}
@@ -177,35 +140,12 @@ func BasicAuthWithAttemptsControl(creds Credentials, tokens appTokens, latere *l
 				info.lastFail.Store(time.Now().UTC())
 			}
 
-			// Credentials doesn't match, we return 401 and abort handlers chain.
-			c.Header("WWW-Authenticate", realm)
+			c.Header("WWW-Authenticate", `Bearer realm="midgard"`)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		// The user credentials was found, set user's id to key
-		// in this context.
-		c.Set("midgard_user", user)
 		c.Set(ctxOwner, owner)
 		c.Set(ctxDevice, device)
 	}
-}
-
-func processCreds(creds Credentials) authPairs {
-	if len(creds) <= 0 {
-		panic("empty list of authorized credentials")
-	}
-	pairs := make(authPairs, 0, len(creds))
-	for user, password := range creds {
-		if user == "" {
-			panic("user can not be empty")
-		}
-		base := user + ":" + password
-		value := "Basic " + base64.StdEncoding.EncodeToString(utils.StringToBytes(base))
-		pairs = append(pairs, authPair{
-			value: value,
-			user:  user,
-		})
-	}
-	return pairs
 }

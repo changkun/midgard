@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/clipboard"
-	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/signin"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/gorilla/websocket"
@@ -58,7 +58,11 @@ func (m *Daemon) subscribeURL() string {
 // dial connects to the midgard server and registers the daemon. It returns
 // the connection once the server has confirmed the registration.
 func (m *Daemon) dial(ctx context.Context) (*websocket.Conn, error) {
-	h := http.Header{"Authorization": {config.Authorization()}}
+	auth, err := signin.Authorization(ctx)
+	if err != nil {
+		return nil, err
+	}
+	h := http.Header{"Authorization": {auth}}
 
 	api := m.subscribeURL()
 	slog.Info("connecting to the midgard server", "api", api)

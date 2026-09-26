@@ -28,6 +28,8 @@ See https://changkun.de/s/midgard for more details.
 
 	r.AddCommand(
 		versionCmd,
+		loginCmd,
+		logoutCmd,
 		serverCmd,
 		daemonCmd,
 		allocCmd,

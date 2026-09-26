@@ -13,8 +13,8 @@ title: "midgard"
 # localhost); spell it out otherwise, with the port if it is not the default,
 # for example http://mg.local:8456.
 domain: example.com
-# this device's token, from `mg server token add <device>` on the server. With
-# a token, a device needs no server.auth credentials.
+# a device signs in with `mg login`. One that cannot, such as a headless box,
+# can use an app token from `mg server token add` on the server instead.
 # token: mgt_...
 
 # midgard server settings
@@ -27,11 +27,6 @@ server:
     # keep every copied text in data/logs/clipboard, in plain text. Off by
     # default: what people copy includes passwords.
     log_clipboard: false
-  auth:
-    # the following two configure your midgard credentials. The server refuses
-    # to start while the password is empty or still this placeholder.
-    user: midgard
-    pass: change-me
   # networks whose X-Forwarded-For header is believed, for a reverse proxy in
   # front of midgard. Empty means loopback and the private networks.
   trusted_proxies: []
