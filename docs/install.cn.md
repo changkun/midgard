@@ -94,6 +94,13 @@ midgard 从 `config.yml` 读取配置。请以 [config.example.yml](../config.ex
 
 ## Midgard 服务端
 
+用户通过 [auth.latere.ai](https://auth.latere.ai) 登录。服务端从环境变量读取设置：
+`AUTH_ALLOWED_PRINCIPALS` 列出允许使用的人（邮箱或主体 ID），`AUTH_URL` 指定签发方（默认 auth.latere.ai）。
+将 [.env.template](../.env.template) 复制为 `.env`，`docker-compose.yml` 会读取它。
+`/midgard/` 的网页需要在 auth.latere.ai 注册的客户端（`midgard-web`，回调地址
+`https://<你的域名>/midgard/.auth/callback`），由 `AUTH_CLIENT_ID` 指定，
+并用 `AUTH_COOKIE_KEY`（`openssl rand -hex 32`）加密会话 Cookie。未设置时网页会提示未开启登录，其余功能不受影响。
+
 从 Docker 启动 midgard 服务端可以使用下列命令:
 
 ```

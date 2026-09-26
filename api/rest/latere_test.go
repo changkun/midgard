@@ -31,7 +31,7 @@ func issuer(t *testing.T) *issuertest.Server {
 func signedIn(t *testing.T, latere *latereAuth, tokens appTokens, header, remote string) (int, string) {
 	t.Helper()
 	r := gin.New()
-	r.Use(signIn(tokens, latere))
+	r.Use(signIn(tokens, latere, nil))
 	var owner string
 	r.GET("/", func(c *gin.Context) { owner = c.GetString(ctxOwner) })
 	req := httptest.NewRequest(http.MethodGet, "/", nil)

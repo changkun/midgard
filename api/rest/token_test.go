@@ -91,7 +91,7 @@ func TestLoginNamesTheOwner(t *testing.T) {
 	tok, _ := s.IssueAppToken(context.Background(), testUser, testEmail, "phone")
 
 	r := gin.New()
-	r.Use(signIn(s, newLatereAuth()))
+	r.Use(signIn(s, newLatereAuth(), nil))
 	var owner, device string
 	r.GET("/", func(c *gin.Context) { owner, device = c.GetString(ctxOwner), c.GetString(ctxDevice) })
 

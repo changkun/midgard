@@ -1,6 +1,7 @@
 # Keep secrets and state out of the build context, and so out of the image.
 .git
 config.yml
+.env
 id_rsa
 data
 mg

@@ -73,21 +73,37 @@ audience from the JWKS (`authkit.JWT`, `Audiences: [midgard]`), then the
 allowlist.
 
 **The web page** uses browser code + PKCE with a session cookie
-(`latere.ai/x/pkg/oidc`), as `redir` does.
+(`latere.ai/x/pkg/authkit/oidc`), as `redir` does, at `/midgard/`, signing in
+at `/midgard/.auth/{login,callback,logout}`. The session cookie is midgard's
+own (`__Host-midgard-session`, not the library's default name, which `redir`
+on the same site uses), lasts 30 days with its access token refreshed
+(`offline_access`), and signs in to the API as a third way beside the two
+tokens, behind the same allowlist. A request it signs in may change nothing
+without the page's CSRF token (`X-CSRF-Token`, double-submitted), and may not
+reach the websocket or the profiles, which are for daemons and their
+operator. The page runs under a nonce-only Content-Security-Policy and shows
+everything as text.
 
 **Shortcuts and Tasker** cannot run a device grant, so the web page issues
 *app tokens*: named, shown once, revocable, owned by the person who issued them
 (the token store from #48, keyed by owner). They reach only their owner's data.
+Only a person signed in, on the page or with a latere token, manages them
+(`/tokens`); an app token cannot, or one leaked token could mint more.
 
 The password in `server.auth` goes, and with it basic auth.
 
-**Registration** (in `latere-ai/auth`, `deploy/base/clients.yaml`):
+**Registration** (in `latere-ai/auth`; where changkun.de's clients are kept is
+to be confirmed: `redir`'s is not in `deploy/base/clients.yaml`):
 
 - `midgard-cli`: public; grants `device_code`, `refresh_token`; scopes `openid
   email profile offline_access`; `actor_audiences: [midgard]`. Its own client,
   not a shared one, so its token file and refreshes are its own.
 - `midgard-web`: public; code + PKCE; `redirect_uris:
-  [https://changkun.de/midgard/.auth/callback, http://localhost:8080/midgard/.auth/callback]`.
+  [https://changkun.de/midgard/.auth/callback, http://localhost:8080/midgard/.auth/callback]`;
+  scopes `openid email profile offline_access`; `allowed_origins:
+  [https://changkun.de]`. The server then needs `AUTH_CLIENT_ID=midgard-web`
+  and an `AUTH_COOKIE_KEY`; without them the page says sign-in is not set up,
+  and the API works as before.
 
 ## 5. The hard barrier
 
@@ -170,6 +186,12 @@ As `main` and `redir` are: `/root/changkun.de/midgard` with a
 allowlist, and `./data` as the volume. Without Chrome the image is a static
 binary on a minimal base; it fits the 2 GB host.
 
+At changkun.de/midgard the page shares its origin with the site's other
+services: a script injected into any page of changkun.de could call midgard's
+API with a visitor's session and its CSRF token. Shares cannot, being
+sandboxed. A host of its own, such as midgard.changkun.de, would close that;
+it is a change of domain and redirect URI, not of code.
+
 Migration: import the shares; the plaintext clipboard history in
 `data/logs` (44 MB, 2020–2025) is deleted, not imported — it may hold
 passwords copied before sensitive copies were marked [pending changkun's
@@ -199,5 +221,6 @@ Each step is its own PR, with its tests, merged when green.
 6. Shares, and `mg server import` for the existing ones. *Done: #65, and
    `mg server import`; `mg share` replaces `mg alloc`, which stays as its
    alias.*
-7. The web page, with browser login and app tokens.
+7. The web page, with browser login and app tokens. *Done: the code;
+   signing in waits for `midgard-web`'s registration.*
 8. Deploy on changkun.de, migrate, and retire the old checkout.

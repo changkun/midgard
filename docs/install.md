@@ -116,6 +116,13 @@ takes its settings from the environment, as changkun.de's other services do:
 A token is accepted only if it was minted for midgard, by that issuer, for
 someone on the list; app tokens stop working when their owner leaves it.
 
+The web page at `/midgard/` signs people in from a browser. It needs a client
+registered with auth.latere.ai (`midgard-web`, with the redirect URI
+`https://<your domain>/midgard/.auth/callback`), named by `AUTH_CLIENT_ID`,
+and an `AUTH_COOKIE_KEY` to encrypt its session cookie
+(`openssl rand -hex 32`). Without them the page says sign-in is not set up,
+and everything else works as before.
+
 Docker:
 
 ```

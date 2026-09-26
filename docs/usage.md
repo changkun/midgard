@@ -27,6 +27,13 @@ $ mg logout
 The server lets in only the people on its `AUTH_ALLOWED_PRINCIPALS`, and each
 person reaches only their own clipboard.
 
+## Web Page
+
+Open `https://<your domain>/midgard/` and sign in. There you see your clipboard
+and can send text to your devices, go through your history, share a file or
+your clipboard at a link and revoke shares, and issue app tokens. It works on a
+phone too, where no daemon runs.
+
 ## History
 
 The server keeps your recent copies, from all your devices: the last 200, for
@@ -49,8 +56,9 @@ them on the device. It is yours alone; no one else who signs in can see it.
 
 For a client that cannot sign in, such as an iOS Shortcut or a device without a
 browser, issue an app token. A token acts for one person, its owner, and reaches only their data;
-revoke one and only that client loses access. On the server's machine, in the
-directory the server runs from:
+revoke one and only that client loses access. Issue one on the web page, under
+**App tokens**, or on the server's machine, in the directory the server runs
+from:
 
 ```sh
 $ mg server token add laptop --owner <owner>   # prints the token, once
