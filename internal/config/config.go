@@ -53,6 +53,11 @@ type Server struct {
 		User string `yaml:"user"`
 		Pass string `yaml:"pass"`
 	} `json:"auth"`
+	// TrustedProxies lists the networks whose X-Forwarded-For header is
+	// believed when working out a client's address, which the login
+	// attempt limit is keyed by. Empty means loopback and private networks,
+	// where a reverse proxy in front of midgard usually sits.
+	TrustedProxies []string `yaml:"trusted_proxies"`
 }
 
 // Daemon is the midgard daemon configuration
