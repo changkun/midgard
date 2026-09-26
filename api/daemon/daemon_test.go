@@ -31,7 +31,7 @@ func TestNewDaemon(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer m.engine.History.Close()
+	defer m.Close() // Windows cannot remove a file still open, the lock among them
 	if m.engine.ID == "" || m.engine.Name == "" {
 		t.Fatalf("the daemon is %+v", m.engine)
 	}

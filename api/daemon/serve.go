@@ -23,8 +23,9 @@ import (
 // device's history in sync with the person's other devices, and the local
 // clipboard with the newest copy (specs/redesign.md §3).
 type Daemon struct {
-	engine *device.Engine
-	url    string // the server's websocket, when not the configured one
+	engine  *device.Engine
+	url     string // the server's websocket, when not the configured one
+	release func() // gives up the device's lock
 
 	mu      sync.Mutex
 	written [sha256.Size]byte // what the daemon last put on the clipboard
@@ -57,7 +58,7 @@ func NewDaemon() (*Daemon, error) {
 	if err != nil || name == "" {
 		name = id
 	}
-	m := &Daemon{}
+	m := &Daemon{release: release}
 	m.engine = &device.Engine{
 		ID: id, Name: name, History: h, Keepalive: device.DefaultKeepalive,
 		Dial: m.dial, Changed: m.changed,
@@ -77,9 +78,17 @@ func (m *Daemon) Run(ctx context.Context) (onStart, onStop func() error) {
 	onStop = func() error {
 		cancel()
 		wg.Wait()
-		return m.engine.History.Close()
+		return m.Close()
 	}
 	return
+}
+
+// Close closes the history and gives up the device, for another midgard to
+// sync it.
+func (m *Daemon) Close() error {
+	err := m.engine.History.Close()
+	m.release()
+	return err
 }
 
 // Serve keeps the device in sync and watches the local clipboard, until ctx
