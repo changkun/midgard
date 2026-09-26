@@ -140,6 +140,7 @@ type HistoryEntry struct {
 	Created time.Time `json:"created"`
 	Type    MIME      `json:"type"`
 	Size    int       `json:"size"`
+	Preview string    `json:"preview,omitempty"` // the start of a text
 }
 
 // HistoryOutput is the answer to GET /history, newest first.

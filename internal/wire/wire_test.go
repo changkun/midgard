@@ -61,9 +61,17 @@ func TestUnmarshalRefuses(t *testing.T) {
 			t.Errorf("%s: decoded %q", name, b)
 		}
 	}
-	// a bare answer names formats whose bytes it leaves out
+	// a bare answer names formats whose bytes it leaves out, but for a preview
 	if f, err := Unmarshal([]byte(`{"type":"have","bare":true,"formats":[{"mime":"text","size":10}]}` + "\n")); err != nil || f.Size() != 10 {
 		t.Errorf("a bare have: %+v, %v", f, err)
+	}
+	f := Frame{Envelope: Envelope{Type: Have, Bare: true, Formats: []Format{{"text", 100}}}, Payload: []byte("the start")}
+	b, err := f.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g, err := Unmarshal(b); err != nil || string(g.Payload) != "the start" || g.Size() != 100 {
+		t.Errorf("a preview: %+v, %v", g, err)
 	}
 }
 

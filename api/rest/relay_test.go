@@ -506,6 +506,10 @@ func TestReadsGoToADevice(t *testing.T) {
 	if code != http.StatusOK || len(h.History) != 3 || h.History[0].Type != types.MIMEImagePNG || h.History[0].Device != "laptop" || h.History[2].Device == "laptop" {
 		t.Fatalf("history from the laptop: %d %s", code, b)
 	}
+	// texts come with their start, images with none
+	if h.History[1].Preview != "second" || h.History[0].Preview != "" || h.History[2].Preview != "held" {
+		t.Fatalf("previews %+v", h.History)
+	}
 	code, b = s.request(alice, http.MethodGet, "/midgard/api/v1/history/"+itoa(uint64(h.History[1].ID)), "")
 	if code != http.StatusOK || !strings.Contains(string(b), `"second"`) {
 		t.Fatalf("one copy from the laptop: %d %s", code, b)

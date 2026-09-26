@@ -9,6 +9,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"unicode/utf8"
 
 	"changkun.de/x/midgard/internal/history"
 	"changkun.de/x/midgard/internal/types"
@@ -29,7 +30,7 @@ func (m *Midgard) History(c *gin.Context) {
 		readFailed(c, err)
 		return
 	}
-	answers, err := m.rel().query(ctx, rm, wire.Envelope{List: history.MaxCopies})
+	answers, err := m.rel().query(ctx, rm, wire.Envelope{List: history.MaxCopies, Preview: previewLen})
 	if err != nil {
 		readFailed(c, err)
 		return
@@ -42,9 +43,21 @@ func (m *Midgard) History(c *gin.Context) {
 		out.History = append(out.History, types.HistoryEntry{
 			ID: int64(f.Seq), Device: f.Origin, Created: f.At().UTC(),
 			Type: types.MIME(f.Formats[0].MIME), Size: f.Size(),
+			Preview: validPrefix(f.Payload),
 		})
 	}
 	c.JSON(http.StatusOK, out)
+}
+
+// previewLen is how much of each text the history shows.
+const previewLen = 240
+
+// validPrefix is b as text, without a character a preview cut in two.
+func validPrefix(b []byte) string {
+	for len(b) > 0 && !utf8.Valid(b) {
+		b = b[:len(b)-1]
+	}
+	return string(b)
 }
 
 // HistoryEntry returns one copy from the requester's history, encoded as

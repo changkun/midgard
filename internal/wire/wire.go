@@ -96,12 +96,13 @@ type Envelope struct {
 	Formats []Format `json:"formats,omitempty"`
 
 	// want, have and done
-	ID     string `json:"id,omitempty"`     // pairs an answer with its want
-	Span   *Span  `json:"span,omitempty"`   // want: these events, by seq
-	Newest bool   `json:"newest,omitempty"` // want: the newest copy
-	List   int    `json:"list,omitempty"`   // want: the newest n copies, without their bytes
-	Bare   bool   `json:"bare,omitempty"`   // have: the bytes are left out
-	Err    string `json:"err,omitempty"`    // done: why there is no answer
+	ID      string `json:"id,omitempty"`      // pairs an answer with its want
+	Span    *Span  `json:"span,omitempty"`    // want: these events, by seq
+	Newest  bool   `json:"newest,omitempty"`  // want: the newest copy
+	List    int    `json:"list,omitempty"`    // want: the newest n copies, without their bytes
+	Preview int    `json:"preview,omitempty"` // want, with List: the first n bytes of each text, as its payload
+	Bare    bool   `json:"bare,omitempty"`    // have: the bytes are left out, but for a preview
+	Err     string `json:"err,omitempty"`     // done: why there is no answer
 }
 
 // Span is the events from From to To, both included.

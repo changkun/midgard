@@ -189,7 +189,7 @@ func (s *Store) Apply(ctx context.Context, f wire.Frame) (applied, ours bool, er
 			return false, false, err
 		}
 	}
-	formats, _ := marshalFormats(f.Formats)
+	formats := formatsText(f.Formats)
 	switch f.Kind {
 	case wire.KindCopy:
 		var covered bool
@@ -348,7 +348,7 @@ func (s *Store) Gaps(ctx context.Context) ([]wire.Span, error) {
 // Newest is the newest copy, the one that belongs on the clipboard, with its
 // bytes. With waiting, a copy the server has not numbered yet counts too.
 func (s *Store) Newest(ctx context.Context, waiting bool) (Entry, bool, error) {
-	list, err := s.list(ctx, 1, waiting, true)
+	list, err := s.list(ctx, 1, waiting, true, 0)
 	if err != nil || len(list) == 0 {
 		return Entry{}, false, err
 	}
@@ -358,13 +358,24 @@ func (s *Store) Newest(ctx context.Context, waiting bool) (Entry, bool, error) {
 // List is the newest n copies, newest first, without their bytes: those
 // numbered, and those waiting to be.
 func (s *Store) List(ctx context.Context, n int) ([]Entry, error) {
-	return s.list(ctx, n, true, false)
+	return s.list(ctx, n, true, false, 0)
 }
 
-func (s *Store) list(ctx context.Context, n int, waiting, data bool) ([]Entry, error) {
+// Previews is List with the first preview bytes of each text as its Data,
+// which may end inside a character; an image has none.
+func (s *Store) Previews(ctx context.Context, n, preview int) ([]Entry, error) {
+	return s.list(ctx, n, true, false, preview)
+}
+
+func (s *Store) list(ctx context.Context, n int, waiting, data bool, preview int) ([]Entry, error) {
 	col := `NULL`
-	if data {
+	switch {
+	case data:
 		col = `data`
+	case preview > 0:
+		// formats is JSON the store wrote, so a text's begins so
+		// a history made before formats were kept as text has them as bytes
+		col = fmt.Sprintf(`CASE WHEN CAST(formats AS TEXT) LIKE '[{"mime":"text"%%' THEN substr(data, 1, %d) END`, preview)
 	}
 	query := `SELECT seq, '' AS ref, time, origin, formats, ` + col + ` AS data, 0 AS waiting
 		FROM events WHERE kind = 'copy' AND gone = 0`
@@ -494,7 +505,7 @@ func (s *Store) Add(ctx context.Context, f wire.Frame, offline bool) (wire.Frame
 	default:
 		return wire.Frame{}, fmt.Errorf("history: cannot add a %q", f.Type)
 	}
-	formats, _ := marshalFormats(f.Formats)
+	formats := formatsText(f.Formats)
 	data := f.Payload
 	if data == nil {
 		data = []byte{}
@@ -546,12 +557,15 @@ func (s *Store) Outbox(ctx context.Context) ([]wire.Frame, error) {
 	return out, rows.Err()
 }
 
-// marshalFormats encodes formats, none as an empty list.
-func marshalFormats(formats []wire.Format) ([]byte, error) {
+// formatsText encodes formats as the JSON text the store keeps, none as an
+// empty list. Text, not bytes: SQLite would keep bytes as a BLOB, which LIKE
+// does not match.
+func formatsText(formats []wire.Format) string {
 	if formats == nil {
 		formats = []wire.Format{}
 	}
-	return json.Marshal(formats)
+	b, _ := json.Marshal(formats)
+	return string(b)
 }
 
 func newRef() (string, error) {

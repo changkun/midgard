@@ -381,12 +381,12 @@ func (e *Engine) answer(ctx context.Context, want wire.Frame) []wire.Frame {
 		}
 	case want.List > 0:
 		var list []history.Entry
-		list, err = e.History.List(ctx, want.List)
+		list, err = e.History.Previews(ctx, want.List, want.Preview)
 		for _, c := range list {
 			if c.Waiting() {
 				continue
 			}
-			f := c.Frame()
+			f := c.Frame() // its payload, if any, is a preview
 			f.Bare = true
 			out = append(out, f)
 		}
@@ -402,9 +402,6 @@ func (e *Engine) answer(ctx context.Context, want wire.Frame) []wire.Frame {
 }
 
 func write(conn *websocket.Conn, f wire.Frame) error {
-	if f.Bare {
-		f.Payload = nil
-	}
 	b, err := f.Marshal()
 	if err != nil {
 		return err

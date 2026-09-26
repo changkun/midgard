@@ -160,7 +160,7 @@ func historyJSON(n int) ([]byte, error) {
 		return nil, err
 	}
 	ctx := context.Background()
-	list, err := e.History.List(ctx, n)
+	list, err := e.History.Previews(ctx, n, previewLen+4) // a character is at most 4 bytes
 	if err != nil {
 		return nil, err
 	}
@@ -170,10 +170,8 @@ func historyJSON(n int) ([]byte, error) {
 		if len(c.Formats) > 0 {
 			en.MIME = c.Formats[0].MIME
 		}
-		if en.MIME == string(types.MIMEPlainText) && !c.Waiting() {
-			if full, err := e.History.Get(ctx, c.Seq); err == nil {
-				en.Preview = preview(full.Data)
-			}
+		if c.Data != nil {
+			en.Preview = preview(c.Data)
 		}
 		out = append(out, en)
 	}

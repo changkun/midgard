@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -75,12 +76,23 @@ func listHistory() {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-	fmt.Fprintln(w, "number\tcopied\tdevice\ttype\tsize")
+	fmt.Fprintln(w, "number\tcopied\tdevice\ttype\tsize\tpreview")
 	for _, e := range entries {
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d\n",
-			e.ID, e.Created.Local().Format(time.DateTime), e.Device, e.Type, e.Size)
+		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d\t%s\n",
+			e.ID, e.Created.Local().Format(time.DateTime), e.Device, e.Type, e.Size, oneLine(e.Preview, 40))
 	}
 	w.Flush()
+}
+
+// oneLine is the first line of s, cut to n characters.
+func oneLine(s string, n int) string {
+	s, _, cut := strings.Cut(strings.TrimSpace(s), "\n")
+	if r := []rune(s); len(r) > n {
+		return string(r[:n-1]) + "…"
+	} else if cut {
+		return s + " …"
+	}
+	return s
 }
 
 // copyFromHistory makes copy id the clipboard again, on all the person's

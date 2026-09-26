@@ -344,3 +344,28 @@ func TestFileIsPrivate(t *testing.T) {
 	}
 	s.Close()
 }
+
+// TestPreviews: the history list can carry the start of each text, for the
+// web page and mg history to show; an image has none.
+func TestPreviews(t *testing.T) {
+	s := open(t)
+	png := wire.NewCopy("image/png", []byte("\x89PNG not really"))
+	png.Type, png.Seq, png.Time = wire.Event, 2, t0.UnixMilli()
+	apply(t, s, copyAt(1, t0.Add(-time.Minute), "a long text, cut short"), png)
+	s.Add(ctx, wire.NewCopy("text", []byte("waiting")), false)
+
+	list, err := s.Previews(ctx, 10, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// a copy waiting to be numbered has its preview too; an image none
+	if len(list) != 3 || string(list[0].Data) != "waitin" || list[1].Data != nil || string(list[2].Data) != "a long" {
+		t.Fatalf("previews %+v", list)
+	}
+	if list[2].Size() != len("a long text, cut short") {
+		t.Fatalf("a preview changed the size: %d", list[2].Size())
+	}
+	if plain, _ := s.List(ctx, 10); plain[2].Data != nil {
+		t.Fatal("List carries bytes")
+	}
+}
