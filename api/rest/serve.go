@@ -104,10 +104,6 @@ func requirements() {
 			fatal("the backup feature needs git; install it or disable backup in config.yml")
 		}
 	}
-	chromeFound = findChrome()
-	if !chromeFound {
-		slog.Warn("code2img is unavailable: install Chrome or Chromium to enable it")
-	}
 }
 
 // execute executes command inside the data folder.

@@ -117,39 +117,6 @@ clipboard cross platforms (e.g. between Mac and Linux).
   + iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/e875c142389e4fe6b45bbed4a517f8c8
 
 
-## Code2image
-
-Convert copied code to an image:
-
-```sh
-$ mg code2img
-https://changkun.de/midgard/code/201218-204010
-https://changkun.de/midgard/code/201218-204010.png
-```
-
-Or convert specify a given file:
-
-```sh
-$ mg code2img /path/to/your/file
-https://changkun.de/midgard/code/201218-204010
-https://changkun.de/midgard/code/201218-204010.png
-```
-
-Or convert specify a given file with line numbers:
-
-```sh
-$ mg code2img /path/to/your/file/ -l 5:10 # line 5 to 10
-https://changkun.de/midgard/code/201218-204010
-https://changkun.de/midgard/code/201218-204010.png
-```
-
-Summary page at https://changkun.de/midgard/code.
-
-### iOS, iPadOS, macOS Shortcut - code2img
-
-- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31aba300b25a
-- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/cec5afc61b01476e87b888163de6e39b
-
 ## License
 
 Copyright 2020-2021 [Changkun Ou](https://changkun.de). All rights reserved.

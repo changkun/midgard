@@ -236,103 +236,6 @@ func (x *AllocateURLOutput) GetMessage() string {
 	return ""
 }
 
-// CodeToImageInput carries the code itself, for the same reason.
-type CodeToImageInput struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          string                 `protobuf:"bytes,4,opt,name=Code,proto3" json:"Code,omitempty"` // empty to render the universal clipboard
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CodeToImageInput) Reset() {
-	*x = CodeToImageInput{}
-	mi := &file_midgard_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CodeToImageInput) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CodeToImageInput) ProtoMessage() {}
-
-func (x *CodeToImageInput) ProtoReflect() protoreflect.Message {
-	mi := &file_midgard_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CodeToImageInput.ProtoReflect.Descriptor instead.
-func (*CodeToImageInput) Descriptor() ([]byte, []int) {
-	return file_midgard_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *CodeToImageInput) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-type CodeToImageOutput struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CodeURL       string                 `protobuf:"bytes,1,opt,name=CodeURL,proto3" json:"CodeURL,omitempty"`
-	ImageURL      string                 `protobuf:"bytes,2,opt,name=ImageURL,proto3" json:"ImageURL,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CodeToImageOutput) Reset() {
-	*x = CodeToImageOutput{}
-	mi := &file_midgard_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CodeToImageOutput) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CodeToImageOutput) ProtoMessage() {}
-
-func (x *CodeToImageOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_midgard_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CodeToImageOutput.ProtoReflect.Descriptor instead.
-func (*CodeToImageOutput) Descriptor() ([]byte, []int) {
-	return file_midgard_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *CodeToImageOutput) GetCodeURL() string {
-	if x != nil {
-		return x.CodeURL
-	}
-	return ""
-}
-
-func (x *CodeToImageOutput) GetImageURL() string {
-	if x != nil {
-		return x.ImageURL
-	}
-	return ""
-}
-
 type ListDaemonsInput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -341,7 +244,7 @@ type ListDaemonsInput struct {
 
 func (x *ListDaemonsInput) Reset() {
 	*x = ListDaemonsInput{}
-	mi := &file_midgard_proto_msgTypes[6]
+	mi := &file_midgard_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -353,7 +256,7 @@ func (x *ListDaemonsInput) String() string {
 func (*ListDaemonsInput) ProtoMessage() {}
 
 func (x *ListDaemonsInput) ProtoReflect() protoreflect.Message {
-	mi := &file_midgard_proto_msgTypes[6]
+	mi := &file_midgard_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -366,7 +269,7 @@ func (x *ListDaemonsInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDaemonsInput.ProtoReflect.Descriptor instead.
 func (*ListDaemonsInput) Descriptor() ([]byte, []int) {
-	return file_midgard_proto_rawDescGZIP(), []int{6}
+	return file_midgard_proto_rawDescGZIP(), []int{4}
 }
 
 type ListDaemonsOutput struct {
@@ -378,7 +281,7 @@ type ListDaemonsOutput struct {
 
 func (x *ListDaemonsOutput) Reset() {
 	*x = ListDaemonsOutput{}
-	mi := &file_midgard_proto_msgTypes[7]
+	mi := &file_midgard_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -390,7 +293,7 @@ func (x *ListDaemonsOutput) String() string {
 func (*ListDaemonsOutput) ProtoMessage() {}
 
 func (x *ListDaemonsOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_midgard_proto_msgTypes[7]
+	mi := &file_midgard_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -403,7 +306,7 @@ func (x *ListDaemonsOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDaemonsOutput.ProtoReflect.Descriptor instead.
 func (*ListDaemonsOutput) Descriptor() ([]byte, []int) {
-	return file_midgard_proto_rawDescGZIP(), []int{7}
+	return file_midgard_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListDaemonsOutput) GetDaemons() string {
@@ -435,19 +338,13 @@ const file_midgard_proto_rawDesc = "" +
 	"SourcePath\"?\n" +
 	"\x11AllocateURLOutput\x12\x10\n" +
 	"\x03URL\x18\x01 \x01(\tR\x03URL\x12\x18\n" +
-	"\aMessage\x18\x02 \x01(\tR\aMessage\"N\n" +
-	"\x10CodeToImageInput\x12\x12\n" +
-	"\x04Code\x18\x04 \x01(\tR\x04CodeJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\bCodePathR\x05StartR\x03End\"I\n" +
-	"\x11CodeToImageOutput\x12\x18\n" +
-	"\aCodeURL\x18\x01 \x01(\tR\aCodeURL\x12\x1a\n" +
-	"\bImageURL\x18\x02 \x01(\tR\bImageURL\"\x12\n" +
+	"\aMessage\x18\x02 \x01(\tR\aMessage\"\x12\n" +
 	"\x10ListDaemonsInput\"-\n" +
 	"\x11ListDaemonsOutput\x12\x18\n" +
-	"\aDaemons\x18\x01 \x01(\tR\aDaemons2\x84\x02\n" +
+	"\aDaemons\x18\x01 \x01(\tR\aDaemons2\xc0\x01\n" +
 	"\aMidgard\x12-\n" +
 	"\x04Ping\x12\x10.proto.PingInput\x1a\x11.proto.PingOutput\"\x00\x12B\n" +
 	"\vAllocateURL\x12\x17.proto.AllocateURLInput\x1a\x18.proto.AllocateURLOutput\"\x00\x12B\n" +
-	"\vCodeToImage\x12\x17.proto.CodeToImageInput\x1a\x18.proto.CodeToImageOutput\"\x00\x12B\n" +
 	"\vListDaemons\x12\x17.proto.ListDaemonsInput\x1a\x18.proto.ListDaemonsOutput\"\x00B\tZ\a.;protob\x06proto3"
 
 var (
@@ -462,28 +359,24 @@ func file_midgard_proto_rawDescGZIP() []byte {
 	return file_midgard_proto_rawDescData
 }
 
-var file_midgard_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_midgard_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_midgard_proto_goTypes = []any{
 	(*PingInput)(nil),         // 0: proto.PingInput
 	(*PingOutput)(nil),        // 1: proto.PingOutput
 	(*AllocateURLInput)(nil),  // 2: proto.AllocateURLInput
 	(*AllocateURLOutput)(nil), // 3: proto.AllocateURLOutput
-	(*CodeToImageInput)(nil),  // 4: proto.CodeToImageInput
-	(*CodeToImageOutput)(nil), // 5: proto.CodeToImageOutput
-	(*ListDaemonsInput)(nil),  // 6: proto.ListDaemonsInput
-	(*ListDaemonsOutput)(nil), // 7: proto.ListDaemonsOutput
+	(*ListDaemonsInput)(nil),  // 4: proto.ListDaemonsInput
+	(*ListDaemonsOutput)(nil), // 5: proto.ListDaemonsOutput
 }
 var file_midgard_proto_depIdxs = []int32{
 	0, // 0: proto.Midgard.Ping:input_type -> proto.PingInput
 	2, // 1: proto.Midgard.AllocateURL:input_type -> proto.AllocateURLInput
-	4, // 2: proto.Midgard.CodeToImage:input_type -> proto.CodeToImageInput
-	6, // 3: proto.Midgard.ListDaemons:input_type -> proto.ListDaemonsInput
-	1, // 4: proto.Midgard.Ping:output_type -> proto.PingOutput
-	3, // 5: proto.Midgard.AllocateURL:output_type -> proto.AllocateURLOutput
-	5, // 6: proto.Midgard.CodeToImage:output_type -> proto.CodeToImageOutput
-	7, // 7: proto.Midgard.ListDaemons:output_type -> proto.ListDaemonsOutput
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
+	4, // 2: proto.Midgard.ListDaemons:input_type -> proto.ListDaemonsInput
+	1, // 3: proto.Midgard.Ping:output_type -> proto.PingOutput
+	3, // 4: proto.Midgard.AllocateURL:output_type -> proto.AllocateURLOutput
+	5, // 5: proto.Midgard.ListDaemons:output_type -> proto.ListDaemonsOutput
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -500,7 +393,7 @@ func file_midgard_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_midgard_proto_rawDesc), len(file_midgard_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

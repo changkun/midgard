@@ -5,7 +5,7 @@ English | [中文](./README.cn.md)
 midgard is a universal clipboard service, it supports macOS/Linux/Windows/iOS.
 
 Copy on one machine, paste on another. Turn what you copied into a link you can
-share. Render code as an image. It all runs on a server you own.
+share. It all runs on a server you own.
 
 ## How it works
 
@@ -54,8 +54,7 @@ daemon status: OK
 ```
 
 Now copy something on one device and paste it on another. `mg alloc` turns the
-clipboard into a public link, and `mg code2img` turns code into an image; see
-[Usage](./docs/usage.md).
+clipboard into a public link; see [Usage](./docs/usage.md).
 
 ## Docs
 

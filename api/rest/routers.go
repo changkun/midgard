@@ -35,7 +35,6 @@ func (m *Midgard) routers() (r *gin.Engine) {
 
 	mg := r.Group("/midgard")
 	mg.GET("/ping", m.PingPong)
-	mg.GET("/code", m.Code)
 
 	v1auth := mg.Group("/api/v1", BasicAuthWithAttemptsControl(Credentials{
 		config.S().Auth.User: config.S().Auth.Pass,
@@ -45,7 +44,6 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
 		v1auth.GET("/ws", m.Subscribe)
 		v1auth.PUT("/allocate", m.AllocateURL)
-		v1auth.POST("/code2img", m.Code2img)
 	}
 
 	// The profiles include a heap dump, which holds the clipboard and the

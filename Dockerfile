@@ -15,8 +15,9 @@ RUN CGO_ENABLED=0 go build -trimpath \
   -ldflags "-s -w -X changkun.de/x/midgard/internal/version.GitVersion=${VERSION}" \
   -o /out/mg .
 
-# headless-shell is the Chrome that code2img renders with; git is for backups.
-FROM chromedp/headless-shell:latest
+# git is for backups. There is no browser any more: code2img, which needed
+# one, is gone.
+FROM debian:stable-slim
 RUN apt-get update && \
   apt-get install -y --no-install-recommends dumb-init git openssh-client ca-certificates && \
   rm -rf /var/lib/apt/lists/*
