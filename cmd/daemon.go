@@ -10,10 +10,9 @@ import (
 	"os"
 
 	"changkun.de/x/midgard/api/daemon"
+	"changkun.de/x/midgard/internal/client"
 	"changkun.de/x/midgard/internal/service"
-	"changkun.de/x/midgard/internal/types/proto"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/status"
 )
 
 // daemonCmd runs the midgard's daemon process.
@@ -61,15 +60,16 @@ var daemonCmd = &cobra.Command{
 				os.Exit(0) // this closes clipboard NSApplication on darwin
 			}
 		case "ls":
-			daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
-				out, err := c.ListDaemons(ctx, &proto.ListDaemonsInput{})
-				if err != nil {
-					errorf("cannot list the daemons: %v", status.Convert(err).Message())
-					return
-				}
-				errorf("active daemons:")
-				fmt.Println(out.Daemons)
-			})
+			devices, err := client.Devices()
+			if err != nil {
+				errorf("cannot list the daemons: %v", err)
+				return
+			}
+			errorf("active daemons:")
+			fmt.Println("id\tname")
+			for _, d := range devices {
+				fmt.Printf("%d\t%s\n", d.Index, d.Name)
+			}
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])
 		}

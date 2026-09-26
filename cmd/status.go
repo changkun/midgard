@@ -5,19 +5,18 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 
-	"changkun.de/x/midgard/api/daemon"
+	"changkun.de/x/midgard/internal/client"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/term"
 	"changkun.de/x/midgard/internal/types"
-	"changkun.de/x/midgard/internal/types/proto"
 	"changkun.de/x/midgard/internal/utils"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/status"
 )
 
 var statusCmd = &cobra.Command{
@@ -46,18 +45,31 @@ var statusCmd = &cobra.Command{
 			}
 		}
 
-		// check daemon status
-		daemon.Connect(func(ctx context.Context, c proto.MidgardClient) {
-			_, err := c.Ping(ctx, &proto.PingInput{})
-			if err != nil {
-				s += fmt.Sprintf("daemon status: %s, details:\n%v\n",
-					term.Red("failed to ping daemon"),
-					status.Convert(err).Message())
-			} else {
-				s += fmt.Sprintf("daemon status: %s\n", term.Green("OK"))
-			}
-		})
+		// check daemon status: the server knows which daemons are
+		// connected, and this machine's is named after its host.
+		devices, err := client.Devices()
+		host, _ := os.Hostname()
+		switch {
+		case err != nil:
+			s += fmt.Sprintf("daemon status: %s, %v\n", term.Red("cannot ask the server"), err)
+		case connected(devices, host):
+			s += fmt.Sprintf("daemon status: %s\n", term.Green("OK"))
+		default:
+			s += fmt.Sprintf("daemon status: %s; start it with mg daemon start\n",
+				term.Red("not connected"))
+		}
 
 		fmt.Println(s)
 	},
+}
+
+// connected reports whether the daemon of the machine called host is among
+// devices. The server adds a suffix when two machines share a name.
+func connected(devices []types.Device, host string) bool {
+	for _, d := range devices {
+		if d.Name == host || strings.HasPrefix(d.Name, host+"-") {
+			return true
+		}
+	}
+	return false
 }

@@ -39,9 +39,3 @@ server:
   # networks whose X-Forwarded-For header is believed, for a reverse proxy in
   # front of midgard. Empty means loopback and the private networks.
   trusted_proxies: []
-
-# midgard daemon settings
-# these settings are only used in daemon mode (run under `mg daemon run`)
-daemon:
-  # addr: localhost:9125 # listen on TCP instead of a socket only you can reach;
-  #                      # any local user could then drive the daemon

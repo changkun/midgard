@@ -11,17 +11,16 @@ understand how midgard works. The midgard service contains three parts:
 - Daemon
 - Server
 
-A user uses midgard CLI communicate with the midgard daemon on local device,
-and the daemon process talks to the midgard server for synchornization/allocation
-between devices.
+Each device runs the daemon, which keeps the device's clipboard in sync with
+the server over a websocket. The CLI talks to the server directly, over HTTPS,
+and phones do the same.
 
 ```
-                            HTTPS
-Mobile <-----------------------------------------------┐
-                                                       |
-CLI    <-------> daemon <-----┐  Secure Websocket      v     HTTPS
-          RPC                 ├--------------------> server <------> public
-CLI    <-------> daemon <-----┘
+Mobile ──────────────── HTTPS ────────────────┐
+CLI    ──────────────── HTTPS ────────────────┤
+                                              ▼
+daemon ◀──────── secure websocket ─────────▶ server ◀── HTTPS ── public links
+daemon ◀──────── secure websocket ─────────▶
 ```
 
 Since midgard serves as a personal service, which does not need to address trust/privacy issue for other customers, it is designed and implemented in a centralized way: everything communicates to a central proxy. This brings several benefits:
@@ -156,11 +155,9 @@ An older `mg daemon install` put a system-wide service in `/etc`, which ran as
 root and could not reach anyone's clipboard. `sudo mg daemon uninstall`
 removes it.
 
-`mg` commands reach the daemon over a socket only you can open:
-`$XDG_RUNTIME_DIR/midgard/daemon.sock` on Linux, and `midgard/daemon.sock`
-in your cache directory elsewhere. Older configurations set `daemon.addr:
-localhost:9125`, which any user on the machine can reach; remove it, then
-restart the daemon.
+`mg` commands talk to the server directly, not to the daemon, so they work
+whether or not the daemon is running. Older configurations have a `daemon:`
+section with `addr: localhost:9125`; it is no longer read, and can go.
 
 or
 
