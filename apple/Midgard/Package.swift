@@ -11,7 +11,7 @@ let build = Context.packageDirectory + "/../build"
 
 let package = Package(
     name: "Midgard",
-    platforms: [.macOS(.v13)],
+    platforms: [.macOS(.v14)],
     targets: [
         .systemLibrary(name: "CMidgard", path: "Sources/CMidgard"),
         .executableTarget(

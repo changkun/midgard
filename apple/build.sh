@@ -5,7 +5,7 @@
 # notarization are for distributing it.
 set -e
 cd "$(dirname "$0")/.."
-MIN=13.0 # what Package.swift and Info.plist say
+MIN=14.0 # what Package.swift and Info.plist say
 VERSION=$(git describe --tags --always 2>/dev/null | sed 's/^v//')
 ARCH=$(uname -m)
 

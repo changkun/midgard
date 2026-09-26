@@ -14,17 +14,17 @@ struct MidgardApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuView(model: delegate.model)
+            PopoverView(model: delegate.model)
         } label: {
             MenuBarIcon()
         }
-        Window("History", id: "history") {
-            HistoryView(model: delegate.model).frame(minWidth: 640, minHeight: 420)
+        .menuBarExtraStyle(.window)
+        Window("Midgard History", id: "history") {
+            HistoryWindow(model: delegate.model)
         }
-        Window("Midgard Settings", id: "settings") {
+        Settings {
             SettingsView(model: delegate.model)
         }
-        .windowResizability(.contentSize)
     }
 }
 
@@ -35,11 +35,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_: Notification) {
         model.start()
-        // The first time, ask for the server.
-        if !model.status.configured {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
+        // The first time, a window says what Midgard is and sets it up:
+        // afterwards it lives in the menu bar, which is easy to miss.
+        if !model.status.configured || !model.status.signedIn {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 400),
                                   styleMask: [.titled, .closable], backing: .buffered, defer: false)
-            window.contentView = NSHostingView(rootView: SettingsView(model: model))
+            window.contentView = NSHostingView(rootView: WelcomeView(model: model) { [weak self] in
+                self?.welcome?.close()
+            })
             window.title = "Welcome to Midgard"
             window.isReleasedWhenClosed = false
             window.center()
