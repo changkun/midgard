@@ -16,9 +16,9 @@ import (
 // and returns a channel that will signal if the hotkey is triggered.
 //
 // No customization for the hotkey, the hotkey is always:
-// Linux: Ctrl+Mod4+s
+// Linux: Ctrl+Mod4+s (Mod4 is the Super key)
 // macOS: Ctrl+Option+s
-// Windows: Unsupported
+// Windows: Ctrl+Shift+s
 func Handle(ctx context.Context, fn func()) {
 	hk := hotkey.New(getModifiers(), getKey())
 	if err := hk.Register(); err != nil {
