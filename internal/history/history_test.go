@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -480,5 +481,37 @@ func TestPreviews(t *testing.T) {
 	}
 	if plain, _ := s.List(ctx, 10); plain[2].Data != nil {
 		t.Fatal("List carries bytes")
+	}
+}
+
+// TestWritesAtOnce: a copy made on the device while events arrive from the
+// server, as happens, waits for the other write rather than failing: a
+// write that fails loses an event, or the copy.
+func TestWritesAtOnce(t *testing.T) {
+	s := open(t)
+	const n = 200
+	errs := make(chan error, 2*n)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		for i := range uint64(n) {
+			if _, _, err := s.Apply(ctx, copyAt(i+1, t0.Add(time.Duration(i)*time.Millisecond), fmt.Sprint("from afar ", i))); err != nil {
+				errs <- fmt.Errorf("Apply(%d): %w", i+1, err)
+			}
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := range n {
+			if _, err := s.Add(ctx, wire.NewCopy("text", []byte(fmt.Sprint("here ", i))), false); err != nil {
+				errs <- fmt.Errorf("Add(%d): %w", i, err)
+			}
+		}
+	}()
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Fatal(err)
 	}
 }

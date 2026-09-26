@@ -96,7 +96,12 @@ func Open(path string) (*Store, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, err
 	}
-	dsn := "file:" + path + "?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)"
+	// Every write takes the lock when it begins (_txlock=immediate), so a
+	// second writer waits its turn, up to the busy timeout. A transaction
+	// that reads first and writes after, as each here does, would otherwise
+	// fail at once when another write came between, and lose what it wrote:
+	// a copy made here while an event arrived.
+	dsn := "file:" + path + "?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_txlock=immediate"
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
