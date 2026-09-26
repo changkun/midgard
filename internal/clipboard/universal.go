@@ -38,15 +38,21 @@ type UniversalClipboard interface {
 	ReadAs(t types.MIME) []byte
 }
 
-// Universal is the Midgard's universal clipboard. It keeps the data in
-// memory, and logs its change history to the data folder only when the
-// configuration asks for it (server.store.log_clipboard).
+// UniversalFor is owner's universal clipboard on the server. It keeps the
+// data in memory, and logs its change history to the data folder only when
+// the configuration asks for it (server.store.log_clipboard).
 //
 // It holds a global shared storage that can be edited/fetched at anytime.
-var Universal UniversalClipboard = &universal{
-	typ: types.MIMEPlainText,
-	buf: []byte{},
+//
+// There is one per person, and no shared one: a person reaches only theirs,
+// by the owner their sign-in names (specs/redesign.md §5).
+func UniversalFor(owner string) UniversalClipboard {
+	v, _ := universals.LoadOrStore(owner, &universal{typ: types.MIMEPlainText, buf: []byte{}})
+	return v.(*universal)
 }
+
+// universals holds each person's universal clipboard, by owner.
+var universals sync.Map
 
 type universal struct {
 	sync.Mutex

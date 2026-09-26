@@ -48,6 +48,7 @@ type user struct {
 	sync.Mutex
 	index uint64
 	id    string
+	owner string // whose daemon it is; it hears only its owner's copies
 	conn  *websocket.Conn
 	write time.Duration // bounds each send
 }
@@ -95,6 +96,9 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 	var (
 		u *user
 		e *list.Element
+		// The daemon joins its owner's room, named by its sign-in and not
+		// by anything it says.
+		owner = c.GetString(ctxOwner)
 	)
 	switch wsm.Action {
 	case types.ActionHandshakeRegister:
@@ -103,7 +107,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 		m.mu.Lock()
 		for e := m.users.Front(); e != nil; e = e.Next() {
 			u, ok := e.Value.(*user)
-			if !ok || u.id != wsm.UserID {
+			if !ok || u.owner != owner || u.id != wsm.UserID {
 				continue
 			}
 			idExist = true
@@ -119,7 +123,7 @@ func (m *Midgard) Subscribe(c *gin.Context) {
 
 		// register to the subscribers
 		idx := uid.Add(1)
-		u = &user{index: idx, id: wsm.UserID, conn: conn, write: m.keepalive.write}
+		u = &user{index: idx, id: wsm.UserID, owner: owner, conn: conn, write: m.keepalive.write}
 		e = m.users.PushBack(u)
 		slog.Info("a daemon subscribed", "subscribers", m.users.Len())
 		m.mu.Unlock()
@@ -230,11 +234,13 @@ func terminate(u *user, err error) error {
 // which mg daemon ls and mg status make; it used to be a round trip over a
 // daemon's websocket, relayed to the command by the daemon's local RPC.
 func (m *Midgard) Devices(c *gin.Context) {
+	owner := c.GetString(ctxOwner)
 	m.mu.Lock()
 	out := types.DevicesOutput{Devices: []types.Device{}}
 	for e := m.users.Front(); e != nil; e = e.Next() {
-		u := e.Value.(*user)
-		out.Devices = append(out.Devices, types.Device{Index: u.index, Name: u.id})
+		if u := e.Value.(*user); u.owner == owner {
+			out.Devices = append(out.Devices, types.Device{Index: u.index, Name: u.id})
+		}
 	}
 	m.mu.Unlock()
 	c.JSON(http.StatusOK, out)
@@ -262,13 +268,13 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 		raw = utils.StringToBytes(b.Data)
 	}
 
-	updated := clipboard.Universal.Write(b.Type, raw)
+	updated := clipboard.UniversalFor(u.owner).Write(b.Type, raw)
 	slog.Info("the universal clipboard is updated", "from", u.id)
 	if updated {
 		// Include MIME type information so that the clipboard is
 		// consistent after sync propagation.
 		raw, _ = json.Marshal(b.ClipboardData)
-		m.boardcastMessage(&types.WebsocketMessage{
+		m.boardcastMessage(u.owner, &types.WebsocketMessage{
 			Action:  types.ActionClipboardChanged,
 			UserID:  u.id,
 			Message: "universal clipboard has changes",
@@ -278,12 +284,14 @@ func (m *Midgard) handleActionClipboardPut(conn *websocket.Conn, u *user, data [
 	return nil
 }
 
-func (m *Midgard) boardcastMessage(msg *types.WebsocketMessage) {
+// boardcastMessage sends msg to owner's daemons, but the one it came from.
+// A copy never leaves its owner's room.
+func (m *Midgard) boardcastMessage(owner string, msg *types.WebsocketMessage) {
 	slog.Info("broadcasting a message", "from", msg.UserID)
 	m.mu.Lock()
 	for e := m.users.Front(); e != nil; e = e.Next() {
 		d, ok := e.Value.(*user)
-		if !ok || d.id == msg.UserID {
+		if !ok || d.owner != owner || d.id == msg.UserID {
 			continue
 		}
 		slog.Info("sending a message", "to", d.id)

@@ -41,7 +41,7 @@ func logged(t *testing.T) []string {
 func TestUniversalLogIsOptIn(t *testing.T) {
 	t.Chdir(t.TempDir())
 
-	clipboard.Universal.Write(types.MIMEPlainText, []byte("secret-one"))
+	clipboard.UniversalFor("test-owner").Write(types.MIMEPlainText, []byte("secret-one"))
 	if files := logged(t); len(files) != 0 {
 		t.Fatalf("the clipboard was logged without log_clipboard: %v", files)
 	}
@@ -49,7 +49,7 @@ func TestUniversalLogIsOptIn(t *testing.T) {
 	config.S().Store.LogClipboard = true
 	t.Cleanup(func() { config.S().Store.LogClipboard = false })
 
-	clipboard.Universal.Write(types.MIMEPlainText, []byte("secret-two"))
+	clipboard.UniversalFor("test-owner").Write(types.MIMEPlainText, []byte("secret-two"))
 	files := logged(t)
 	if len(files) != 1 {
 		t.Fatalf("log_clipboard is set, want one log file, got %v", files)

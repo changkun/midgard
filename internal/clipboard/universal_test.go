@@ -15,19 +15,19 @@ import (
 
 func TestUniversalClipboard(t *testing.T) {
 	buf := utils.StringToBytes("hello")
-	clipboard.Universal.Write(types.MIMEPlainText, buf)
+	clipboard.UniversalFor("test-owner").Write(types.MIMEPlainText, buf)
 
-	got := clipboard.Universal.ReadAs(types.MIMEPlainText)
+	got := clipboard.UniversalFor("test-owner").ReadAs(types.MIMEPlainText)
 	if !bytes.Equal(buf, got) {
 		t.Fatalf("failed to put data into ub.")
 	}
 
-	got = clipboard.Universal.ReadAs(types.MIMEImagePNG)
+	got = clipboard.UniversalFor("test-owner").ReadAs(types.MIMEImagePNG)
 	if bytes.Equal(buf, got) {
 		t.Fatalf("unexpected read from ub, want blank, got %v", utils.BytesToString(got))
 	}
 
-	tt, got := clipboard.Universal.Read()
+	tt, got := clipboard.UniversalFor("test-owner").Read()
 
 	if tt != types.MIMEPlainText {
 		t.Fatalf("incorrect data type")
@@ -37,4 +37,16 @@ func TestUniversalClipboard(t *testing.T) {
 	}
 
 	t.Log(utils.BytesToString(buf))
+}
+
+// TestUniversalPerOwner: there is no shared clipboard; one person's copy is
+// not another's to read.
+func TestUniversalPerOwner(t *testing.T) {
+	clipboard.UniversalFor("alice").Write(types.MIMEPlainText, []byte("alice's"))
+	if got := clipboard.UniversalFor("bob").ReadAs(types.MIMEPlainText); bytes.Equal(got, []byte("alice's")) {
+		t.Fatal("bob read alice's clipboard")
+	}
+	if got := clipboard.UniversalFor("alice").ReadAs(types.MIMEPlainText); !bytes.Equal(got, []byte("alice's")) {
+		t.Fatalf("alice's clipboard = %q", got)
+	}
 }
