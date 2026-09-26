@@ -39,7 +39,7 @@ func (m *Daemon) watchLocalClipboard(ctx context.Context) {
 		slog.Info("the hotkey is triggered")
 		res, err := utils.Request(
 			http.MethodPut,
-			types.EndpointAllocateURL,
+			types.EndpointAllocateURL(),
 			&types.AllocateURLInput{
 				Source: types.SourceUniversalClipboard,
 			})

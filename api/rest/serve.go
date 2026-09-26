@@ -39,6 +39,7 @@ func NewMidgard() *Midgard {
 
 // Serve serves Midgard RESTful APIs.
 func (m *Midgard) Serve() {
+	requirements()
 	ctx, cancel := context.WithCancel(context.Background())
 
 	var wg sync.WaitGroup
@@ -81,9 +82,18 @@ func (m *Midgard) serveHTTP() {
 	}
 }
 
-func init() {
-	if _, err := exec.LookPath("git"); err != nil {
-		panic("please intall git on your system: sudo apt install git")
+// requirements checks what the server needs from the system it runs on. It
+// runs when the server starts rather than at package init, because every mg
+// command links this package and only the server needs these.
+func requirements() {
+	if config.S().Store.Backup.Enable {
+		if _, err := exec.LookPath("git"); err != nil {
+			fatal("the backup feature needs git; install it or disable backup in config.yml")
+		}
+	}
+	chromeFound = findChrome()
+	if !chromeFound {
+		slog.Warn("code2img is unavailable: install Chrome or Chromium to enable it")
 	}
 }
 

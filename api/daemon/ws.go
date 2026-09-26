@@ -30,7 +30,7 @@ func (m *Daemon) wsConnect() error {
 	token := base64.StdEncoding.EncodeToString(utils.StringToBytes(creds))
 	h := http.Header{"Authorization": {"Basic " + token}}
 
-	api := types.EndpointSubscribe
+	api := types.EndpointSubscribe()
 	if strings.Contains(config.Get().Domain, "localhost") || strings.Contains(config.Get().Domain, "0.0.0.0") {
 		api = "ws://" + api
 	} else {

@@ -20,11 +20,15 @@ import (
 	"golang.design/x/code2img"
 )
 
-func init() {
-	// tries to find the Chrome browser somewhere in the current system.
-	// It performs a rather agressive search, which is the same in all
-	// systems. That may make it a bit slow, but it will only be run at
-	// boot time.
+// chromeFound reports whether code2img can render, which needs a Chrome or
+// Chromium browser. Only the server renders, so it is looked for when the
+// server starts rather than in every mg command; see requirements.
+var chromeFound bool
+
+// findChrome tries to find the Chrome browser somewhere in the current system.
+// It performs a rather aggressive search, which is the same in all systems.
+// That may make it a bit slow, but it only runs when the server starts.
+func findChrome() bool {
 	for _, path := range [...]string{
 		// Unix-like
 		"headless_shell",
@@ -48,16 +52,23 @@ func init() {
 	} {
 		_, err := exec.LookPath(path)
 		if err == nil {
-			return
+			return true
 		}
 	}
-	panic("please intall google-chrome on your system (required by code2img).")
+	return false
 }
 
 const code2imgTimeFormat = "060102-150405"
 
 // Code2img code to image handler
 func (m *Midgard) Code2img(c *gin.Context) {
+	if !chromeFound {
+		c.JSON(http.StatusServiceUnavailable, &types.Code2ImgOutput{
+			Message: "code2img needs Chrome or Chromium installed on the midgard server",
+		})
+		return
+	}
+
 	var in types.Code2ImgInput
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, &types.Code2ImgOutput{

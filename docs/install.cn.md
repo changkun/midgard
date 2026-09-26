@@ -93,10 +93,14 @@ $ make build
 
 ## 配置
 
-Midgard 的配置文件可以通过下面两种方式进行
+midgard 从 `config.yml` 读取配置（全部选项见 [config.yml](../config.yml)），按以下顺序使用找到的第一个：
 
-1. 默认配置路径：在仓库附属的配置文件 [config.yml](../config.yml)
-2. 自定义配置路径：使用环境变量 `MIDGARD_CONF=/path/to/your/config.yml` 修改 [config.yml](../config.yml) 的文件位置
+1. 环境变量 `MIDGARD_CONF` 指定的文件，例如 `MIDGARD_CONF=/path/to/your/config.yml`；
+2. 运行 `mg` 时所在目录下的 `config.yml`；
+3. 用户配置目录下的 `midgard/config.yml`：Linux 为 `~/.config/midgard/config.yml`，
+   macOS 为 `~/Library/Application Support/midgard/config.yml`，Windows 为 `%AppData%\midgard\config.yml`。
+
+随系统启动的 daemon 请使用第三个位置，因为系统服务没有可用的工作目录。`mg version` 等命令不需要任何配置。
 
 ## Midgard 服务端
 

@@ -60,7 +60,7 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 
 	res, err := utils.Request(
 		http.MethodPut,
-		types.EndpointAllocateURL,
+		types.EndpointAllocateURL(),
 		&types.AllocateURLInput{
 			Source: source,
 			URI:    uri,
@@ -120,7 +120,7 @@ func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (o
 		}
 	}
 
-	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image, &types.Code2ImgInput{Code: code})
+	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image(), &types.Code2ImgInput{Code: code})
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert: %w", err)
 	}
