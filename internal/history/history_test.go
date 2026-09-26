@@ -6,6 +6,7 @@ package history
 
 import (
 	"context"
+	"fmt"
 	"errors"
 	"os"
 	"path/filepath"
@@ -298,10 +299,121 @@ func TestOutbox(t *testing.T) {
 	}
 }
 
+// TestOnce: the history holds a copy once, where it was copied last, the same
+// on every device whatever order the events reach it in.
+func TestOnce(t *testing.T) {
+	s := open(t)
+	apply(t, s,
+		copyAt(1, t0.Add(-3*time.Minute), "a"),
+		copyAt(2, t0.Add(-2*time.Minute), "b"),
+		copyAt(3, t0.Add(-time.Minute), "a"), // copied again, or put back from the history
+	)
+	if got := texts(t, s); got != "a b" {
+		t.Fatalf("history %q, want a once, as the newest", got)
+	}
+	if e, _, _ := s.Newest(ctx, false); e.Seq != 3 {
+		t.Errorf("Newest = %d, want 3", e.Seq)
+	}
+	if _, err := s.Get(ctx, 1); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Get(1) = %v, want it gone", err)
+	}
+	// and a peer catching up is told it is gone
+	if fs, _ := s.Events(ctx, wire.Span{From: 1, To: 1}); len(fs) != 1 || fs[0].Kind != wire.KindVoid {
+		t.Errorf("Events(1) = %+v, want a void", fs)
+	}
+
+	// made offline before the b that is there: it arrives gone
+	apply(t, s, copyAt(4, t0.Add(-150*time.Second), "b"))
+	if got := texts(t, s); got != "a b" {
+		t.Fatalf("history %q, want the newer b kept", got)
+	}
+	if e, err := s.Get(ctx, 2); err != nil || string(e.Data) != "b" {
+		t.Fatalf("Get(2) = %v, want the newer b", err)
+	}
+
+	// the same bytes as another type are another copy
+	img := wire.NewCopy("image/png", []byte("a"))
+	img.Type, img.Seq, img.Time = wire.Event, 5, t0.UnixMilli()
+	apply(t, s, img)
+	if list, _ := s.List(ctx, 10); len(list) != 3 {
+		t.Fatalf("%d copies, want the image beside the text", len(list))
+	}
+
+	// out of order, as catching up brings them: the older arrives gone
+	o := open(t)
+	apply(t, o, copyAt(3, t0.Add(-time.Minute), "a"), copyAt(2, t0.Add(-2*time.Minute), "b"), copyAt(1, t0.Add(-3*time.Minute), "a"))
+	if got := texts(t, o); got != "a b" {
+		t.Fatalf("out of order: history %q, want a b", got)
+	}
+	// a copy that arrives deleted still removes the older ones, as it did
+	// on the devices that had it before its delete
+	apply(t, o, event(5, wire.KindDelete, 6), copyAt(6, t0, "b"))
+	if got := texts(t, o); got != "a" {
+		t.Fatalf("history %q, want b gone with its newer copy", got)
+	}
+}
+
+// TestOnceWhileWaiting: a copy the server has yet to number is listed once
+// too, in place of the older one it will remove.
+func TestOnceWhileWaiting(t *testing.T) {
+	s := open(t)
+	apply(t, s, copyAt(1, t0.Add(-2*time.Minute), "a"), copyAt(2, t0.Add(-time.Minute), "b"))
+	f, err := s.Add(ctx, wire.NewCopy("text", []byte("a")), true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := texts(t, s), "("+f.Ref+") b"; got != want {
+		t.Fatalf("history %q, want %q", got, want)
+	}
+	f.Type, f.Seq = wire.Event, 3
+	apply(t, s, f)
+	if got := texts(t, s); got != "a b" {
+		t.Fatalf("numbered: history %q, want a b", got)
+	}
+	if e, _, _ := s.Newest(ctx, true); e.Seq != 3 {
+		t.Errorf("Newest = %d, want 3", e.Seq)
+	}
+}
+
+// TestOnceInAnOlderHistory: a history kept before copies were held once
+// holds each once when it is opened.
+func TestOnceInAnOlderHistory(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "history.db")
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, text := range []string{"a", "b", "a", "a"} {
+		if _, err := s.db.Exec(`INSERT INTO events (seq, kind, time, formats, data) VALUES (?, 'copy', ?, ?, ?)`,
+			i+1, t0.Add(time.Duration(i)*time.Second).UnixMilli(), formatsText(wire.NewCopy("text", nil).Formats), text); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := s.db.Exec(`PRAGMA user_version = 1`); err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+
+	s, err = Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	s.now = func() time.Time { return t0 }
+	list, _ := s.List(ctx, 10)
+	var seqs []uint64
+	for _, e := range list {
+		seqs = append(seqs, e.Seq)
+	}
+	if fmt.Sprint(seqs) != "[4 2]" {
+		t.Fatalf("copies %v, want [4 2]: the last a, and b", seqs)
+	}
+}
+
 func TestBounds(t *testing.T) {
 	s := open(t)
 	for i := range uint64(MaxCopies + 5) {
-		apply(t, s, copyAt(i+1, t0.Add(time.Duration(i)*time.Second), "x"))
+		apply(t, s, copyAt(i+1, t0.Add(time.Duration(i)*time.Second), fmt.Sprint("copy ", i))) // each its own, or they are one
 	}
 	list, _ := s.List(ctx, 1000)
 	if len(list) != MaxCopies || list[len(list)-1].Seq != 6 {
@@ -309,8 +421,9 @@ func TestBounds(t *testing.T) {
 	}
 
 	s = open(t)
-	big := make([]byte, MaxBytes/2+1)
 	for i := range uint64(3) {
+		big := make([]byte, MaxBytes/2+1)
+		big[0] = byte(i)
 		f := wire.NewCopy("image/png", big)
 		f.Type, f.Seq, f.Time = wire.Event, i+1, t0.Add(time.Duration(i)*time.Second).UnixMilli()
 		apply(t, s, f)

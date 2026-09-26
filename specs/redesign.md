@@ -155,6 +155,14 @@ arrival. History is ordered by `(time, seq)`. So a copy made offline takes its
 place at when it was made, and never takes over the clipboard from a newer
 copy that another device made in the meantime.
 
+**Each copy once.** A copy of what an older copy holds, the same bytes of the
+same types, takes its place: the older one is removed, as the bounds remove a
+copy, on each device as it applies the newer. Copying something again, or
+putting a copy back from the history, moves it to the top rather than listing
+it twice. Every device applies the same events in the same order, so each
+removes the same copies; one that arrives out of order, as catching up brings
+it, is removed on arrival if a newer copy of it is there.
+
 ```mermaid
 sequenceDiagram
     participant L as Laptop

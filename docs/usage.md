@@ -66,8 +66,9 @@ $ mg history rm 41        # remove it, from every device
 $ mg history clear        # remove all of it
 ```
 
-Copies a password manager marks as secret are neither synced nor kept.
-Removing a copy from the history does not change what is on anyone's
+A copy is in the history once: copying it again, or putting it back from
+the history, moves it to the top. Copies a password manager marks as secret
+are neither synced nor kept. Removing a copy from the history does not change what is on anyone's
 clipboard.
 
 ## Sharing a Link

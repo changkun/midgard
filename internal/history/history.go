@@ -13,6 +13,10 @@
 // tombstone, without its bytes, so the device can tell a peer catching up
 // that it is gone. What the device does before the server has numbered it
 // waits in an outbox.
+//
+// The history holds a copy once: a copy of what an older copy holds, the same
+// bytes of the same types, takes its place, as putting an older copy back on
+// the clipboard does. The older one is removed, as the bounds remove a copy.
 package history
 
 import (
@@ -136,6 +140,12 @@ var migrations = []string{
 		formats TEXT    NOT NULL DEFAULT '[]',
 		data    BLOB
 	)`,
+	// 2: a copy of what a newer copy holds is removed, as Apply does from
+	// now on. Every device has the same log, so each removes the same.
+	`UPDATE events SET gone = 1, data = NULL
+	WHERE kind = 'copy' AND gone = 0 AND EXISTS (SELECT 1 FROM events AS n
+		WHERE n.kind = 'copy' AND n.gone = 0 AND n.formats = events.formats AND n.data = events.data
+		AND (n.time > events.time OR (n.time = events.time AND n.seq > events.seq)))`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {
@@ -165,8 +175,10 @@ func (s *Store) migrate(ctx context.Context) error {
 // Apply applies an event the server numbered, once: an event already in the
 // log is left as it is. A copy that a delete or a clear already in the log
 // covers arrives gone, as catching up can bring events out of order; a copy
-// the device sent itself leaves the outbox. It reports whether the event was
-// new, and whether it was the device's own, come back numbered.
+// the device sent itself leaves the outbox. A copy removes an older one of
+// the same bytes, and arrives gone if there is a newer one. It reports
+// whether the event was new, and whether it was the device's own, come back
+// numbered.
 func (s *Store) Apply(ctx context.Context, f wire.Frame) (applied, ours bool, err error) {
 	if f.Seq == 0 {
 		return false, false, errors.New("history: an event without a number")
@@ -197,6 +209,24 @@ func (s *Store) Apply(ctx context.Context, f wire.Frame) (applied, ours bool, er
 			WHERE (kind = 'delete' AND target = ?) OR (kind = 'clear' AND target >= ?))`, f.Seq, f.Seq).Scan(&covered)
 		if err != nil {
 			return false, false, err
+		}
+		// the same bytes, of the same types: the formats hold the size, so
+		// only a copy of the same size has its bytes compared
+		if len(f.Payload) > 0 {
+			same := `kind = 'copy' AND gone = 0 AND formats = ? AND data = ?`
+			var newer bool
+			err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM events WHERE `+same+`
+				AND (time > ? OR (time = ? AND seq > ?)))`, formats, f.Payload, f.Time, f.Time, f.Seq).Scan(&newer)
+			if err != nil {
+				return false, false, err
+			}
+			// even a copy that arrives deleted removes the older ones: the
+			// devices that had it before its delete removed them too
+			if _, err := tx.ExecContext(ctx, `UPDATE events SET gone = 1, data = NULL WHERE `+same+`
+				AND (time < ? OR (time = ? AND seq < ?))`, formats, f.Payload, f.Time, f.Time, f.Seq); err != nil {
+				return false, false, err
+			}
+			covered = covered || newer
 		}
 		var data any = f.Payload
 		if covered {
@@ -380,7 +410,11 @@ func (s *Store) list(ctx context.Context, n int, waiting, data bool, preview int
 	query := `SELECT seq, '' AS ref, time, origin, formats, ` + col + ` AS data, 0 AS waiting
 		FROM events WHERE kind = 'copy' AND gone = 0`
 	if waiting {
-		query += ` UNION ALL SELECT 0, ref, time, '', formats, ` + col + `, 1 FROM outbox WHERE type = 'copy'`
+		// A copy waiting holds what it will remove once numbered, so it is
+		// not listed twice meanwhile.
+		query += ` AND NOT EXISTS (SELECT 1 FROM outbox AS o
+			WHERE o.type = 'copy' AND o.formats = events.formats AND o.data = events.data)
+		UNION ALL SELECT 0, ref, time, '', formats, ` + col + `, 1 FROM outbox WHERE type = 'copy'`
 	}
 	// A copy waiting to be numbered will be numbered after every copy of
 	// the same time, so it sorts as the newer.
