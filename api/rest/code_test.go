@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"changkun.de/x/midgard/internal/config"
@@ -38,6 +39,17 @@ func TestCode2imgWithoutStore(t *testing.T) {
 	w := do(t, NewMidgard(), http.MethodPost, "/midgard/api/v1/code2img", `{"code":"package main"}`, true)
 	var out types.Code2ImgOutput
 	json.Unmarshal(w.Body.Bytes(), &out)
+
+	// The code is saved before it is rendered, so it must be there even
+	// where Chrome is installed but cannot start, as on Ubuntu runners,
+	// whose AppArmor denies Chrome its sandbox.
+	codes, _ := filepath.Glob(filepath.Join(config.RepoPath, "code", "*"))
+	if len(codes) == 0 {
+		t.Fatalf("the code was not saved: got %d (%s)", w.Code, out.Message)
+	}
+	if strings.Contains(out.Message, "chrome failed to start") {
+		t.Skipf("the code was saved, but Chrome cannot start here to render it: %s", out.Message)
+	}
 	if w.Code != http.StatusOK {
 		t.Fatalf("got %d (%s), want 200", w.Code, out.Message)
 	}
