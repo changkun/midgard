@@ -16,6 +16,7 @@ import (
 	"mime"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -66,20 +67,30 @@ func DeleteShare(slug string) error {
 	return call(http.MethodDelete, types.EndpointShares()+"/"+slug, nil, nil)
 }
 
-// Devices lists the daemons connected to the server.
+// Devices lists this person's devices, online or not.
 func Devices() ([]types.Device, error) {
-	res, err := utils.Request(http.MethodGet, types.EndpointDevices(), nil)
-	if errors.Is(err, signin.ErrSignedOut) {
-		return nil, err
-	}
-	if err != nil {
-		return nil, fmt.Errorf("cannot reach the midgard server: %w", err)
-	}
 	var out types.DevicesOutput
-	if err := json.Unmarshal(res, &out); err != nil {
-		return nil, fmt.Errorf("cannot parse the server's answer: %w", err)
-	}
-	return out.Devices, nil
+	err := call(http.MethodGet, types.EndpointDevices(), nil, &out)
+	return out.Devices, err
+}
+
+// ForgetDevice forgets this person's device id: the server stops holding
+// copies for it, until it connects again.
+func ForgetDevice(id string) error {
+	return call(http.MethodDelete, types.EndpointDevices()+"/"+id, nil, nil)
+}
+
+// Queue is what the server holds until each of this person's devices has
+// it.
+func Queue() (types.QueueOutput, error) {
+	var out types.QueueOutput
+	err := call(http.MethodGet, types.EndpointQueue(), nil, &out)
+	return out, err
+}
+
+// TakeBack takes back a copy none of this person's devices has yet.
+func TakeBack(seq uint64) error {
+	return call(http.MethodDelete, types.EndpointQueue()+"/"+strconv.FormatUint(seq, 10), nil, nil)
 }
 
 // ErrNotFound means the server has no such thing for this person.

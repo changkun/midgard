@@ -8,8 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"text/tabwriter"
-	"time"
 
 	"changkun.de/x/midgard/api/daemon"
 	"changkun.de/x/midgard/internal/client"
@@ -71,16 +69,7 @@ var daemonCmd = &cobra.Command{
 				errorf("cannot list the daemons: %v", err)
 				return
 			}
-			w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(w, "name\tonline\tlast seen\thas up to\tid")
-			for _, d := range devices {
-				online := "no"
-				if d.Online {
-					online = "yes"
-				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\n", d.Name, online, d.LastSeen.Local().Format(time.DateTime), d.Acked, d.ID)
-			}
-			w.Flush()
+			printDevices(devices)
 		default:
 			err = fmt.Errorf("%s is not a valid action", args[0])
 		}

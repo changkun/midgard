@@ -112,6 +112,17 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     <div class="row"><button class="danger" id="history-clear">Clear history</button></div>
   </section>
 
+  <section id="queue">
+    <h2>On its way <small>held until each of your devices has it</small></h2>
+    <ul class="list" id="queue-list"></ul>
+    <p class="note" id="queue-status" role="status"></p>
+  </section>
+
+  <section id="devices-section">
+    <h2>Devices <small>where your clipboard and history are</small></h2>
+    <ul class="list" id="device-list"></ul>
+  </section>
+
   <section id="shares">
     <h2>Shares <small>anyone with a link can open it</small></h2>
     <ul class="list" id="share-list"></ul>
@@ -181,9 +192,20 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     if (res.status === 204) return null;
     let data = null;
     try { data = await res.json(); } catch (_) {}
-    if (!res.ok) throw new Error((data && data.msg) || "the server answered " + res.status);
+    if (!res.ok) {
+      const err = new Error((data && data.msg) || "the server answered " + res.status);
+      err.status = res.status;
+      throw err;
+    }
     return data;
   }
+
+  // offline is a failed read that means no device of yours is online, which
+  // is how things are, not an error.
+  const offline = (e) => e.status === 503;
+  const failure = (e) => el("li", offline(e)
+    ? { class: "muted", text: "None of your devices is online right now; your history is on them." }
+    : { class: "error", text: e.message });
 
   function status(id, text, bad) {
     const p = $(id);
@@ -219,13 +241,10 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
       current = await call("GET", "/clipboard");
       $("clip").replaceChildren(current && current.data ? view(current) : el("p", { class: "muted", text: "Your clipboard is empty." }));
     } catch (e) {
-      $("clip").replaceChildren(el("p", { class: "error", text: e.message }));
+      current = null;
+      $("clip").replaceChildren(el("p", { class: offline(e) ? "muted" : "error",
+        text: offline(e) ? "None of your devices is online, and nothing is on its way." : e.message }));
     }
-    try {
-      const d = await call("GET", "/devices");
-      const names = (d.devices || []).filter((x) => x.online).map((x) => x.name);
-      $("devices").textContent = names.length ? "online: " + names.join(", ") : "no device online";
-    } catch (_) {}
   }
   $("clip-copy").addEventListener("click", async () => {
     if (!current || !current.data) return status("clip-status", "Nothing to copy.", true);
@@ -243,12 +262,25 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
   async function send(data) {
     if (!data) return status("clip-status", "Nothing to send.", true);
     try {
-      await call("POST", "/clipboard", { type: "text", data });
+      const r = await call("POST", "/clipboard", { type: "text", data });
+      remember({ seq: r.seq, text: data, at: Date.now() });
       status("clip-status", "Sent to your devices.");
       $("send-text").value = "";
-      loadClipboard(); loadHistory();
+      loadClipboard(); loadHistory(); loadQueue();
     } catch (e) { status("clip-status", e.message, true); }
   }
+
+  // What this page sent, kept in the browser until a device has it: the
+  // server holds copies in memory only, and a restart loses what no device
+  // had yet (specs/redesign.md §7).
+  const SENT = "midgard.sent";
+  function sentList() {
+    try { return JSON.parse(localStorage.getItem(SENT) || "[]"); } catch (_) { return []; }
+  }
+  function keepSent(list) {
+    try { localStorage.setItem(SENT, JSON.stringify(list)); } catch (_) {}
+  }
+  const remember = (item) => keepSent(sentList().concat([item]).slice(-50));
   $("send").addEventListener("click", () => send($("send-text").value));
   $("send-local").addEventListener("click", async () => {
     try { send(await navigator.clipboard.readText()); }
@@ -284,13 +316,74 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
         return li;
       }));
     } catch (e) {
-      list.replaceChildren(el("li", { class: "error", text: e.message }));
+      list.replaceChildren(failure(e));
     }
   }
   $("history-clear").addEventListener("click", async () => {
     if (!confirm("Delete every copy in your history, on every device?")) return;
     try { await call("DELETE", "/history"); loadHistory(); loadClipboard(); } catch (e) { alert(e.message); }
   });
+
+  // On its way, and the devices
+  async function loadQueue() {
+    let q;
+    try {
+      q = await call("GET", "/queue");
+    } catch (e) {
+      $("queue-list").replaceChildren(failure(e));
+      return;
+    }
+    const names = {};
+    for (const d of q.devices) names[d.id] = d.name;
+    const online = q.devices.filter((d) => d.online);
+    $("devices").textContent = online.length ? "online: " + online.map((d) => d.name).join(", ") : "no device online";
+
+    const held = new Set(q.queue.map((e) => e.seq));
+    const has = (seq) => q.devices.some((d) => d.counted && d.acked >= seq);
+    // what this page sent: waiting, delivered, or lost
+    const sent = sentList();
+    const lost = sent.filter((s) => !held.has(s.seq) && !has(s.seq));
+    keepSent(sent.filter((s) => held.has(s.seq) || lost.includes(s)));
+
+    const items = q.queue.map((e) => {
+      const what = {
+        copy: kind(e.type) + " · " + size(e.size),
+        void: "taken back",
+        delete: "deleting a copy",
+        clear: "clearing the history",
+      }[e.kind] || e.kind;
+      const waiting = e.waiting.map((id) => names[id] || id).join(", ");
+      const row = el("div", { class: "row" });
+      if (e.kind === "copy" && !online.length) {
+        row.append(el("button", { text: "Take back", onclick: async () => {
+          try { await call("DELETE", "/queue/" + e.seq); forget(e.seq); loadQueue(); }
+          catch (err) { status("queue-status", err.message, true); }
+        } }));
+      }
+      return el("li", {}, el("div", { class: "item-head" },
+        el("div", { class: "meta", text: when(e.created) + " · from " + e.origin + " · " + what +
+          (waiting ? " · waiting for " + waiting : "") }), row));
+    });
+    for (const s of lost) {
+      items.push(el("li", {}, el("div", { class: "item-head" },
+        el("div", { class: "meta error", text: "Lost before any device had it: “" + s.text.slice(0, 60) + "”" }),
+        el("div", { class: "row" },
+          el("button", { text: "Send again", onclick: () => { forget(s.seq); send(s.text); } }),
+          el("button", { text: "Dismiss", onclick: () => { forget(s.seq); loadQueue(); } })))));
+    }
+    $("queue-list").replaceChildren(...(items.length ? items : [el("li", { class: "muted", text: "Nothing; every device has everything." })]));
+
+    $("device-list").replaceChildren(...(q.devices.length ? q.devices.map((d) => el("li", {},
+      el("div", { class: "item-head" },
+        el("div", { class: "meta", text: d.name + " · " + (d.online ? "online" : "last seen " + when(d.last_seen)) +
+          (d.counted ? "" : " · forgotten") }),
+        el("div", { class: "row" }, d.online || !d.counted ? "" : el("button", { class: "danger", text: "Forget", onclick: async () => {
+          if (!confirm("Forget " + d.name + "? The server stops holding copies for it, until it connects again.")) return;
+          try { await call("DELETE", "/devices/" + encodeURIComponent(d.id)); loadQueue(); }
+          catch (err) { status("queue-status", err.message, true); }
+        } }))))) : [el("li", { class: "muted", text: "No devices yet. Run midgard on a computer to add one." })]));
+  }
+  const forget = (seq) => keepSent(sentList().filter((s) => s.seq !== seq));
 
   // Shares
   async function loadShares() {
@@ -382,7 +475,12 @@ footer { max-width: 760px; margin: 0 auto; padding: 8px 16px 32px; font-size: 12
     } catch (e) { status("token-status", e.message, true); }
   });
 
-  loadClipboard(); loadHistory(); loadShares(); loadTokens();
+  loadClipboard(); loadHistory(); loadQueue(); loadShares(); loadTokens();
+  // What is on its way changes as devices come and go.
+  setInterval(() => { if (!document.hidden) loadQueue(); }, 5000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) { loadClipboard(); loadHistory(); loadQueue(); }
+  });
 })();
 </script>
 </body>

@@ -33,6 +33,8 @@ See https://changkun.de/s/midgard for more details.
 		historyCmd,
 		serverCmd,
 		daemonCmd,
+		devicesCmd,
+		queueCmd,
 		shareCmd,
 		sharesCmd,
 		statusCmd,
