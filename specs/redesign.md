@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12), revision in review |
+| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12) |
 | **Decided** | 2026-09-26, with changkun: clipboards belong to individuals, behind a hard barrier; history is shared across one's own devices; login through auth.latere.ai; code2img and the GitHub backup go; the API stays `/v1` and changes in place |
 | **Revised** | 2026-09-26, with changkun: the server keeps no copy of anyone's clipboard, only relays and orders them; history lives on the devices, in one order on all of them; a tray app is what people use, `mg` stays for agents and scripts; end-to-end encryption is a must, after this |
 | **Builds on** | #35–#53 (Phase 0 and 1: safe, and easy to run) |
@@ -176,15 +176,13 @@ restarted, or a copy outlived the bounds below — it asks the person's online
 devices for, and passes on. If none of them is online, the device waits for
 one, and says so.
 
-**Where a copy waits.** [To decide in review.] Recommended: the server holds
-every copy in memory until each of the person's devices has it, within bounds
-per person (64 MB, 7 days) past which the oldest go; a device not seen for
-30 days stops counting, and the tray app and the web page can forget a device.
-This covers a laptop closed right after a copy, a phone's paste while every
-computer is asleep, and the web page's queue alike. The narrower alternative
-is to hold only what the web page and Shortcuts send, one copy or a short
-queue, and to leave device-to-device catch-up to devices that are online at
-the same time.
+**Where a copy waits.** The server holds every copy in memory until each of
+the person's devices has it, within bounds per person (64 MB, 7 days) past
+which the oldest go. A device not seen for 30 days stops counting, and the
+tray app and the web page can forget a device. This covers a laptop closed
+right after a copy, a phone's paste while every computer is asleep, and the
+web page's queue alike. (Decided in review, over holding only what the web
+page and Shortcuts send.)
 
 - **The web page's queue** is that buffer: it lists what is still on its way,
   to which devices, and lets one remove a copy that has not arrived yet.
