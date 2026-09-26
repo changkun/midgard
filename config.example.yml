@@ -18,6 +18,9 @@ server:
   mode: release # or debug/test
   store: # data folder is in ./data
     prefix: /midgard # access via example.com/midgard/*
+    # keep every copied text in data/logs/clipboard, in plain text. Off by
+    # default: what people copy includes passwords.
+    log_clipboard: false
     backup:
       enable: false # enable backup to a git repository
       interval: 60 # in minutes

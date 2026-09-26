@@ -39,7 +39,11 @@ type Server struct {
 	Mode  string `yaml:"mode"`
 	Store struct {
 		Prefix string `yaml:"prefix"`
-		Backup struct {
+		// LogClipboard keeps every text copied on any device, in plain
+		// text, under data/logs/clipboard. It is off unless asked for:
+		// what people copy includes passwords.
+		LogClipboard bool `yaml:"log_clipboard"`
+		Backup       struct {
 			Enable   bool   `yaml:"enable"`
 			Interval int    `yaml:"interval"`
 			Repo     string `yaml:"repo"`

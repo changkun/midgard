@@ -7,12 +7,12 @@ package clipboard
 import (
 	"bytes"
 	"fmt"
-	"io/fs"
 	"log/slog"
 	"os"
 	"sync"
 	"time"
 
+	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
 	"gopkg.in/yaml.v3"
@@ -38,8 +38,9 @@ type UniversalClipboard interface {
 	ReadAs(t types.MIME) []byte
 }
 
-// Universal is the Midgard's universal clipboard, it keeps the data in
-// memory and logs its change history to the data store of midgard.
+// Universal is the Midgard's universal clipboard. It keeps the data in
+// memory, and logs its change history to the data folder only when the
+// configuration asks for it (server.store.log_clipboard).
 //
 // It holds a global shared storage that can be edited/fetched at anytime.
 var Universal UniversalClipboard = &universal{
@@ -80,7 +81,9 @@ func (uc *universal) Write(t types.MIME, buf []byte) bool {
 		return false
 	}
 
-	uc.log(t, buf)
+	if config.S().Store.LogClipboard {
+		uc.log(t, buf)
+	}
 
 	uc.typ = t
 	uc.buf = buf
@@ -110,14 +113,16 @@ func (uc *universal) log(t types.MIME, buf []byte) {
 
 	logdir := "./data/logs/clipboard"
 	fpath := fmt.Sprintf("%s/%d/%d", logdir, date.Year(), date.Month())
-	err = os.MkdirAll(fpath, fs.ModeDir|fs.ModePerm)
+	// The log is readable by the server's user alone: it is everything
+	// copied, and it never belongs in the published store.
+	err = os.MkdirAll(fpath, 0o700)
 	if err != nil {
 		slog.Error("cannot create the clipboard log folder", "path", fpath, "err", err)
 		return
 	}
 
 	f, err := os.OpenFile(fmt.Sprintf("%s/%d.log", fpath, date.Day()),
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, fs.ModePerm)
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		slog.Error("cannot open the clipboard log file", "path", fpath, "err", err)
 		return
