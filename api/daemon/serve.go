@@ -8,12 +8,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net"
 	"os"
 	"sync"
 	"time"
 
-	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/types/proto"
 	"changkun.de/x/midgard/internal/utils"
@@ -104,9 +102,9 @@ func (m *Daemon) Serve(ctx context.Context) {
 const maxMessageSize = 10 << 20 // 10 MB
 
 func (m *Daemon) serveRPC() {
-	l, err := net.Listen("tcp", config.D().Addr)
+	l, addr, err := listenRPC()
 	if err != nil {
-		fatal("cannot initialize the midgard daemon", "addr", config.D().Addr, "err", err)
+		fatal("cannot initialize the midgard daemon", "err", err)
 	}
 
 	m.s = grpc.NewServer(
@@ -115,7 +113,7 @@ func (m *Daemon) serveRPC() {
 		grpc.ConnectionTimeout(time.Minute*5),
 	)
 	proto.RegisterMidgardServer(m.s, m)
-	slog.Info("daemon is running", "addr", "rpc://"+config.D().Addr)
+	slog.Info("daemon is running", "addr", addr)
 	if err := m.s.Serve(l); err != nil {
 		fatal("cannot serve the midgard daemon", "err", err)
 	}

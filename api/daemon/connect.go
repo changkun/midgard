@@ -8,16 +8,14 @@ import (
 	"context"
 	"time"
 
-	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/types/proto"
-	"google.golang.org/grpc"
 )
 
 // Connect connects to a midgard client
 func Connect(callback func(ctx context.Context, c proto.MidgardClient)) {
-	// We don't need authentication here. Daemon is running
-	// on a local machine.
-	conn, err := grpc.Dial(config.D().Addr, grpc.WithInsecure())
+	// No authentication: the daemon listens on a socket only this user
+	// can reach (see rpcSocket).
+	conn, err := dialRPC()
 	if err != nil {
 		fatal("cannot connect to the midgard daemon", "err", err)
 	}

@@ -135,6 +135,8 @@ $ mg daemon uninstall
 
 旧版 `mg daemon install` 会在 `/etc` 中安装以 root 运行的系统服务，它无法访问任何人的剪贴板。`sudo mg daemon uninstall` 可将其移除。
 
+`mg` 命令通过只有你能访问的套接字与守护进程通信：Linux 上为 `$XDG_RUNTIME_DIR/midgard/daemon.sock`，其他系统为缓存目录下的 `midgard/daemon.sock`。旧配置中的 `daemon.addr: localhost:9125` 可被本机任何用户访问，请将其删除并重启守护进程。
+
 若不需要安装为系统进程，则可直接使用下列命令运行在终端中（使用 Ctrl+C 退出）：
 
 ```sh

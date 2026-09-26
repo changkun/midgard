@@ -19,4 +19,4 @@ server:
     pass: midgard-test-password
 
 daemon:
-  addr: localhost:9125
+  server: ""
