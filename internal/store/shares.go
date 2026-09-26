@@ -96,10 +96,11 @@ func (s *Store) share(ctx context.Context, where string, key string) (Share, err
 }
 
 // Shares lists owner's shares, newest first, without their data, expired ones
-// included so their owner can see them go.
+// included so their owner can see them go. Shares made in the same
+// millisecond are in the order they were made, by rowid.
 func (s *Store) Shares(ctx context.Context, owner string) ([]Share, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT slug, path, created, expires, mime, LENGTH(data) FROM shares WHERE owner = ? ORDER BY created DESC, slug`, owner)
+		`SELECT slug, path, created, expires, mime, LENGTH(data) FROM shares WHERE owner = ? ORDER BY created DESC, rowid DESC`, owner)
 	if err != nil {
 		return nil, err
 	}

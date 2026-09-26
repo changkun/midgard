@@ -55,6 +55,27 @@ func TestShares(t *testing.T) {
 	}
 }
 
+// TestSharesInOrder: shares made in the same millisecond, as a script's are,
+// are listed newest first all the same, not by their random links.
+func TestSharesInOrder(t *testing.T) {
+	s, _ := open(t)
+	ctx := context.Background()
+	var made []string
+	for range 20 {
+		sh, err := s.CreateShare(ctx, "alice", "", "text", []byte("x"), time.Time{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		made = append(made, sh.Slug)
+	}
+	list, _ := s.Shares(ctx, "alice")
+	for i, sh := range list {
+		if want := made[len(made)-1-i]; sh.Slug != want {
+			t.Fatalf("share %d is %s, want %s, made %d before it", i, sh.Slug, want, i)
+		}
+	}
+}
+
 // TestSharesKeepOwnersApart is the barrier for shares: a link is public, but
 // no one lists or revokes anyone else's.
 func TestSharesKeepOwnersApart(t *testing.T) {
