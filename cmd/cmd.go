@@ -32,7 +32,6 @@ See https://changkun.de/s/midgard for more details.
 		daemonCmd,
 		allocCmd,
 		statusCmd,
-		code2imgCmd,
 	)
 	r.Execute()
 }

@@ -11,7 +11,6 @@ package proto;
 service Midgard {
     rpc Ping(PingInput) returns (PingOutput) {}
     rpc AllocateURL(AllocateURLInput) returns (AllocateURLOutput) {}
-    rpc CodeToImage(CodeToImageInput) returns (CodeToImageOutput) {}
     rpc ListDaemons(ListDaemonsInput) returns (ListDaemonsOutput) {}
 }
 
@@ -36,18 +35,6 @@ message AllocateURLInput {
 message AllocateURLOutput {
     string URL = 1;
     string Message = 2;
-}
-
-// CodeToImageInput carries the code itself, for the same reason.
-message CodeToImageInput {
-    reserved 1, 2, 3; // CodePath, Start, End
-    reserved "CodePath", "Start", "End";
-    string Code = 4; // empty to render the universal clipboard
-}
-
-message CodeToImageOutput {
-    string CodeURL = 1;
-    string ImageURL = 2;
 }
 
 message ListDaemonsInput {}

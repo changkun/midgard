@@ -26,7 +26,7 @@ CLI    <-------> daemon <-----┘
 
 Since midgard serves as a personal service, which does not need to address trust/privacy issue for other customers, it is designed and implemented in a centralized way: everything communicates to a central proxy. This brings several benefits:
 
-1. Central backup (midgard server backups clipboard history, and currently backups code2img/link history to a GitHub repository)
+1. Central backup (midgard server backups clipboard history, and currently backups link history to a GitHub repository)
 2. Single connection broadcasting (a device only need a single connection, server broadcasts all messages)
 3. Distributed synchronization consistency (server is the lead)
 

@@ -80,32 +80,6 @@ func (m *Daemon) AllocateURL(ctx context.Context, in *proto.AllocateURLInput) (*
 	return &proto.AllocateURLOutput{URL: url, Message: "Done."}, nil
 }
 
-// CodeToImage tries to create an image for the given code.
-func (m *Daemon) CodeToImage(ctx context.Context, in *proto.CodeToImageInput) (out *proto.CodeToImageOutput, err error) {
-	slog.Info("received a code2img request", "bytes", len(in.Code))
-
-	// An empty code asks the server to render the universal clipboard.
-	res, err := utils.Request(http.MethodPost, types.EndpointCode2Image(), &types.Code2ImgInput{Code: in.Code})
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert: %w", err)
-	}
-
-	var o types.Code2ImgOutput
-	err = json.Unmarshal(res, &o)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse server response: %w", err)
-	}
-
-	// write to local clipboard.
-	clipboard.Local.Write(types.MIMEPlainText,
-		utils.StringToBytes(config.ServerURL()+o.Image))
-
-	return &proto.CodeToImageOutput{
-		CodeURL:  o.Code,
-		ImageURL: o.Image,
-	}, nil
-}
-
 // ListDaemons lists all active daemons.
 func (m *Daemon) ListDaemons(ctx context.Context, in *proto.ListDaemonsInput) (out *proto.ListDaemonsOutput, err error) {
 	readerId, err := utils.NewUUIDShort()

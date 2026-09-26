@@ -20,9 +20,6 @@ func EndpointClipboard() string { return config.ServerURL() + "/midgard/api/v1/c
 // EndpointAllocateURL allocates a public URL.
 func EndpointAllocateURL() string { return config.ServerURL() + "/midgard/api/v1/allocate" }
 
-// EndpointCode2Image renders code as an image.
-func EndpointCode2Image() string { return config.ServerURL() + "/midgard/api/v1/code2img" }
-
 // EndpointSubscribe is the websocket daemons subscribe to, as a ws:// or
 // wss:// URL.
 func EndpointSubscribe() string {
@@ -84,17 +81,5 @@ type AllocateURLInput struct {
 // AllocateURLOutput ...
 type AllocateURLOutput struct {
 	URL     string `json:"url"`
-	Message string `json:"msg"`
-}
-
-// Code2ImgInput ...
-type Code2ImgInput struct {
-	Code string `json:"code"`
-}
-
-// Code2ImgOutput ...
-type Code2ImgOutput struct {
-	Code    string `json:"code"`
-	Image   string `json:"img"`
 	Message string `json:"msg"`
 }

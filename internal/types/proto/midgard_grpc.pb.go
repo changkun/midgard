@@ -25,7 +25,6 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	Midgard_Ping_FullMethodName        = "/proto.Midgard/Ping"
 	Midgard_AllocateURL_FullMethodName = "/proto.Midgard/AllocateURL"
-	Midgard_CodeToImage_FullMethodName = "/proto.Midgard/CodeToImage"
 	Midgard_ListDaemons_FullMethodName = "/proto.Midgard/ListDaemons"
 )
 
@@ -35,7 +34,6 @@ const (
 type MidgardClient interface {
 	Ping(ctx context.Context, in *PingInput, opts ...grpc.CallOption) (*PingOutput, error)
 	AllocateURL(ctx context.Context, in *AllocateURLInput, opts ...grpc.CallOption) (*AllocateURLOutput, error)
-	CodeToImage(ctx context.Context, in *CodeToImageInput, opts ...grpc.CallOption) (*CodeToImageOutput, error)
 	ListDaemons(ctx context.Context, in *ListDaemonsInput, opts ...grpc.CallOption) (*ListDaemonsOutput, error)
 }
 
@@ -67,16 +65,6 @@ func (c *midgardClient) AllocateURL(ctx context.Context, in *AllocateURLInput, o
 	return out, nil
 }
 
-func (c *midgardClient) CodeToImage(ctx context.Context, in *CodeToImageInput, opts ...grpc.CallOption) (*CodeToImageOutput, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CodeToImageOutput)
-	err := c.cc.Invoke(ctx, Midgard_CodeToImage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *midgardClient) ListDaemons(ctx context.Context, in *ListDaemonsInput, opts ...grpc.CallOption) (*ListDaemonsOutput, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListDaemonsOutput)
@@ -93,7 +81,6 @@ func (c *midgardClient) ListDaemons(ctx context.Context, in *ListDaemonsInput, o
 type MidgardServer interface {
 	Ping(context.Context, *PingInput) (*PingOutput, error)
 	AllocateURL(context.Context, *AllocateURLInput) (*AllocateURLOutput, error)
-	CodeToImage(context.Context, *CodeToImageInput) (*CodeToImageOutput, error)
 	ListDaemons(context.Context, *ListDaemonsInput) (*ListDaemonsOutput, error)
 	mustEmbedUnimplementedMidgardServer()
 }
@@ -110,9 +97,6 @@ func (UnimplementedMidgardServer) Ping(context.Context, *PingInput) (*PingOutput
 }
 func (UnimplementedMidgardServer) AllocateURL(context.Context, *AllocateURLInput) (*AllocateURLOutput, error) {
 	return nil, status.Error(codes.Unimplemented, "method AllocateURL not implemented")
-}
-func (UnimplementedMidgardServer) CodeToImage(context.Context, *CodeToImageInput) (*CodeToImageOutput, error) {
-	return nil, status.Error(codes.Unimplemented, "method CodeToImage not implemented")
 }
 func (UnimplementedMidgardServer) ListDaemons(context.Context, *ListDaemonsInput) (*ListDaemonsOutput, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListDaemons not implemented")
@@ -174,24 +158,6 @@ func _Midgard_AllocateURL_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Midgard_CodeToImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CodeToImageInput)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MidgardServer).CodeToImage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Midgard_CodeToImage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MidgardServer).CodeToImage(ctx, req.(*CodeToImageInput))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Midgard_ListDaemons_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListDaemonsInput)
 	if err := dec(in); err != nil {
@@ -224,10 +190,6 @@ var Midgard_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AllocateURL",
 			Handler:    _Midgard_AllocateURL_Handler,
-		},
-		{
-			MethodName: "CodeToImage",
-			Handler:    _Midgard_CodeToImage_Handler,
 		},
 		{
 			MethodName: "ListDaemons",

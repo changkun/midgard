@@ -95,41 +95,6 @@ midgard 守护进程将自动监控剪贴板并将内容与 midgard 服务器进
   + iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/c1b98b1ae59045e59c1f302a634e5633
   + iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/e875c142389e4fe6b45bbed4a517f8c8
 
-## 代码转图片 code2img
-
-将任意一个拷贝到剪贴板中的代码转换为图片，可以使用下面的命令：
-
-```sh
-$ mg code2img # 读取剪贴板的内容，并转化为可公开访问的图片
-https://changkun.de/midgard/code/201218-204010
-https://changkun.de/midgard/code/201218-204010.png
-```
-
-或者直接读取某个指定的代码文件进行创建：
-
-```sh
-$ mg code2img /path/to/your/file  # 读取指定的文件内容，并转化为可公开访问的图片
-https://changkun.de/midgard/code/201218-204010
-https://changkun.de/midgard/code/201218-204010.png
-```
-
-甚至指定文件的行号，选择性的进行转换：
-
-```sh
-$ mg code2img /path/to/your/file/ -l 5:10 # 选择行号从 5 到 10
-https://changkun.de/midgard/code/201218-204010
-https://changkun.de/midgard/code/201218-204010.png
-```
-
-code2img 服务的所有内容可以在这个路由下找到合集：/midgard/code，例如 https://changkun.de/midgard/code
-
-### iOS, iPadOS, macOS 捷径 - code2img
-
-请在 iOS, iPadOS, macOS 设备上访问 midgard-code2img 的捷径链接，并根据提示输入相关配置数据（包括 midgard 服务端域名、服务端配置的用户名及密码）
-
-- iOS 14, iPadOS 14: https://www.icloud.com/shortcuts/73f978c0179642b5bc2c31aba300b25a
-- iOS 15+, iPadOS 15+, macOS 12+: https://www.icloud.com/shortcuts/cec5afc61b01476e87b888163de6e39b
-
 ## 许可
 
 版权所有 2020-2021 [欧长坤](https://changkun.de)。保留所有权利。
