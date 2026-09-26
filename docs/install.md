@@ -54,6 +54,12 @@ And more :-)
 
 ## Build
 
+### Download
+
+Each [release](https://github.com/changkun/midgard/releases) carries a ready
+`mg` for macOS, Linux and Windows, on amd64 and arm64: unpack it and put `mg`
+on your `PATH`. `checksums.txt` next to the archives lets you verify them.
+
 ### Binary Distribution
 
 ```
