@@ -6,11 +6,18 @@ package config_test
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/testdata"
 )
+
+func TestMain(m *testing.M) {
+	testdata.UseConfig()
+	os.Exit(m.Run())
+}
 
 func TestParseConfig(t *testing.T) {
 	conf := config.Get()

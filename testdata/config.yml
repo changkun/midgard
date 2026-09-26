@@ -1,0 +1,22 @@
+# Configuration for the tests. The credentials are placeholders, not a real
+# account; see config.yml for a deployment.
+
+---
+title: "midgard test"
+domain: localhost:8080
+
+server:
+  addr: localhost:8080
+  mode: test
+  store:
+    prefix: /midgard
+    backup:
+      enable: false
+      interval: 60
+      repo: ""
+  auth:
+    user: midgard-test
+    pass: midgard-test-password
+
+daemon:
+  addr: localhost:9125

@@ -5,10 +5,13 @@
 package config
 
 import (
+	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 
 	"gopkg.in/yaml.v3"
@@ -72,36 +75,85 @@ func Get() *Config {
 	return conf
 }
 
+// load reads the configuration the first time it is asked for, not when the
+// program starts, so a command that needs none — mg version, mg help — runs
+// without one.
 func load() {
 	once.Do(func() {
-		conf = &Config{}
-		conf.parse()
+		path, err := find()
+		if err != nil {
+			slog.Error("cannot find the configuration", "err", err)
+			os.Exit(1)
+		}
+		conf, err = read(path)
+		if err != nil {
+			slog.Error("cannot read the configuration", "path", path, "err", err)
+			os.Exit(1)
+		}
 	})
 }
 
-func (c *Config) parse() {
-	f := os.Getenv("MIDGARD_CONF")
-	d, err := os.ReadFile(f)
-	if err != nil {
-		fix := func(p string) string { // fixes a relative path
-			_, filename, _, ok := runtime.Caller(1)
-			if !ok {
-				slog.Error("cannot get the runtime caller")
-				os.Exit(1)
-			}
-			return path.Join(path.Dir(filename), p)
+// find returns the path of the configuration file. It looks, in order, at:
+//
+//  1. $MIDGARD_CONF, when set;
+//  2. config.yml in the working directory;
+//  3. midgard/config.yml in the user's configuration directory, such as
+//     ~/.config on Linux and ~/Library/Application Support on macOS.
+//
+// A MIDGARD_CONF that names a missing file is an error rather than a reason to
+// look elsewhere: whoever set it meant that file.
+func find() (string, error) {
+	if p := os.Getenv("MIDGARD_CONF"); p != "" {
+		if _, err := os.Stat(p); err != nil {
+			return "", fmt.Errorf("MIDGARD_CONF=%s: %w", p, err)
 		}
+		return p, nil
+	}
 
-		p := fix("../../config.yml")
-		d, err = os.ReadFile(p)
-		if err != nil {
-			slog.Error("cannot read the configuration", "path", p, "err", err)
-			os.Exit(1)
+	candidates := []string{"config.yml"}
+	if dir, err := os.UserConfigDir(); err == nil {
+		candidates = append(candidates, filepath.Join(dir, "midgard", "config.yml"))
+	}
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			return p, nil
 		}
 	}
-	err = yaml.Unmarshal(d, c)
-	if err != nil {
-		slog.Error("cannot parse the configuration", "err", err)
-		os.Exit(1)
+
+	// Before the lookup above existed, the configuration was read from the
+	// source tree the binary was built in. Installed daemons still depend on
+	// that, so keep finding it, but say where it should move to.
+	if p := sourceTreeConfig(); p != "" {
+		if _, err := os.Stat(p); err == nil {
+			slog.Warn("reading the configuration from the source tree; "+
+				"move it to one of the searched locations",
+				"path", p, "searched", strings.Join(candidates, ", "))
+			return p, nil
+		}
 	}
+	return "", fmt.Errorf("no config.yml in %s, and MIDGARD_CONF is not set: %w",
+		strings.Join(candidates, ", "), fs.ErrNotExist)
+}
+
+// sourceTreeConfig is where config.yml sat relative to this file's source,
+// which only exists on the machine that built the binary.
+func sourceTreeConfig() string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+	return filepath.Join(filepath.Dir(filename), "..", "..", "config.yml")
+}
+
+// read parses the configuration file at path.
+func read(path string) (*Config, error) {
+	d, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	c := &Config{}
+	if err := yaml.Unmarshal(d, c); err != nil {
+		return nil, err
+	}
+	return c, nil
 }

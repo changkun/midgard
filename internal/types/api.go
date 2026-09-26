@@ -8,13 +8,21 @@ import (
 	"changkun.de/x/midgard/internal/config"
 )
 
-// Endpoints
-var (
-	EndpointClipboard   = config.Get().Domain + "/midgard/api/v1/clipboard"
-	EndpointAllocateURL = config.Get().Domain + "/midgard/api/v1/allocate"
-	EndpointCode2Image  = config.Get().Domain + "/midgard/api/v1/code2img"
-	EndpointSubscribe   = config.Get().Domain + "/midgard/api/v1/ws"
-)
+// Endpoints of the midgard server. They are functions rather than variables so
+// that the configuration naming the server is read when a request is made, not
+// when the program starts.
+
+// EndpointClipboard is the universal clipboard.
+func EndpointClipboard() string { return config.Get().Domain + "/midgard/api/v1/clipboard" }
+
+// EndpointAllocateURL allocates a public URL.
+func EndpointAllocateURL() string { return config.Get().Domain + "/midgard/api/v1/allocate" }
+
+// EndpointCode2Image renders code as an image.
+func EndpointCode2Image() string { return config.Get().Domain + "/midgard/api/v1/code2img" }
+
+// EndpointSubscribe is the websocket daemons subscribe to.
+func EndpointSubscribe() string { return config.Get().Domain + "/midgard/api/v1/ws" }
 
 // PingInput is the input for /ping
 type PingInput struct{}

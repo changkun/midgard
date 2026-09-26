@@ -87,10 +87,20 @@ $ make build
 
 ## Configuration
 
-To configure midgard settings:
+midgard reads its settings from a `config.yml` (see [config.yml](../config.yml)
+for every option). It uses the first one it finds:
 
-- in a configuration file, see [config.yml](../config.yml) for more details.
-- Or use environment variable `MIDGARD_CONF=/path/to/your/config.yml` to change the location of [config.yml](../config.yml).
+1. the file named by the `MIDGARD_CONF` environment variable, for example
+   `MIDGARD_CONF=/path/to/your/config.yml`;
+2. `config.yml` in the directory you run `mg` from;
+3. `midgard/config.yml` in your user configuration directory:
+   `~/.config/midgard/config.yml` on Linux,
+   `~/Library/Application Support/midgard/config.yml` on macOS, and
+   `%AppData%\midgard\config.yml` on Windows.
+
+For a daemon that starts with your machine, use the third location: a service
+has no useful working directory. Commands such as `mg version` need no
+configuration at all.
 
 ## Midgard Server
 
