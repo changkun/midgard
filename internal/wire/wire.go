@@ -54,6 +54,12 @@ const (
 	Want    Type = "want"    // either: send me these events
 	Have    Type = "have"    // device: one event it was asked for
 	Done    Type = "done"    // device: the end of an answer to want
+
+	// The Shortcuts bridge (specs/redesign.md §11), on a device where it is
+	// switched on: a copy in the clear, both ways, as the Shortcuts cannot
+	// seal. A device pushes its newest copy; nothing asks it for one.
+	Mirror Type = "mirror" // bridge: its newest copy, in the clear, for Get from Midgard
+	Plain  Type = "plain"  // server: what Send to Midgard sent, for the bridge to seal in
 )
 
 // Kind is what an event of the history is.
@@ -87,6 +93,7 @@ type Envelope struct {
 	Name   string `json:"name,omitempty"`   // the device's name, to show
 	Clock  int64  `json:"clock,omitempty"`  // the device's clock, unix ms
 	Gaps   []Span `json:"gaps,omitempty"`   // what it lacks below Acked
+	Bridge bool   `json:"bridge,omitempty"` // it is a Shortcuts bridge
 
 	// welcome
 	Head uint64 `json:"head,omitempty"` // the last seq given out

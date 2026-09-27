@@ -42,8 +42,13 @@ type Config struct {
 	Domain string `yaml:"domain"`
 	// Token is an app token for this device, issued with mg server token
 	// add, for a device that does not sign in with mg login.
-	Token  string  `yaml:"token"`
-	Server *Server `yaml:"server"`
+	Token string `yaml:"token"`
+	// PlainBridge makes this device a Shortcuts bridge (specs/redesign.md
+	// §11): it hands its newest copy to the server in the clear, for iPhone
+	// Shortcuts, which cannot seal, and seals in what they send. The server
+	// reads both.
+	PlainBridge bool    `yaml:"plain_bridge,omitempty"`
+	Server      *Server `yaml:"server"`
 }
 
 // Server is the midgard server side configuration
@@ -153,6 +158,30 @@ func Save(domain string) (path string, err error) {
 	conf.Store(c)
 	once.Do(func() {})
 	return path, nil
+}
+
+// SetPlainBridge switches this device's Shortcuts bridge on or off, in the
+// user's configuration directory, keeping the rest, as Save does.
+func SetPlainBridge(on bool) error {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(dir, "midgard", "config.yml")
+	c, err := read(path)
+	if err != nil {
+		return err
+	}
+	c.PlainBridge = on
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(path, b, 0o600); err != nil {
+		return err
+	}
+	conf.Store(c)
+	return nil
 }
 
 // find returns the path of the configuration file. It looks, in order, at:

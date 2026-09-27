@@ -94,7 +94,7 @@ func (m *Midgard) Sync(c *gin.Context) {
 		return
 	}
 	l := &link{
-		id: hello.Device, name: hello.Name, v: hello.V,
+		id: hello.Device, name: hello.Name, v: hello.V, bridge: hello.Bridge,
 		out: make(chan []byte, 256), gone: make(chan struct{}),
 		offset: time.Since(time.UnixMilli(hello.Clock)),
 	}
@@ -145,6 +145,8 @@ func (m *Midgard) Sync(c *gin.Context) {
 				r.ack(ctx, rm, l, f.Acked, f.Gaps)
 			case wire.Have, wire.Done:
 				r.answer(rm, l, f)
+			case wire.Mirror:
+				r.setMirror(rm, l, f)
 			}
 		}
 	}()

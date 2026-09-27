@@ -48,6 +48,8 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.GET("/clipboard", m.GetFromUniversalClipboard)
 		v1auth.POST("/clipboard", m.PutToUniversalClipboard)
 		v1auth.GET("/ws", notFromTheWeb, m.Sync)
+		v1auth.GET("/plain/clipboard", m.GetPlainClipboard)
+		v1auth.POST("/plain/clipboard", m.PutPlainClipboard)
 		v1auth.GET("/key", m.Key)
 		v1auth.POST("/pair", m.LeavePairing)
 		v1auth.GET("/pair/:mailbox", m.TakePairing)

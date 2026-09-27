@@ -81,14 +81,37 @@ type Engine struct {
 	LoadKey func() (*e2e.Key, uint64, error)
 	SaveKey func(*e2e.Key, uint64) error
 
-	mu      sync.Mutex
-	send    chan wire.Frame // the connection's, while there is one
-	applied map[uint64]bool // copies applied since the clipboard was last looked at
-	settle  *time.Timer
-	sealing bool          // the connection seals: its person has a key, and this device it
-	pairing bool          // its person has a key this device lacks
-	kid     string        // the id of its person's key, as the server said
-	rekey   chan struct{} // a key came, by pairing: connect again now
+	// Bridge makes the device a Shortcuts bridge (§11), for iPhone
+	// Shortcuts, which cannot seal: it pushes its newest copy to the
+	// server in the clear, and seals in what they send as copies of its
+	// own. Change it with SetBridge.
+	Bridge bool
+
+	mu       sync.Mutex
+	send     chan wire.Frame // the connection's, while there is one
+	applied  map[uint64]bool // copies applied since the clipboard was last looked at
+	settle   *time.Timer
+	sealing  bool          // the connection seals: its person has a key, and this device it
+	pairing  bool          // its person has a key this device lacks
+	kid      string        // the id of its person's key, as the server said
+	rekey    chan struct{} // a key came, by pairing: connect again now
+	kick     chan struct{} // the hello changed: connect again now
+	bridging bool          // the connection is a Shortcuts bridge's
+}
+
+// SetBridge switches the device's Shortcuts bridge on or off, and says so
+// to the server at once, connecting again.
+func (e *Engine) SetBridge(on bool) {
+	e.mu.Lock()
+	e.Bridge = on
+	kick := e.kick
+	e.mu.Unlock()
+	if kick != nil {
+		select {
+		case kick <- struct{}{}:
+		default:
+		}
+	}
 }
 
 // Errors connecting ends in, on the way to sealing (§11).
@@ -177,8 +200,30 @@ func (e *Engine) add(ctx context.Context, f wire.Frame) error {
 	}
 	if e.send != nil {
 		e.enqueue(f)
+		e.mirrorLocked(ctx)
 	}
 	return nil
+}
+
+// mirror pushes the device's newest copy to the server in the clear, when
+// it is a Shortcuts bridge (§11): for Get from Midgard. A device pushes it;
+// the server cannot ask for one.
+func (e *Engine) mirror(ctx context.Context) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.mirrorLocked(ctx)
+}
+
+// mirrorLocked is mirror, with e.mu held.
+func (e *Engine) mirrorLocked(ctx context.Context) {
+	if !e.bridging || e.send == nil {
+		return
+	}
+	f := wire.Frame{Envelope: wire.Envelope{Type: wire.Mirror}}
+	if newest, ok, err := e.History.Newest(ctx, true); err == nil && ok && len(newest.Formats) > 0 {
+		f.Formats, f.Payload = newest.Formats, newest.Data
+	}
+	e.enqueue(f)
 }
 
 // enqueue sends f on the connection, or drops it if the connection is too
@@ -200,6 +245,9 @@ func (e *Engine) Run(ctx context.Context) {
 	e.mu.Lock()
 	if e.rekey == nil {
 		e.rekey = make(chan struct{}, 1)
+	}
+	if e.kick == nil {
+		e.kick = make(chan struct{}, 1)
 	}
 	rekey := e.rekey
 	e.mu.Unlock()
@@ -272,7 +320,7 @@ func (e *Engine) connect(ctx context.Context) (*websocket.Conn, error) {
 		}
 	}
 	e.mu.Lock()
-	key := e.Key
+	key, bridge := e.Key, e.Bridge
 	e.mu.Unlock()
 	kid := ""
 	if key != nil {
@@ -298,7 +346,7 @@ func (e *Engine) connect(ctx context.Context) (*websocket.Conn, error) {
 	conn.SetReadDeadline(time.Now().Add(e.Keepalive.Wait))
 	if err := write(conn, wire.Frame{Envelope: wire.Envelope{
 		Type: wire.Hello, V: wire.Version, Device: e.ID, Name: e.Name,
-		Clock: time.Now().UnixMilli(), Acked: acked, Gaps: gaps, Kid: kid,
+		Clock: time.Now().UnixMilli(), Acked: acked, Gaps: gaps, Kid: kid, Bridge: bridge,
 	}}); err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("cannot say hello: %w", err)
@@ -380,7 +428,13 @@ func (e *Engine) serve(ctx context.Context, conn *websocket.Conn) error {
 		key = e.Key
 	}
 	since := e.Since
+	e.bridging = e.Bridge
+	kick := e.kick
 	e.mu.Unlock()
+	select { // what the hello already says
+	case <-kick:
+	default:
+	}
 	write := func(conn *websocket.Conn, f wire.Frame) error {
 		f, err := seal(key, f)
 		if err != nil {
@@ -390,7 +444,7 @@ func (e *Engine) serve(ctx context.Context, conn *websocket.Conn) error {
 	}
 	defer func() {
 		e.mu.Lock()
-		e.send = nil
+		e.send, e.bridging = nil, false
 		e.mu.Unlock()
 	}()
 
@@ -403,6 +457,7 @@ func (e *Engine) serve(ctx context.Context, conn *websocket.Conn) error {
 			return fmt.Errorf("cannot send what waited: %w", err)
 		}
 	}
+	e.mirror(ctx)
 
 	ping := time.NewTicker(ka.Ping)
 	defer ping.Stop()
@@ -414,6 +469,8 @@ func (e *Engine) serve(ctx context.Context, conn *websocket.Conn) error {
 			return ctx.Err()
 		case err := <-readErr:
 			return err
+		case <-kick:
+			return errors.New("saying hello again, as the device changed")
 		case <-ping.C:
 			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(ka.Write)); err != nil {
 				return fmt.Errorf("cannot ping the server: %w", err)
@@ -453,6 +510,20 @@ func (e *Engine) readFrom(ctx context.Context, conn *websocket.Conn, send chan<-
 			}
 			if applied {
 				e.applied1(f, ours)
+			}
+		case wire.Plain:
+			// what a Shortcut sent the bridge, in the clear: a copy of the
+			// device's own, sealed like any, in the Shortcut's name
+			e.mu.Lock()
+			bridging := e.bridging
+			e.mu.Unlock()
+			if !bridging || len(f.Formats) == 0 || len(f.Payload) == 0 {
+				continue
+			}
+			c := wire.NewCopy(f.Formats[0].MIME, f.Payload)
+			c.Origin = f.Origin
+			if err := e.add(ctx, c); err != nil {
+				slog.Error("cannot keep what a Shortcut sent", "err", err)
 			}
 		case wire.Want:
 			for _, a := range e.answer(ctx, f) {
@@ -511,6 +582,7 @@ func (e *Engine) settled() {
 		e.mu.Unlock()
 	}
 
+	e.mirror(ctx)
 	newest, ok, err := e.History.Newest(ctx, true)
 	if err != nil || !ok || newest.Waiting() || !applied[newest.Seq] || e.Changed == nil {
 		return

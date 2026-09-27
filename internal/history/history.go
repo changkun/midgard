@@ -151,6 +151,9 @@ var migrations = []string{
 	WHERE kind = 'copy' AND gone = 0 AND EXISTS (SELECT 1 FROM events AS n
 		WHERE n.kind = 'copy' AND n.gone = 0 AND n.formats = events.formats AND n.data = events.data
 		AND (n.time > events.time OR (n.time = events.time AND n.seq > events.seq)))`,
+	// 3: the origin a copy waits with: a bridge names the Shortcut that
+	// sent it (specs/redesign.md §11), and a copy sent again keeps it.
+	`ALTER TABLE outbox ADD COLUMN origin TEXT NOT NULL DEFAULT ''`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {
@@ -549,8 +552,8 @@ func (s *Store) Add(ctx context.Context, f wire.Frame, offline bool) (wire.Frame
 	if data == nil {
 		data = []byte{}
 	}
-	if _, err := tx.ExecContext(ctx, `INSERT INTO outbox (ref, type, time, offline, target, formats, data) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		f.Ref, f.Type, f.Time, offline, f.Target, formats, data); err != nil {
+	if _, err := tx.ExecContext(ctx, `INSERT INTO outbox (ref, type, time, offline, target, formats, data, origin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		f.Ref, f.Type, f.Time, offline, f.Target, formats, data, f.Origin); err != nil {
 		return wire.Frame{}, err
 	}
 	return f, tx.Commit()
@@ -572,7 +575,7 @@ func (s *Store) Forget(ctx context.Context, ref string) error {
 // Outbox is what waits to be numbered, in the order it happened, to send
 // again once connected.
 func (s *Store) Outbox(ctx context.Context) ([]wire.Frame, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT ref, type, time, offline, target, formats, data FROM outbox ORDER BY n`)
+	rows, err := s.db.QueryContext(ctx, `SELECT ref, type, time, offline, target, formats, data, origin FROM outbox ORDER BY n`)
 	if err != nil {
 		return nil, err
 	}
@@ -581,7 +584,7 @@ func (s *Store) Outbox(ctx context.Context) ([]wire.Frame, error) {
 	for rows.Next() {
 		var f wire.Frame
 		var formats string
-		if err := rows.Scan(&f.Ref, &f.Type, &f.Time, &f.Offline, &f.Target, &formats, &f.Payload); err != nil {
+		if err := rows.Scan(&f.Ref, &f.Type, &f.Time, &f.Offline, &f.Target, &formats, &f.Payload, &f.Origin); err != nil {
 			return nil, err
 		}
 		if err := json.Unmarshal([]byte(formats), &f.Formats); err != nil {

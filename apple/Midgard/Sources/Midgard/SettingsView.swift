@@ -108,6 +108,12 @@ private struct Encryption: View {
                     Text("Your copies are encrypted with a key your devices share: your server passes them, and cannot read them. A device gets the key by pairing with one that has it.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                Section {
+                    Toggle("Let iPhone Shortcuts in, unencrypted", isOn: Binding(get: { model.status.bridge }, set: { model.setBridge($0) }))
+                } footer: {
+                    Text("Shortcuts cannot encrypt. With this on, this Mac hands your newest copy to your server in the clear, for Get from Midgard, and takes what Send to Midgard sends: your server can read both, and could send copies of its own. The web page on your iPhone's Home Screen needs none of this.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             } else if model.status.needsPairing {
                 Section {
                     LabeledContent("Encryption", value: "This Mac needs your key")

@@ -230,3 +230,56 @@ func TestOlderDevicesOnceSealed(t *testing.T) {
 		t.Fatalf("an older device, once alice has a key: %+v %q, want it told to update", f, reason)
 	}
 }
+
+// TestShortcutsBridge: a device switched on as a bridge hands the Shortcuts
+// its newest copy in the clear, and seals in what they send, in their name;
+// with no bridge online, the Shortcuts get nothing.
+func TestShortcutsBridge(t *testing.T) {
+	s := twoPeople(t)
+	if code, _ := s.request(alice, http.MethodGet, "/midgard/api/v1/plain/clipboard", ""); code != http.StatusServiceUnavailable {
+		t.Fatalf("GET /plain/clipboard with no bridge: %d, want 503", code)
+	}
+
+	mac := alice.device(t, s, "mac").sealing()
+	mac.e.Bridge = true
+	mac.start()
+	eventually(t, "the mac seals", mac.e.Sealing)
+	laptop := alice.device(t, s, "laptop").sealing().startUnpaired()
+	pair(t, s, alice, mac, laptop)
+	eventually(t, "the laptop is online", laptop.e.Online)
+
+	// the bridge's newest copy, in the clear, for Get from Midgard
+	mac.copy("for the iphone")
+	var clip types.ClipboardData
+	eventually(t, "the Shortcuts see the newest copy", func() bool {
+		code, b := s.request(alice, http.MethodGet, "/midgard/api/v1/plain/clipboard", "")
+		json.Unmarshal(b, &clip)
+		return code == http.StatusOK && clip.Data == "for the iphone"
+	})
+	if clip.Kid != "" {
+		t.Errorf("the Shortcuts got a sealed copy: %+v", clip)
+	}
+
+	// what Send to Midgard sends, sealed in by the bridge, in its name
+	if code, b := s.request(alice, http.MethodPost, "/midgard/api/v1/plain/clipboard", `{"type":"text","data":"from the iphone"}`); code != http.StatusOK {
+		t.Fatalf("POST /plain/clipboard: %d %s", code, b)
+	}
+	if got := laptop.heard(3 * time.Second); got != "from the iphone" {
+		t.Fatalf("the laptop heard %q", got)
+	}
+	// it came through sealed, as the relay takes nothing else now, and in
+	// the Shortcut's name
+	if n, ok, _ := laptop.e.History.Newest(t.Context(), false); !ok || n.Origin != "Shortcuts" {
+		t.Errorf("the laptop has it from %q, want Shortcuts", n.Origin)
+	}
+
+	// the bridge gone, the copy in the clear goes too
+	mac.stop()
+	eventually(t, "the Shortcuts see nothing", func() bool {
+		code, _ := s.request(alice, http.MethodGet, "/midgard/api/v1/plain/clipboard", "")
+		return code == http.StatusServiceUnavailable
+	})
+	if code, _ := s.request(alice, http.MethodPost, "/midgard/api/v1/plain/clipboard", `{"type":"text","data":"x"}`); code != http.StatusServiceUnavailable {
+		t.Errorf("POST /plain/clipboard with no bridge: %d, want 503", code)
+	}
+}

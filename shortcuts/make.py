@@ -95,11 +95,13 @@ def setup():
 
 
 def request(method, json=None):
-    """Get Contents of URL on the clipboard's endpoint, with the token."""
+    """Get Contents of URL on the Shortcuts bridge's endpoint, with the token:
+    the Shortcuts cannot seal, so they reach the person's copies through a
+    device switched on as a bridge, in the clear (specs/redesign.md §11)."""
     uid = new_id()
     params = dict(
         UUID=uid, WFHTTPMethod=method, ShowHeaders=True,
-        WFURL=text("https://" + OBJ + "/midgard/api/v1/clipboard", order=["server"]),
+        WFURL=text("https://" + OBJ + "/midgard/api/v1/plain/clipboard", order=["server"]),
         WFHTTPHeaders=dictionary([("Authorization", text("Bearer " + OBJ, order=["token"]))]),
     )
     if json is not None:

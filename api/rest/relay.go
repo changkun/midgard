@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log/slog"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -82,8 +83,11 @@ type room struct {
 	held  []held                   // in order of seq
 	size  int                      // the bytes held
 	kid   string                   // the id of the person's key; "" while they have none (§11)
-	asks  map[string]*ask          // wants waiting for an answer, by id
-	fills map[string]bool          // devices a peer is filling in, by id
+	// mirror is the newest copy a Shortcuts bridge pushed, in the clear,
+	// for Get from Midgard (§11): in memory, while a bridge is online
+	mirror *wire.Frame
+	asks   map[string]*ask // wants waiting for an answer, by id
+	fills  map[string]bool // devices a peer is filling in, by id
 }
 
 // held is an event the relay holds, with when it came and which device it
@@ -98,6 +102,7 @@ type held struct {
 type link struct {
 	id, name string
 	v        int           // the protocol it speaks: under 2, it seals nothing
+	bridge   bool          // a Shortcuts bridge (§11)
 	out      chan []byte   // the connection's writer sends these
 	gone     chan struct{} // closed when the connection is over
 	once     sync.Once
@@ -221,6 +226,9 @@ func (r *relay) leave(ctx context.Context, rm *room, l *link) {
 		return
 	}
 	delete(rm.conns, l.id)
+	if !slices.ContainsFunc(slices.Collect(maps.Values(rm.conns)), func(o *link) bool { return o.bridge }) {
+		rm.mirror = nil // what no bridge online keeps up to date
+	}
 	for id, a := range rm.asks {
 		if a.device == l.id {
 			delete(rm.asks, id)
@@ -310,6 +318,10 @@ func (r *relay) number(ctx context.Context, rm *room, from *link, origin string,
 	device := ""
 	if from != nil {
 		device = from.id
+		// a bridge names the Shortcut a copy came from (§11)
+		if from.bridge && f.Origin != "" {
+			ev.Origin = f.Origin
+		}
 	}
 	rm.held = append(rm.held, held{Frame: ev, at: now, device: device})
 	rm.size += len(ev.Payload)
@@ -319,6 +331,38 @@ func (r *relay) number(ctx context.Context, rm *room, from *link, origin string,
 	}
 	r.evict(rm)
 	return ev, nil
+}
+
+// errNoBridge is what the Shortcuts get with no bridge online (§11).
+var errNoBridge = errors.New("no Shortcuts bridge is online: switch one on, in the Mac app's Settings, Encryption, or with plain_bridge in mg daemon's config.yml")
+
+// setMirror keeps the newest copy a bridge pushed, in the clear; a mirror
+// without formats, when its history has none, keeps nothing.
+func (r *relay) setMirror(rm *room, l *link, f wire.Frame) {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	if !l.bridge {
+		return
+	}
+	if len(f.Formats) == 0 {
+		rm.mirror = nil
+		return
+	}
+	rm.mirror = &f
+}
+
+// toBridge passes what a Shortcut sent, in the clear, to a bridge online,
+// which seals it into the history as a copy of its own.
+func (r *relay) toBridge(rm *room, f wire.Frame) error {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	for _, l := range rm.conns {
+		if l.bridge {
+			l.send(encode(f))
+			return nil
+		}
+	}
+	return errNoBridge
 }
 
 // void turns the held copies that match into voids: the copy is gone, its

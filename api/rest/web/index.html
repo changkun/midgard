@@ -152,6 +152,10 @@ ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 26px
 ol.steps > li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; background: var(--brand-soft); color: var(--brand);
   font-weight: 650; font-size: 13px; display: grid; place-items: center; }
 ol.steps p { margin: 2px 0 8px; }
+details.plain { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+details.plain summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+details.plain[open] summary { margin-bottom: 8px; }
+details.plain ol.steps { margin-top: 12px; }
 
 /* the front page: the icon's night sky, over the top of the page, and
    its mountains rising into the page */
@@ -372,23 +376,32 @@ footer a { color: var(--faint); }
       {{end}}
 
       <section class="card" id="iphone">
-        <div class="head"><h2>Your iPhone</h2><small>two Shortcuts, a minute</small></div>
+        <div class="head"><h2>Your iPhone</h2><small>this page, encrypted</small></div>
         <ol class="steps">
-          <li><div>
-            <p>Issue a token for the iPhone, and copy it, for step 3.</p>
-            <button class="primary" id="iphone-token">Issue a token</button>
-            <div id="iphone-token-value"></div>
-          </div></li>
-          <li><div>
-            <p>On the iPhone, add the Shortcuts:</p>
-            <div class="row">
-              <a class="button" href="shortcuts/get-from-midgard.shortcut">Get from Midgard</a>
-              <a class="button" href="shortcuts/send-to-midgard.shortcut">Send to Midgard</a>
-            </div>
-          </div></li>
-          <li><div><p>When Shortcuts asks, keep the server and paste the token. Put them on the Home Screen, or on Back Tap.</p></div></li>
+          <li><div><p>On your Mac, in the Midgard app: Settings → Encryption → Pair Another Device.</p></div></li>
+          <li><div><p>Scan its QR with the iPhone's camera. This page opens in Safari, paired: your clipboard and history, to copy and to send.</p></div></li>
+          <li><div><p>In Safari, Share → Add to Home Screen, to open it in a tap.</p></div></li>
         </ol>
-        <p class="note" id="iphone-status" role="status"></p>
+        <details class="plain">
+          <summary>Or Shortcuts, unencrypted</summary>
+          <p class="note">Shortcuts cannot encrypt. They reach your copies through a Mac you let them in on, in the clear: your server can read what passes, and could send copies of its own. On that Mac, in the Midgard app: Settings → Encryption → Let iPhone Shortcuts in. Then:</p>
+          <ol class="steps">
+            <li><div>
+              <p>Issue a token for the iPhone, and copy it, for step 3.</p>
+              <button class="primary" id="iphone-token">Issue a token</button>
+              <div id="iphone-token-value"></div>
+            </div></li>
+            <li><div>
+              <p>On the iPhone, add the Shortcuts:</p>
+              <div class="row">
+                <a class="button" href="shortcuts/get-from-midgard.shortcut">Get from Midgard</a>
+                <a class="button" href="shortcuts/send-to-midgard.shortcut">Send to Midgard</a>
+              </div>
+            </div></li>
+            <li><div><p>When Shortcuts asks, keep the server and paste the token. Put them on the Home Screen, or on Back Tap.</p></div></li>
+          </ol>
+          <p class="note" id="iphone-status" role="status"></p>
+        </details>
       </section>
 
       <section class="card" id="shares">

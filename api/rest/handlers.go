@@ -182,3 +182,64 @@ func readFailed(c *gin.Context, err error) {
 		c.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
 	}
 }
+
+// GetPlainClipboard is the newest copy a Shortcuts bridge pushed, in the
+// clear, for Get from Midgard (specs/redesign.md §11): the Shortcuts cannot
+// open a sealed copy. With no bridge online, there is none.
+func (m *Midgard) GetPlainClipboard(c *gin.Context) {
+	rm, err := m.rel().room(c.Request.Context(), c.GetString(ctxOwner))
+	if err != nil {
+		readFailed(c, err)
+		return
+	}
+	rm.mu.Lock()
+	f := rm.mirror
+	rm.mu.Unlock()
+	if f == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"msg": errNoBridge.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, clipboardData(*f))
+}
+
+// PutPlainClipboard passes what Send to Midgard sent, in the clear, to a
+// Shortcuts bridge, which seals it into the history as a copy of its own.
+func (m *Midgard) PutPlainClipboard(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, wire.MaxPayload/3*4+1<<16)
+	var b types.PutToUniversalClipboardInput
+	if err := c.ShouldBindJSON(&b); err != nil {
+		c.JSON(http.StatusBadRequest, types.PutToUniversalClipboardOutput{Message: fmt.Sprintf("cannot read the request: %v", err)})
+		return
+	}
+	raw := []byte(b.Data)
+	if b.Type == types.MIMEImagePNG {
+		var err error
+		if raw, err = base64.StdEncoding.DecodeString(b.Data); err != nil {
+			c.JSON(http.StatusBadRequest, types.PutToUniversalClipboardOutput{Message: "an image must be base64"})
+			return
+		}
+	}
+	if len(raw) == 0 || string(raw) == "\n" {
+		c.JSON(http.StatusBadRequest, types.PutToUniversalClipboardOutput{Message: "nothing to copy"})
+		return
+	}
+	if len(raw) > wire.MaxPayload {
+		c.JSON(http.StatusRequestEntityTooLarge, types.PutToUniversalClipboardOutput{Message: fmt.Sprintf("a copy holds at most %d MB", wire.MaxPayload>>20)})
+		return
+	}
+	rm, err := m.rel().room(c.Request.Context(), c.GetString(ctxOwner))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.PutToUniversalClipboardOutput{Message: err.Error()})
+		return
+	}
+	f := wire.Frame{
+		Envelope: wire.Envelope{Type: wire.Plain, Origin: cmp.Or(b.DaemonID, c.GetString(ctxDevice), "Shortcuts"),
+			Formats: []wire.Format{{MIME: string(cmp.Or(b.Type, types.MIMEPlainText)), Size: len(raw)}}},
+		Payload: raw,
+	}
+	if err := m.rel().toBridge(rm, f); err != nil {
+		c.JSON(http.StatusServiceUnavailable, types.PutToUniversalClipboardOutput{Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, types.PutToUniversalClipboardOutput{Message: "sent to your devices, through your bridge"})
+}

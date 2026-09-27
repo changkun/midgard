@@ -191,6 +191,12 @@ func MidgardPairShow() *C.char {
 //export MidgardPairJoin
 func MidgardPairJoin(code *C.char) *C.char { return cerr(pairJoin(C.GoString(code))) }
 
+// MidgardSetBridge switches the Mac's Shortcuts bridge on (1) or off (0):
+// it hands iPhone Shortcuts copies in the clear (specs/redesign.md §11).
+//
+//export MidgardSetBridge
+func MidgardSetBridge(on C.int) *C.char { return cerr(setBridge(on != 0)) }
+
 // MidgardFree gives back what the engine returned.
 //
 //export MidgardFree

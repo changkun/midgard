@@ -296,6 +296,12 @@ final class Model: ObservableObject {
 
     struct PairError: Error { let message: String }
 
+    /// Switches the Shortcuts bridge on or off (§11).
+    func setBridge(_ on: Bool) {
+        do { try Engine.setBridge(on) } catch { problem = "Cannot change the Shortcuts bridge: \(Model.say(error))" }
+        refresh()
+    }
+
     /// An engine's error, as words.
     nonisolated static func say(_ error: Error) -> String {
         if case Engine.StartError.failed(let why) = error { return why }

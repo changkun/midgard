@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"changkun.de/x/midgard/internal/clipboard"
+	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/device"
 	"changkun.de/x/midgard/internal/history"
 	"changkun.de/x/midgard/internal/types"
@@ -69,6 +70,8 @@ func NewDaemon() (*Daemon, error) {
 		// the person's key (specs/redesign.md §11), which mg pair may give
 		// it while it runs
 		Key: key, Since: since, LoadKey: device.LoadKey, SaveKey: device.SaveKey,
+		// a Shortcuts bridge, when config.yml says so (§11)
+		Bridge: config.Get().PlainBridge,
 	}
 	return m, nil
 }

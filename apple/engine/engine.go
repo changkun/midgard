@@ -81,6 +81,7 @@ func start(changed func(mime string, data []byte)) error {
 		ID: id, Name: name, History: h, Keepalive: device.DefaultKeepalive, Dial: device.Dial,
 		// the person's key (specs/redesign.md §11)
 		Key: key, Since: since, LoadKey: device.LoadKey, SaveKey: device.SaveKey,
+		Bridge: config.Get().PlainBridge,
 		Changed: func(c history.Entry) {
 			if mime, data, ok := firstFormat(c); ok && changed != nil {
 				changed(mime, data)
@@ -235,6 +236,8 @@ type status struct {
 	// person's key, or their key is one it lacks, and it must pair
 	Sealing      bool `json:"sealing"`
 	NeedsPairing bool `json:"needs_pairing"`
+	// a Shortcuts bridge: it hands iPhone Shortcuts copies in the clear
+	Bridge bool `json:"bridge"`
 }
 
 func statusNow() status {
@@ -247,6 +250,7 @@ func statusNow() status {
 		s.Running, s.Online, s.Device, s.Name = true, e.Online(), e.ID, e.Name
 		s.Sealing = e.Sealing()
 		s.NeedsPairing, _ = e.NeedsPairing()
+		s.Bridge = config.Get().PlainBridge
 	}
 	return s
 }
@@ -267,6 +271,19 @@ func pairShow() (code, link string, err error) {
 		return "", "", err
 	}
 	return c.String(), config.ServerURL() + "/midgard/#" + c.Link(), nil
+}
+
+// setBridge switches the Mac's Shortcuts bridge on or off, and keeps it so.
+func setBridge(on bool) error {
+	e, err := running()
+	if err != nil {
+		return err
+	}
+	if err := config.SetPlainBridge(on); err != nil {
+		return err
+	}
+	e.SetBridge(on)
+	return nil
 }
 
 // pairJoin takes the person's key with a code another device showed, and

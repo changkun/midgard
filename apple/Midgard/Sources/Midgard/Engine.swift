@@ -108,6 +108,10 @@ enum Engine {
         throw StartError.failed(out["error"] ?? "cannot pair")
     }
 
+    /// Switches the Mac's Shortcuts bridge on or off: it hands iPhone
+    /// Shortcuts copies in the clear, which the server can read (§11).
+    static func setBridge(_ on: Bool) throws { try check(MidgardSetBridge(on ? 1 : 0)) }
+
     /// Takes the person's key with a pairing code another device showed.
     static func pairJoin(_ code: String) throws {
         try code.withCString { try check(MidgardPairJoin(UnsafeMutablePointer(mutating: $0))) }
@@ -162,9 +166,10 @@ struct Status: Decodable, Equatable {
     /// It seals with its person's key; or their key is one it lacks (§11).
     var sealing = false
     var needsPairing = false
+    var bridge = false
 
     enum CodingKeys: String, CodingKey {
-        case configured, server, running, online, device, name, sealing
+        case configured, server, running, online, device, name, sealing, bridge
         case signedIn = "signed_in"
         case needsPairing = "needs_pairing"
     }
@@ -185,5 +190,6 @@ extension Status {
         name = try c.decodeIfPresent(String.self, forKey: .name)
         sealing = try c.decodeIfPresent(Bool.self, forKey: .sealing) ?? false
         needsPairing = try c.decodeIfPresent(Bool.self, forKey: .needsPairing) ?? false
+        bridge = try c.decodeIfPresent(Bool.self, forKey: .bridge) ?? false
     }
 }

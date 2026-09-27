@@ -390,7 +390,8 @@ func TestOnceInAnOlderHistory(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, err := s.db.Exec(`PRAGMA user_version = 1`); err != nil {
+	// as a history of version 1 was: without what later migrations add
+	if _, err := s.db.Exec(`ALTER TABLE outbox DROP COLUMN origin; PRAGMA user_version = 1`); err != nil {
 		t.Fatal(err)
 	}
 	s.Close()
