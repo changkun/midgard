@@ -207,6 +207,7 @@ struct WelcomeView: View {
             switch model.phase {
             case .needsServer: Setup(model: model)
             case .needsSignIn: SignInPrompt(model: model)
+            case .notOnList: NotOnListNotice(model: model)
             case .needsPairing: PairPrompt(model: model)
             case .blocked(let why): Notice(symbol: "exclamationmark.triangle", title: "Midgard cannot start", text: why)
             case .ready: allSet

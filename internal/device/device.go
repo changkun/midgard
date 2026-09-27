@@ -93,6 +93,7 @@ type Engine struct {
 	settle   *time.Timer
 	sealing  bool          // the connection seals: its person has a key, and this device it
 	pairing  bool          // its person has a key this device lacks
+	refused  bool          // the server's allowlist does not have its person
 	kid      string        // the id of its person's key, as the server said
 	rekey    chan struct{} // a key came, by pairing: connect again now
 	kick     chan struct{} // the hello changed: connect again now
@@ -119,6 +120,14 @@ var (
 	errNewKey       = errors.New("made this person's key; saying hello with it")
 	errNeedsPairing = errors.New("this device's person has a key it lacks: pair it with one of their devices")
 )
+
+// NotOnList reports whether the server turned the device's person away:
+// its allowlist does not have them.
+func (e *Engine) NotOnList() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.refused
+}
 
 // NeedsPairing reports whether the device's person has a key it lacks, and
 // the id of that key: until it pairs, it syncs nothing.
@@ -257,6 +266,18 @@ func (e *Engine) Run(ctx context.Context) {
 		case errors.Is(err, errNewKey):
 			slog.Info("made this person's key, the first of their devices to seal")
 			continue
+		case errors.Is(err, ErrNotOnList):
+			// asked again now and then: whoever runs the server may add them
+			slog.Warn(err.Error())
+			e.mu.Lock()
+			e.refused = true
+			e.mu.Unlock()
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(ka.RetryMax):
+			}
+			continue
 		case errors.Is(err, errNeedsPairing):
 			// until it pairs, here or through mg pair, it asks again now and
 			// then, and at once when SetKey gives it the key
@@ -279,6 +300,9 @@ func (e *Engine) Run(ctx context.Context) {
 			continue
 		}
 		slog.Info("connected to the midgard server", "device", e.Name)
+		e.mu.Lock()
+		e.refused = false
+		e.mu.Unlock()
 
 		start := time.Now()
 		err = e.serve(ctx, conn)

@@ -161,6 +161,7 @@ final class Model: ObservableObject {
     enum Phase: Equatable {
         case needsServer          // the first start
         case needsSignIn
+        case notOnList            // the server's allowlist does not have its person
         case needsPairing         // its person has a key this Mac lacks (§11)
         case blocked(String)      // it cannot run, and why
         case ready
@@ -170,6 +171,7 @@ final class Model: ObservableObject {
         if !status.configured { return .needsServer }
         if !status.running { return .blocked(problem ?? "Midgard is not running.") }
         if !status.signedIn { return .needsSignIn }
+        if status.notOnList { return .notOnList }
         if status.needsPairing { return .needsPairing }
         return .ready
     }
@@ -206,6 +208,11 @@ final class Model: ObservableObject {
         let image = NSImage(cgImage: small, size: .zero)
         thumbnails.setObject(image, forKey: key)
         return image
+    }
+
+    /// The server's web page, where one signs in from a browser.
+    var webPage: URL? {
+        status.server.flatMap { URL(string: $0.hasSuffix("/") ? $0 + "midgard/" : $0 + "/midgard/") }
     }
 
     /// The app's version, as the bundle says it.
@@ -272,6 +279,7 @@ final class Model: ObservableObject {
         switch phase {
         case .needsServer: return ("Set up", .systemOrange)
         case .needsSignIn: return ("Sign in", .systemOrange)
+        case .notOnList: return ("Not on the list", .systemOrange)
         case .needsPairing: return ("Pair", .systemOrange)
         case .blocked: return ("Stopped", .systemRed)
         case .ready:
@@ -321,6 +329,7 @@ final class Model: ObservableObject {
 
     /// A line on what Midgard does now.
     var summary: String {
+        if phase == .notOnList { return "Your server's list does not have you yet." }
         if phase == .needsPairing { return "Pair this Mac with one of your devices to sync: your copies are encrypted." }
         if let problem, phase != .ready { return problem }
         if paused { return "Paused: Midgard leaves this Mac's clipboard alone." }

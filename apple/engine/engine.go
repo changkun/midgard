@@ -236,6 +236,8 @@ type status struct {
 	// person's key, or their key is one it lacks, and it must pair
 	Sealing      bool `json:"sealing"`
 	NeedsPairing bool `json:"needs_pairing"`
+	// the server's allowlist does not have this Mac's person
+	NotOnList bool `json:"not_on_list"`
 	// a Shortcuts bridge: it hands iPhone Shortcuts copies in the clear
 	Bridge bool `json:"bridge"`
 }
@@ -250,6 +252,7 @@ func statusNow() status {
 		s.Running, s.Online, s.Device, s.Name = true, e.Online(), e.ID, e.Name
 		s.Sealing = e.Sealing()
 		s.NeedsPairing, _ = e.NeedsPairing()
+		s.NotOnList = e.NotOnList()
 		s.Bridge = config.Get().PlainBridge
 	}
 	return s

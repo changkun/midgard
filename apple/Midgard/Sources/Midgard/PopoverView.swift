@@ -25,6 +25,8 @@ struct PopoverView: View {
                 Setup(model: model)
             case .needsSignIn:
                 SignInPrompt(model: model)
+            case .notOnList:
+                NotOnListNotice(model: model)
             case .needsPairing:
                 PairPrompt(model: model)
             case .blocked(let why):
@@ -226,6 +228,27 @@ struct Setup: View {
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(server.isEmpty)
+            Spacer()
+        }
+        .padding(24)
+    }
+}
+
+/// A server that knows who signed in, and does not let them in: its
+/// allowlist does not have them, or names them by an email it learns is
+/// theirs once they sign in on its web page (docs/install.md).
+struct NotOnListNotice: View {
+    @ObservedObject var model: Model
+    var body: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            Image(systemName: "person.crop.circle.badge.questionmark").font(.system(size: 34)).foregroundStyle(.orange)
+            Text("Not on this server’s list").font(.title3.weight(.semibold))
+            Text("Your server lets in only the people on its list. Ask whoever runs it to add you. If they added your email, sign in once on its web page: this Mac then connects by itself.")
+                .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            if let page = model.webPage {
+                Button("Open the Web Page") { NSWorkspace.shared.open(page) }
+            }
             Spacer()
         }
         .padding(24)

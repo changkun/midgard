@@ -167,11 +167,14 @@ struct Status: Decodable, Equatable {
     var sealing = false
     var needsPairing = false
     var bridge = false
+    /// The server's allowlist does not have this Mac's person.
+    var notOnList = false
 
     enum CodingKeys: String, CodingKey {
         case configured, server, running, online, device, name, sealing, bridge
         case signedIn = "signed_in"
         case needsPairing = "needs_pairing"
+        case notOnList = "not_on_list"
     }
 }
 
@@ -191,5 +194,6 @@ extension Status {
         sealing = try c.decodeIfPresent(Bool.self, forKey: .sealing) ?? false
         needsPairing = try c.decodeIfPresent(Bool.self, forKey: .needsPairing) ?? false
         bridge = try c.decodeIfPresent(Bool.self, forKey: .bridge) ?? false
+        notOnList = try c.decodeIfPresent(Bool.self, forKey: .notOnList) ?? false
     }
 }

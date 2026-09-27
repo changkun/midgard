@@ -6,8 +6,11 @@ package device
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"changkun.de/x/midgard/internal/signin"
 	"changkun.de/x/midgard/internal/types"
@@ -26,9 +29,28 @@ func DialURL(ctx context.Context, url string) (*websocket.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, url, http.Header{"Authorization": {auth}})
+	conn, resp, err := websocket.DefaultDialer.DialContext(ctx, url, http.Header{"Authorization": {auth}})
 	if err != nil {
+		if notOnList(resp) {
+			return nil, ErrNotOnList
+		}
 		return nil, fmt.Errorf("failed to connect midgard server: %w", err)
 	}
 	return conn, nil
 }
+
+// notOnList reports whether resp, a refused handshake's, says the server's
+// allowlist does not have the one who signed in.
+func notOnList(resp *http.Response) bool {
+	if resp == nil || resp.StatusCode != http.StatusForbidden || resp.Body == nil {
+		return false
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<10))
+	return strings.Contains(string(body), types.MsgNotOnList)
+}
+
+// ErrNotOnList is a server that knows who signed in, and does not let them
+// in: its allowlist does not name them, or names them by an email it does
+// not know is theirs until they sign in on its web page.
+var ErrNotOnList = errors.New("the server's list does not have you: ask whoever runs it to add you, or, if they added your email, sign in once on its web page")
