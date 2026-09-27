@@ -109,7 +109,7 @@ $ docker compose run --rm -v /path/to/old/data/repo:/app/old:ro \
 
 ### Mac：Midgard 应用
 
-Midgard 常驻菜单栏，需要 macOS 14 或更高版本。在服务端的网页上点 **Get Midgard for Mac** 下载，打开磁盘映像，把 Midgard 拖到“应用程序”。
+Midgard 常驻菜单栏，需要 macOS 14 或更高版本。在服务端的网页上点 **Download for Mac** 下载，或从[发布页](https://github.com/changkun/midgard/releases)下载 `Midgard.dmg`；打开磁盘映像，把 Midgard 拖到“应用程序”。
 
 它尚未经过 Apple 公证，所以第一次打开时 Mac 会拒绝：在“系统设置”的“隐私与安全性”中点击**仍要打开**。也可以在终端中执行一次：`xattr -dr com.apple.quarantine /Applications/Midgard.app`。
 

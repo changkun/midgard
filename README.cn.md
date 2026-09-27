@@ -41,7 +41,7 @@ $ make build && make up              # 或直接运行：mg server
 
 `docker-compose.yml` 会加入一个已有的 traefik 网络；如需使用自己的反向代理，请参阅[安装](./docs/install.cn.md)。
 
-**2. Mac。** 在服务端网页上点 **Get Midgard for Mac** 下载应用（changkun.de 的在[这里](https://changkun.de/midgard/download/Midgard.dmg)），或用 `make mac` 构建。它会询问你的服务端地址、引导你登录，并常驻菜单栏：可将最近的复制内容放回剪贴板，在窗口中查看历史记录，按 **Ctrl+Option+S** 把剪贴板分享为链接。在 Mac 上它取代 `mg daemon`，详见 [Mac：Midgard 应用](./docs/install.cn.md#macmidgard-应用)。
+**2. Mac。** 在服务端网页上点 **Download for Mac** 下载应用（changkun.de 的在[这里](https://changkun.de/midgard/download/Midgard.dmg)），或用 `make mac` 构建。它会询问你的服务端地址、引导你登录，并常驻菜单栏：可将最近的复制内容放回剪贴板，在窗口中查看历史记录，按 **Ctrl+Option+S** 把剪贴板分享为链接。在 Mac 上它取代 `mg daemon`，详见 [Mac：Midgard 应用](./docs/install.cn.md#macmidgard-应用)。
 
 **3. Linux、Windows，或不使用应用的 Mac。** 从 [releases](https://github.com/changkun/midgard/releases) 下载 `mg`（或使用 `go install changkun.de/x/midgard@latest`，生成的程序名为 `midgard`），然后将以下内容写入配置文件：Linux 为 `~/.config/midgard/config.yml`，macOS 为 `~/Library/Application Support/midgard/config.yml`，Windows 为 `%AppData%\midgard\config.yml`：
 

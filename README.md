@@ -54,8 +54,8 @@ $ make build && make up              # or run: mg server
 `docker-compose.yml` joins an existing traefik network; see
 [Installation](./docs/install.md) to put midgard behind your own reverse proxy.
 
-**2. A Mac.** Download the app from your server's web page, **Get Midgard
-for Mac** (for changkun.de's, [here](https://changkun.de/midgard/download/Midgard.dmg)),
+**2. A Mac.** Download the app from your server's web page, **Download for
+Mac** (for changkun.de's, [here](https://changkun.de/midgard/download/Midgard.dmg)),
 or build it with `make mac`. It asks for your server, signs you in, and
 lives in the menu bar: recent copies to put back, the history in a
 window, **Ctrl+Option+S** to share the clipboard at a link. It replaces

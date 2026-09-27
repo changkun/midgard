@@ -141,8 +141,9 @@ server's allowlist.
 ### A Mac: the Midgard App
 
 Midgard lives in the menu bar, on macOS 14 or later. Download it from your
-server's web page, **Get Midgard for Mac**, open the disk image, and drag
-Midgard to Applications.
+server's web page, **Download for Mac**, or `Midgard.dmg` from the
+[releases](https://github.com/changkun/midgard/releases); open the disk image,
+and drag Midgard to Applications.
 
 It is not notarized by Apple yet, so the first time you open it the Mac
 refuses: in System Settings, under Privacy & Security, click **Open
