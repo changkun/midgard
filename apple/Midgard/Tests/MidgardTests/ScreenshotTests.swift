@@ -64,7 +64,7 @@ final class ScreenshotTests: XCTestCase {
                                      preview: "Flight LH 2023 · Munich → Berlin · Gate G24, boarding 18:05", waiting: false), at: 0)
         }
         m.history = items
-        m.thumbnails.setObject(photo(), forKey: 56)
+        m.thumbnails.setObject(photo(), forKey: "56")
         return m
     }
 

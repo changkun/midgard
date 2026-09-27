@@ -42,8 +42,8 @@ struct HistoryWindow: View {
                     .padding(.vertical, 4)
                     .tag(item.id)
                     .contextMenu {
-                        Button("Copy") { model.use(item) }.disabled(item.waiting)
-                        Button("Delete", role: .destructive) { model.delete(item) }.disabled(item.waiting)
+                        Button("Copy") { model.use(item) }
+                        Button(item.waiting ? "Take Back" : "Delete", role: .destructive) { model.delete(item) }
                     }
             }
             .overlay {
@@ -131,10 +131,12 @@ private struct Detail: View {
                     }
                     .keyboardShortcut("c")
                     .buttonStyle(.borderedProminent)
-                    Button(role: .destructive) { model.delete(item) } label: { Label("Delete", systemImage: "trash") }
+                    Button(role: .destructive) { model.delete(item) } label: {
+                        Label(item.waiting ? "Take Back" : "Delete", systemImage: item.waiting ? "arrow.uturn.backward" : "trash")
+                    }
+                    .help(item.waiting ? "It has not reached your server: take it back, and it goes nowhere" : "Delete it on every device")
                     Spacer()
                 }
-                .disabled(item.waiting)
             }
             .padding(16)
         }
@@ -172,11 +174,10 @@ private struct Detail: View {
     /// Fetches the copy, and cuts a text, away from the main thread, and
     /// makes it what the pane shows.
     private func load() async -> Shown? {
-        guard !item.waiting else { return nil }
-        let seq = item.seq, most = Self.most
+        let item = item, most = Self.most
         enum Got { case image(Data), text(String, cut: Bool) }
         let got = await Task.detached(priority: .userInitiated) { () -> Got? in
-            guard let (mime, data) = Engine.get(seq) else { return nil }
+            guard let (mime, data) = Engine.bytes(of: item) else { return nil }
             if mime == "image/png" { return .image(data) }
             let text = String(decoding: data, as: UTF8.self)
             if data.count <= most { return .text(text, cut: false) } // no more characters than bytes

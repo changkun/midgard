@@ -157,10 +157,10 @@ private struct PopoverRow: View {
             .onHover { hovered = $0 }
             .onTapGesture { model.use(item) }
             .contextMenu {
-                Button("Copy") { model.use(item) }.disabled(item.waiting)
-                Button("Delete", role: .destructive) { model.delete(item) }.disabled(item.waiting)
+                Button("Copy") { model.use(item) }
+                Button(item.waiting ? "Take Back" : "Delete", role: .destructive) { model.delete(item) }
             }
-            .help(item.waiting ? "Waiting to reach the server" : "Click to put it on the clipboard")
+            .help(item.waiting ? "Waiting to reach the server: click to put it on this Mac's clipboard" : "Click to put it on the clipboard")
     }
 }
 

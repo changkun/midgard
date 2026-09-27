@@ -132,6 +132,26 @@ func MidgardGet(seq C.uint64_t, mime **C.char, size *C.int64_t) unsafe.Pointer {
 	return C.CBytes(data)
 }
 
+// MidgardGetWaiting is the bytes of the copy waiting in the outbox as ref,
+// as MidgardGet has them; NULL when there is no such copy.
+//
+//export MidgardGetWaiting
+func MidgardGetWaiting(ref *C.char, mime **C.char, size *C.int64_t) unsafe.Pointer {
+	t, data, err := getWaiting(C.GoString(ref))
+	if err != nil {
+		return nil
+	}
+	*mime = C.CString(t)
+	*size = C.int64_t(len(data))
+	return C.CBytes(data)
+}
+
+// MidgardTakeBack takes the copy waiting as ref out of the outbox, before
+// the server has it.
+//
+//export MidgardTakeBack
+func MidgardTakeBack(ref *C.char) *C.char { return cerr(takeBack(C.GoString(ref))) }
+
 // MidgardStatus is the engine's state as JSON: {"configured","server",
 // "signed_in","running","online","device","name"}.
 //

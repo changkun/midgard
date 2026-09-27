@@ -516,3 +516,33 @@ func TestWritesAtOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// TestWaitingCopy: a copy still in the outbox is on this device, bytes and
+// all, so it can be shown, put back on the clipboard, or taken back before
+// the server has it.
+func TestWaitingCopy(t *testing.T) {
+	s := open(t)
+	sent, err := s.Add(ctx, wire.NewCopy("image/png", []byte("a picture")), true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, err := s.Waiting(ctx, sent.Ref)
+	if err != nil || !e.Waiting() || e.Ref != sent.Ref || string(e.Data) != "a picture" || e.Formats[0].MIME != "image/png" {
+		t.Fatalf("Waiting = %+v, %v", e, err)
+	}
+	if _, err := s.Waiting(ctx, "no-such-ref"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("Waiting(unknown) = %v, want ErrNotFound", err)
+	}
+	if err := s.Forget(ctx, sent.Ref); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Waiting(ctx, sent.Ref); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("Waiting after taking it back = %v, want ErrNotFound", err)
+	}
+	if out, _ := s.Outbox(ctx); len(out) != 0 {
+		t.Fatalf("the outbox still has %+v", out)
+	}
+	if list, _ := s.List(ctx, 10); len(list) != 0 {
+		t.Fatalf("the history still lists %+v", list)
+	}
+}

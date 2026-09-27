@@ -158,6 +158,7 @@ type entry struct {
 	Size    int    `json:"size"`
 	Preview string `json:"preview,omitempty"` // the start of a text
 	Waiting bool   `json:"waiting"`
+	Ref     string `json:"ref,omitempty"` // its name in the outbox, while it waits
 }
 
 // previewLen is how much of a text the list shows.
@@ -176,7 +177,7 @@ func historyJSON(n int) ([]byte, error) {
 	}
 	out := []entry{}
 	for _, c := range list {
-		en := entry{Seq: c.Seq, Time: c.Time.UnixMilli(), Origin: c.Origin, Size: c.Size(), Waiting: c.Waiting()}
+		en := entry{Seq: c.Seq, Time: c.Time.UnixMilli(), Origin: c.Origin, Size: c.Size(), Waiting: c.Waiting(), Ref: c.Ref}
 		if len(c.Formats) > 0 {
 			en.MIME = c.Formats[0].MIME
 		}
@@ -214,6 +215,33 @@ func get(seq uint64) (string, []byte, error) {
 		return "", nil, history.ErrNotFound
 	}
 	return mime, data, nil
+}
+
+// getWaiting is the copy waiting in the outbox as ref, in its first format.
+func getWaiting(ref string) (string, []byte, error) {
+	e, err := running()
+	if err != nil {
+		return "", nil, err
+	}
+	c, err := e.History.Waiting(context.Background(), ref)
+	if err != nil {
+		return "", nil, err
+	}
+	mime, data, ok := firstFormat(c)
+	if !ok {
+		return "", nil, history.ErrNotFound
+	}
+	return mime, data, nil
+}
+
+// takeBack takes the copy waiting as ref out of the outbox, before the
+// server has it: it goes nowhere.
+func takeBack(ref string) error {
+	e, err := running()
+	if err != nil {
+		return err
+	}
+	return e.History.Forget(context.Background(), ref)
 }
 
 func firstFormat(c history.Entry) (string, []byte, bool) {

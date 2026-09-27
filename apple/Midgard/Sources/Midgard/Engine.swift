@@ -65,6 +65,30 @@ enum Engine {
         return (take(mime) ?? "", data)
     }
 
+    /// The bytes of a copy waiting in this Mac's outbox as ref, and their type.
+    static func getWaiting(_ ref: String) -> (mime: String, data: Data)? {
+        var mime: UnsafeMutablePointer<CChar>?
+        var size: Int64 = 0
+        guard let p = ref.withCString({ MidgardGetWaiting(UnsafeMutablePointer(mutating: $0), &mime, &size) }) else { return nil }
+        defer { MidgardFree(p) }
+        let data = Data(bytes: p, count: Int(size))
+        return (take(mime) ?? "", data)
+    }
+
+    /// A copy's bytes, and their type: from the history, or, while it waits,
+    /// from this Mac's outbox.
+    static func bytes(of item: HistoryItem) -> (mime: String, data: Data)? {
+        if item.waiting {
+            return item.ref.flatMap { getWaiting($0) }
+        }
+        return get(item.seq)
+    }
+
+    /// Takes a copy waiting as ref out of the outbox, before the server has it.
+    static func takeBack(_ ref: String) throws {
+        try ref.withCString { try check(MidgardTakeBack(UnsafeMutablePointer(mutating: $0))) }
+    }
+
     static func status() -> Status {
         guard let json = take(MidgardStatus()),
               let s = try? JSONDecoder().decode(Status.self, from: Data(json.utf8)) else { return Status() }
@@ -148,8 +172,10 @@ struct HistoryItem: Decodable, Identifiable, Equatable {
     var size: Int
     var preview: String?
     var waiting: Bool
+    /// Its name in this Mac's outbox, while it waits.
+    var ref: String? = nil
 
-    var id: String { waiting ? "waiting-\(time)" : "\(seq)" }
+    var id: String { waiting ? "waiting-\(ref ?? String(time))" : "\(seq)" }
     var date: Date { Date(timeIntervalSince1970: Double(time) / 1000) }
     var isImage: Bool { mime == "image/png" }
 }

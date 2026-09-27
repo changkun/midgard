@@ -455,6 +455,19 @@ func (s *Store) Get(ctx context.Context, seq uint64) (Entry, error) {
 	return e, err
 }
 
+// Waiting is the copy waiting in the outbox as ref, with its bytes: on this
+// device before the server has it, to show, and to put back on the
+// clipboard.
+func (s *Store) Waiting(ctx context.Context, ref string) (Entry, error) {
+	row := s.db.QueryRowContext(ctx, `SELECT 0, ref, time, origin, formats, data FROM outbox
+		WHERE ref = ? AND type = 'copy'`, ref)
+	e, err := scanEntry(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Entry{}, ErrNotFound
+	}
+	return e, err
+}
+
 type scanner interface{ Scan(...any) error }
 
 func scanEntry(r scanner) (Entry, error) {

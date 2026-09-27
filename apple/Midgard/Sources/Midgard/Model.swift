@@ -145,10 +145,12 @@ final class Model: ObservableObject {
 
     /// Makes an older copy the clipboard again, on this Mac and every device:
     /// written here, it is a copy like any other.
+    /// A copy still waiting is on its way already: only this Mac's clipboard
+    /// takes it again.
     func use(_ item: HistoryItem) {
-        guard !item.waiting, let (mime, data) = Engine.get(item.seq) else { return }
+        guard let (mime, data) = Engine.bytes(of: item) else { return }
         pasteboard.write(mime: mime, data: data)
-        if !paused { try? Engine.copy(mime: mime, data: data) }
+        if !paused && !item.waiting { try? Engine.copy(mime: mime, data: data) }
         justCopied = item.id
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1.2))
@@ -185,18 +187,18 @@ final class Model: ObservableObject {
         return out
     }
 
-    /// Thumbnails by seq; internal, for the screenshot tests' sample images.
-    let thumbnails = NSCache<NSNumber, NSImage>()
+    /// Thumbnails by a copy's id; internal, for the screenshot tests' sample
+    /// images.
+    let thumbnails = NSCache<NSString, NSImage>()
 
     /// A small image of a copy that is one, made once, away from the main
     /// thread: decoding a screenshot takes longer than a frame of scrolling.
     func thumbnail(_ item: HistoryItem) async -> NSImage? {
-        guard item.isImage, !item.waiting else { return nil }
-        let key = NSNumber(value: item.seq)
+        guard item.isImage else { return nil }
+        let key = item.id as NSString
         if let cached = thumbnails.object(forKey: key) { return cached }
-        let seq = item.seq
         let small = await Task.detached(priority: .userInitiated) { () -> CGImage? in
-            guard let (_, data) = Engine.get(seq),
+            guard let (_, data) = Engine.bytes(of: item),
                   let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
             return CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
@@ -220,8 +222,14 @@ final class Model: ObservableObject {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
     }
 
+    /// Deletes a copy on every device; one still waiting goes back out of
+    /// the outbox, before the server has it.
     func delete(_ item: HistoryItem) {
-        try? Engine.delete(item.seq)
+        if item.waiting, let ref = item.ref {
+            try? Engine.takeBack(ref)
+        } else {
+            try? Engine.delete(item.seq)
+        }
         refresh()
     }
 
