@@ -42,8 +42,18 @@ mg shares rm revokes a share.`,
 		if len(args) > 0 {
 			name = args[0]
 		}
+		if commandLike[name] {
+			// mg share list would publish the clipboard at /midgard/list
+			fail(exitUsage, "%q looks like a command, not a name for a link: mg shares lists your shares, and mg shares rm <id> revokes one", name)
+		}
 		share(name, fpath)
 	},
+}
+
+// commandLike are the names mg share refuses to give a link, as one who
+// types them means a command, not to publish their clipboard under them.
+var commandLike = map[string]bool{
+	"list": true, "ls": true, "rm": true, "remove": true, "delete": true, "del": true, "revoke": true, "help": true,
 }
 
 func init() {
