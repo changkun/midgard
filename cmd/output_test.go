@@ -21,6 +21,7 @@ func TestExitCodes(t *testing.T) {
 		signin.ErrSignedOut:                     exitSignedIn,
 		fmt.Errorf("x: %w", client.ErrNoDevice): exitOffline,
 		client.ErrNotFound:                      exitNotFound,
+		client.ErrNotPaired:                     exitNotPaired,
 		errors.New("the disk is full"):          exitFailed,
 	} {
 		if got := exitCode(err); got != want {

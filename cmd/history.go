@@ -46,7 +46,7 @@ manager marked are never kept.`,
 			}
 			switch args[0] {
 			case "show":
-				t, data, err := client.HistoryEntry(id)
+				t, data, err := client.HistoryEntry(personKey(), id)
 				exitOn(err, "read that copy")
 				printCopy(t, data)
 			case "copy":
@@ -65,7 +65,7 @@ manager marked are never kept.`,
 }
 
 func listHistory() {
-	entries, err := client.History()
+	entries, err := client.History(personKey())
 	exitOn(err, "read the history")
 	if jsonOut {
 		printJSON(types.HistoryOutput{History: entries})
@@ -98,9 +98,10 @@ func oneLine(s string, n int) string {
 // copyFromHistory makes copy id the clipboard again, on all the person's
 // devices: it goes to the server, which relays it to them.
 func copyFromHistory(id int64) {
-	t, data, err := client.HistoryEntry(id)
+	key := personKey()
+	t, data, err := client.HistoryEntry(key, id)
 	exitOn(err, "read that copy")
-	seq, err := client.Copy(t, data)
+	seq, err := client.Copy(key, t, data)
 	exitOn(err, "put it on your clipboard")
 	copyHere(t, data)
 	if jsonOut {

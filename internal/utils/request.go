@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/signin"
+	"changkun.de/x/midgard/internal/types"
 )
 
 // Request conducts a http request for a given method, api endpoint, and
@@ -49,6 +50,8 @@ func Do(method, api string, data any) (int, []byte, error) {
 	}
 	req.Header.Set("Authorization", auth)
 	req.Header.Set("Content-Type", "application/json")
+	// it opens sealed copies (specs/redesign.md §11), with the key it has
+	req.Header.Set(types.HeaderSealed, "1")
 	resp, err := c.Do(req)
 	if err != nil {
 		return 0, nil, err

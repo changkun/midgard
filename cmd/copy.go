@@ -59,7 +59,7 @@ It reaches devices that are off when they come back.`,
 		case !utf8.Valid(data):
 			fail(exitUsage, "only text and PNG images can be copied")
 		}
-		seq, err := client.Copy(t, data)
+		seq, err := client.Copy(personKey(), t, data)
 		exitOn(err, "copy")
 		copyHere(t, data)
 		if jsonOut {
@@ -87,7 +87,7 @@ in base64. One of your devices must be online, unless the copy is still on its
 way to them.`,
 	Args: cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
-		t, data, err := client.Clipboard()
+		t, data, err := client.Clipboard(personKey())
 		exitOn(err, "read your clipboard")
 		printCopy(t, data)
 	},

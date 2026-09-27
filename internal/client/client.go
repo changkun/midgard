@@ -19,15 +19,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/e2e"
 	"changkun.de/x/midgard/internal/signin"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
+	"changkun.de/x/midgard/internal/wire"
 )
 
-// Share publishes data at a link and returns it. With no data it publishes
-// this person's clipboard instead. A name, when given, is a link of its own
+// Share publishes data at a link and returns it. To share the clipboard, a
+// client reads it first (Clipboard) and sends its bytes: the server does not
+// ask a device for them (specs/redesign.md §11). A name, when given, is a link of its own
 // besides the random one. filename, the source file's name if there is one,
 // gives the share its type and the name its extension. A positive expires
 // retires the share after that long.
@@ -96,6 +100,18 @@ func TakeBack(seq uint64) error {
 // ErrNotFound means the server has no such thing for this person.
 var ErrNotFound = errors.New("not found")
 
+// ErrNotPaired means this person's copies are sealed with a key this device
+// does not have (specs/redesign.md §11): it must pair with one that has it.
+var ErrNotPaired = errors.New("this device does not have your key: pair it with one of your devices")
+
+// statusError is an answer the server refused with.
+type statusError struct {
+	code int
+	msg  string
+}
+
+func (e *statusError) Error() string { return fmt.Sprintf("the server answered %d: %s", e.code, e.msg) }
+
 // ErrNoDevice means none of this person's devices is online to answer a read
 // of their clipboard or history, which are on the devices.
 var ErrNoDevice = errors.New("none of your devices is online")
@@ -120,7 +136,7 @@ func call(method, api string, in, out any) error {
 			Msg string `json:"msg"`
 		}
 		json.Unmarshal(body, &reason)
-		return fmt.Errorf("the server answered %d: %s", status, cmp.Or(reason.Msg, http.StatusText(status)))
+		return &statusError{status, cmp.Or(reason.Msg, http.StatusText(status))}
 	}
 	if out == nil || len(body) == 0 {
 		return nil
@@ -128,20 +144,48 @@ func call(method, api string, in, out any) error {
 	return json.Unmarshal(body, out)
 }
 
-// History lists this person's clipboard history, newest first.
-func History() ([]types.HistoryEntry, error) {
+// History lists this person's clipboard history, newest first, each text
+// with its start, opened with key when sealed.
+func History(key *e2e.Key) ([]types.HistoryEntry, error) {
 	var out types.HistoryOutput
-	err := call(http.MethodGet, types.EndpointHistory(), nil, &out)
-	return out.History, err
+	if err := call(http.MethodGet, types.EndpointHistory(), nil, &out); err != nil {
+		return nil, err
+	}
+	for i, e := range out.History {
+		if e.Kid == "" {
+			continue
+		}
+		if key == nil || key.ID() != e.Kid {
+			return nil, ErrNotPaired
+		}
+		sealed, err := base64.StdEncoding.DecodeString(e.Preview)
+		if err != nil {
+			return nil, err
+		}
+		preview, err := key.Open(e2e.Preview, []wire.Format{{MIME: string(e.Type), Size: e.Size}}, sealed)
+		if err != nil {
+			return nil, err
+		}
+		out.History[i].Preview, out.History[i].Kid = validPrefix(preview), ""
+	}
+	return out.History, nil
+}
+
+// validPrefix is b as text, without a character a preview cut in two.
+func validPrefix(b []byte) string {
+	for len(b) > 0 && !utf8.Valid(b) {
+		b = b[:len(b)-1]
+	}
+	return string(b)
 }
 
 // HistoryEntry returns the copy numbered id from this person's history.
-func HistoryEntry(id int64) (types.MIME, []byte, error) {
+func HistoryEntry(key *e2e.Key, id int64) (types.MIME, []byte, error) {
 	var out types.ClipboardData
 	if err := call(http.MethodGet, fmt.Sprintf("%s/%d", types.EndpointHistory(), id), nil, &out); err != nil {
 		return "", nil, err
 	}
-	return decode(out)
+	return open(key, out)
 }
 
 // DeleteHistoryEntry removes the copy numbered id from this person's history.
@@ -158,24 +202,53 @@ func ClearHistory() error {
 // it to their devices, and returns its number in the history. A command
 // cannot keep it there itself: on X11 and Wayland a copy lasts only while the
 // program that made it runs, and a command exits at once. The daemons run on.
-func Copy(t types.MIME, data []byte) (uint64, error) {
+func Copy(key *e2e.Key, t types.MIME, data []byte) (uint64, error) {
 	in := types.PutToUniversalClipboardInput{ClipboardData: types.ClipboardData{Type: t, Data: string(data)}}
-	if t == types.MIMEImagePNG {
+	switch {
+	case key != nil:
+		sealed, err := key.Seal(e2e.Copy, []wire.Format{{MIME: string(t), Size: len(data)}}, data)
+		if err != nil {
+			return 0, err
+		}
+		in.Data, in.Kid = base64.StdEncoding.EncodeToString(sealed), key.ID()
+	case t == types.MIMEImagePNG:
 		in.Data = base64.StdEncoding.EncodeToString(data)
 	}
 	var out types.PutToUniversalClipboardOutput
 	err := call(http.MethodPost, types.EndpointClipboard(), &in, &out)
+	var se *statusError
+	if key == nil && errors.As(err, &se) && se.code == http.StatusConflict {
+		return 0, ErrNotPaired // its person's copies are sealed, and it has no key
+	}
 	return out.Seq, err
 }
 
 // Clipboard is this person's clipboard: the newest copy, from one of their
-// devices or from what the server holds. ErrNoDevice when there is neither.
-func Clipboard() (types.MIME, []byte, error) {
+// devices or from what the server holds, opened with key when sealed.
+// ErrNoDevice when there is neither.
+func Clipboard(key *e2e.Key) (types.MIME, []byte, error) {
 	var out types.ClipboardData
 	if err := call(http.MethodGet, types.EndpointClipboard(), nil, &out); err != nil {
 		return "", nil, err
 	}
-	return decode(out)
+	return open(key, out)
+}
+
+// open is the bytes of a copy the server answered with: sealed, opened with
+// key, which must be the one it names.
+func open(key *e2e.Key, d types.ClipboardData) (types.MIME, []byte, error) {
+	if d.Kid == "" {
+		return decode(d)
+	}
+	if key == nil || key.ID() != d.Kid {
+		return "", nil, ErrNotPaired
+	}
+	sealed, err := base64.StdEncoding.DecodeString(d.Data)
+	if err != nil || len(sealed) < e2e.Overhead {
+		return "", nil, errors.New("the server answered with a copy that is not one")
+	}
+	plain, err := key.Open(e2e.Copy, []wire.Format{{MIME: string(d.Type), Size: len(sealed) - e2e.Overhead}}, sealed)
+	return d.Type, plain, err
 }
 
 // decode is the bytes of a copy as the API encodes it: an image in base64.

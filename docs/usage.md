@@ -158,6 +158,7 @@ Every command ends with one of these exit codes:
 | 3 | this device is not signed in: `mg login`, or a token in `config.yml` |
 | 4 | none of your devices is online to answer (your clipboard and history are on them) |
 | 5 | there is no such copy, share, device or token |
+| 6 | this device does not have your key: `mg pair <code>` |
 
 ## Is It Working?
 

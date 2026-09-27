@@ -16,7 +16,9 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/e2e"
 	"changkun.de/x/midgard/internal/types"
+	"changkun.de/x/midgard/internal/wire"
 	"changkun.de/x/midgard/testdata"
 )
 
@@ -141,14 +143,14 @@ func TestHistory(t *testing.T) {
 		}
 	})
 
-	h, err := History()
+	h, err := History(nil)
 	if err != nil || len(h) != 1 || h[0].ID != 7 {
 		t.Fatalf("History() = %+v, %v", h, err)
 	}
-	if typ, data, err := HistoryEntry(7); err != nil || typ != types.MIMEImagePNG || string(data) != "png" {
-		t.Fatalf("HistoryEntry(7) = %v, %q, %v; want the decoded image", typ, data, err)
+	if typ, data, err := HistoryEntry(nil, 7); err != nil || typ != types.MIMEImagePNG || string(data) != "png" {
+		t.Fatalf("HistoryEntry(nil, 7) = %v, %q, %v; want the decoded image", typ, data, err)
 	}
-	if _, _, err := HistoryEntry(8); !errors.Is(err, ErrNotFound) {
+	if _, _, err := HistoryEntry(nil, 8); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("a missing copy: %v, want ErrNotFound", err)
 	}
 	if err := DeleteHistoryEntry(7); err != nil {
@@ -175,14 +177,14 @@ func TestCopy(t *testing.T) {
 			t.Errorf("request %s %s", r.Method, r.URL.Path)
 		}
 	})
-	seq, err := Copy(types.MIMEPlainText, []byte("a link"))
+	seq, err := Copy(nil, types.MIMEPlainText, []byte("a link"))
 	if err != nil || seq != 57 || got.Type != types.MIMEPlainText || got.Data != "a link" {
 		t.Fatalf("Copy(text) = %d, %v; sent %+v", seq, err, got)
 	}
-	if _, err := Copy(types.MIMEImagePNG, []byte("png")); err != nil || got.Data != base64.StdEncoding.EncodeToString([]byte("png")) {
+	if _, err := Copy(nil, types.MIMEImagePNG, []byte("png")); err != nil || got.Data != base64.StdEncoding.EncodeToString([]byte("png")) {
 		t.Fatalf("Copy(image) sent %+v, %v; want it base64", got, err)
 	}
-	if typ, data, err := Clipboard(); err != nil || typ != types.MIMEImagePNG || string(data) != "png" {
+	if typ, data, err := Clipboard(nil); err != nil || typ != types.MIMEImagePNG || string(data) != "png" {
 		t.Fatalf("Clipboard() = %v, %q, %v; want the decoded image", typ, data, err)
 	}
 }
@@ -194,10 +196,58 @@ func TestNoDevice(t *testing.T) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		json.NewEncoder(w).Encode(map[string]string{"msg": "none of your devices is online"})
 	})
-	if _, _, err := Clipboard(); !errors.Is(err, ErrNoDevice) {
+	if _, _, err := Clipboard(nil); !errors.Is(err, ErrNoDevice) {
 		t.Fatalf("Clipboard() with no device online: %v, want ErrNoDevice", err)
 	}
-	if _, err := History(); !errors.Is(err, ErrNoDevice) {
+	if _, err := History(nil); !errors.Is(err, ErrNoDevice) {
 		t.Fatalf("History() with no device online: %v, want ErrNoDevice", err)
+	}
+}
+
+// TestSealed: with its person's key, a client seals what it copies and opens
+// what it reads, and says it opens sealed copies; without the key, a sealed
+// copy is ErrNotPaired, not ciphertext (specs/redesign.md §11).
+func TestSealed(t *testing.T) {
+	key, _ := e2e.NewKey()
+	var got types.PutToUniversalClipboardInput
+	var header string
+	server(t, func(w http.ResponseWriter, r *http.Request) {
+		header = r.Header.Get(types.HeaderSealed)
+		switch r.Method + " " + r.URL.Path {
+		case "POST /midgard/api/v1/clipboard":
+			json.NewDecoder(r.Body).Decode(&got)
+			json.NewEncoder(w).Encode(types.PutToUniversalClipboardOutput{Message: "copied", Seq: 58})
+		case "GET /midgard/api/v1/clipboard":
+			// the copy just sent, as the server hands it back
+			json.NewEncoder(w).Encode(types.ClipboardData{Type: got.Type, Data: got.Data, Kid: got.Kid})
+		case "GET /midgard/api/v1/history":
+			sealed, _ := key.Seal(e2e.Preview, []wire.Format{{MIME: "text", Size: 11}}, []byte("the start\xe2"))
+			json.NewEncoder(w).Encode(types.HistoryOutput{History: []types.HistoryEntry{{
+				ID: 1, Type: types.MIMEPlainText, Size: 11, Kid: key.ID(), Preview: base64.StdEncoding.EncodeToString(sealed),
+			}}})
+		}
+	})
+	if _, err := Copy(key, types.MIMEPlainText, []byte("secret")); err != nil || got.Kid != key.ID() || strings.Contains(got.Data, "secret") {
+		t.Fatalf("Copy sealed = %v; sent %+v", err, got)
+	}
+	if header != "1" {
+		t.Errorf("%s = %q, want 1", types.HeaderSealed, header)
+	}
+	if _, data, err := Clipboard(key); err != nil || string(data) != "secret" {
+		t.Fatalf("Clipboard opened %q, %v", data, err)
+	}
+	if _, _, err := Clipboard(nil); !errors.Is(err, ErrNotPaired) {
+		t.Errorf("Clipboard without the key: %v, want ErrNotPaired", err)
+	}
+	other, _ := e2e.NewKey()
+	if _, _, err := Clipboard(other); !errors.Is(err, ErrNotPaired) {
+		t.Errorf("Clipboard with another key: %v, want ErrNotPaired", err)
+	}
+	h, err := History(key)
+	if err != nil || len(h) != 1 || h[0].Preview != "the start" || h[0].Kid != "" {
+		t.Fatalf("History = %+v, %v; want the preview opened, cut at a character", h, err)
+	}
+	if _, err := History(nil); !errors.Is(err, ErrNotPaired) {
+		t.Errorf("History without the key: %v, want ErrNotPaired", err)
 	}
 }

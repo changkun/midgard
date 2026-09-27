@@ -19,12 +19,13 @@ import (
 // messages stay on stderr. Every command ends with one of these codes, so a
 // script can tell what went wrong without reading the message.
 const (
-	exitOK       = 0
-	exitFailed   = 1 // the server or the network failed, or refused
-	exitUsage    = 2 // the command was used wrongly
-	exitSignedIn = 3 // this device is not signed in: mg login, or a token
-	exitOffline  = 4 // none of your devices is online to answer
-	exitNotFound = 5 // no such copy, share, device or token
+	exitOK        = 0
+	exitFailed    = 1 // the server or the network failed, or refused
+	exitUsage     = 2 // the command was used wrongly
+	exitSignedIn  = 3 // this device is not signed in: mg login, or a token
+	exitOffline   = 4 // none of your devices is online to answer
+	exitNotFound  = 5 // no such copy, share, device or token
+	exitNotPaired = 6 // this device does not have its person's key: mg pair
 )
 
 // jsonOut is --json: print results as JSON.
@@ -57,6 +58,8 @@ func exitOn(err error, doing string) {
 		fail(code, "cannot %s: none of your devices is online; your clipboard and history are on them", doing)
 	case exitNotFound:
 		fail(code, "cannot %s: there is no such thing", doing)
+	case exitNotPaired:
+		fail(code, "cannot %s: this machine does not have your key; pair it: mg pair <code>, with a code from one of your devices", doing)
 	default:
 		fail(code, "cannot %s: %v", doing, err)
 	}
@@ -73,6 +76,8 @@ func exitCode(err error) int {
 		return exitOffline
 	case errors.Is(err, client.ErrNotFound):
 		return exitNotFound
+	case errors.Is(err, client.ErrNotPaired):
+		return exitNotPaired
 	default:
 		return exitFailed
 	}

@@ -37,7 +37,7 @@ func ShowPairing(k *e2e.Key, since uint64) (e2e.Code, error) {
 func JoinPairing(code e2e.Code) (*e2e.Key, uint64, error) {
 	box, err := client.TakePairing(code.Mailbox())
 	if errors.Is(err, client.ErrNotFound) {
-		return nil, 0, errors.New("no pairing waits for this code: it was used, or ten minutes passed; show a new one")
+		return nil, 0, fmt.Errorf("no pairing waits for this code: it was used, or ten minutes passed; show a new one (%w)", err)
 	}
 	if err != nil {
 		return nil, 0, err

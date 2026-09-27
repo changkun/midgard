@@ -52,17 +52,25 @@ func init() {
 }
 
 // share publishes srcpath, or the clipboard when there is none, and puts the
-// link on the clipboard.
+// link on the clipboard. The clipboard is read here, and opened with this
+// machine's key, as the server never asks a device for it (§11).
 func share(name, srcpath string) {
+	key := personKey()
 	var data []byte
 	filename := ""
-	if srcpath != "" {
+	if srcpath == "" {
+		_, b, err := client.Clipboard(key)
+		exitOn(err, "read your clipboard")
+		if len(b) == 0 {
+			fail(exitNotFound, "your clipboard is empty, there is nothing to share")
+		}
+		data = b
+	} else {
 		b, err := os.ReadFile(srcpath)
 		if err != nil {
 			fail(exitFailed, "cannot read %s: %v", srcpath, err)
 		}
 		if len(b) == 0 {
-			// no data means "the clipboard" to the server
 			fail(exitUsage, "%s is empty, there is nothing to share", srcpath)
 		}
 		data, filename = b, filepath.Base(srcpath)
@@ -77,7 +85,7 @@ func share(name, srcpath string) {
 	}
 	// Through the server, so the daemons keep it: on X11 and Wayland a copy
 	// this command made would go when it exits (see client.Copy).
-	if _, err := client.Copy(types.MIMEPlainText, []byte(sh.URL)); err != nil {
+	if _, err := client.Copy(key, types.MIMEPlainText, []byte(sh.URL)); err != nil {
 		errorf("the link is not on your clipboard: %v", err)
 		return
 	}
