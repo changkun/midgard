@@ -11,6 +11,16 @@ func shortName(_ name: String) -> String {
     name.hasSuffix(".local") ? String(name.dropLast(6)) : name
 }
 
+/// The symbol of a device, as its name says what it is: a phone, a tablet,
+/// a laptop, or else a desktop.
+func deviceSymbol(_ name: String, this: Bool) -> String {
+    let n = name.lowercased()
+    if ["iphone", "android", "pixel", "phone", "shortcuts"].contains(where: n.contains) { return "iphone" }
+    if n.contains("ipad") { return "ipad" }
+    if this || ["macbook", "-air", "laptop", "thinkpad"].contains(where: n.contains) { return "laptopcomputer" }
+    return "desktopcomputer"
+}
+
 /// The app's state: the engine's status and history, and what the Mac's
 /// clipboard does with them.
 @MainActor
@@ -173,7 +183,8 @@ final class Model: ObservableObject {
         return out
     }
 
-    private let thumbnails = NSCache<NSNumber, NSImage>()
+    /// Thumbnails by seq; internal, for the screenshot tests' sample images.
+    let thumbnails = NSCache<NSNumber, NSImage>()
 
     /// A small image of a copy that is one, made once, away from the main
     /// thread: decoding a screenshot takes longer than a frame of scrolling.

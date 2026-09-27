@@ -29,7 +29,7 @@ struct HistoryWindow: View {
                 if !model.devices.isEmpty {
                     Section("From") {
                         ForEach(model.devices, id: \.self) { d in
-                            Label(shortName(d), systemImage: d == model.status.name ? "laptopcomputer" : "desktopcomputer")
+                            Label(shortName(d), systemImage: deviceSymbol(d, this: d == model.status.name))
                                 .tag(Filter.device(d))
                         }
                     }
