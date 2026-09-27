@@ -90,6 +90,8 @@ $ scp apple/build/Midgard.dmg your.server:midgard/data/downloads/
 
 新的构建以同名文件替换旧的即可。
 
+自己构建的磁盘映像只为你自己的 Mac 签名，其他 Mac 会拒绝打开，直到有人在“隐私与安全性”中点击**仍要打开**。要让 Apple 公证它，你需要自己的 Developer ID：把 `MIDGARD_SIGN` 设为它的 Developer ID Application 身份，把 `MIDGARD_NOTARY` 设为 `xcrun notarytool store-credentials` 保存的钥匙串配置名称，`make dmg` 就会签名并让 Apple 公证。
+
 ### 从旧版服务端迁移
 
 旧版服务端把分享以文件形式保存在 `data/repo` 下，并在 `data/logs` 下保存每一次复制的明文日志。把分享一次性导入为某人的分享，链接保持不变。日志不导入：服务端现在不保存复制内容，日志可以删除。
@@ -121,7 +123,7 @@ $ docker compose run --rm -v /path/to/old/data/repo:/app/old:ro \
 
 Midgard 常驻菜单栏，需要 macOS 14 或更高版本。在服务端的网页上点 **Download for Mac** 下载，或从[发布页](https://github.com/changkun/midgard/releases)下载 `Midgard.dmg`；打开磁盘映像，把 Midgard 拖到“应用程序”。
 
-它尚未经过 Apple 公证，所以第一次打开时 Mac 会拒绝：在“系统设置”的“隐私与安全性”中点击**仍要打开**。也可以在终端中执行一次：`xattr -dr com.apple.quarantine /Applications/Midgard.app`。
+它已签名并经过 Apple 公证，像其他应用一样直接打开即可。v0.2.0 及更早版本的磁盘映像没有公证：第一次打开时 Mac 会拒绝，需要在“系统设置”的“隐私与安全性”中点击**仍要打开**。
 
 首次启动时，它会询问你的服务端，并在浏览器中引导你登录。之后菜单中有：最近的复制内容，可放回剪贴板；历史记录窗口；**将剪贴板分享为链接**，快捷键 **Ctrl+Option+S**，无需辅助功能权限；**暂停同步**；以及**登录时启动**。密码管理器标记为机密的内容不会被同步，也不会被保存。
 

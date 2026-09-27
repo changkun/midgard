@@ -115,6 +115,14 @@ $ scp apple/build/Midgard.dmg your.server:midgard/data/downloads/
 
 A newer build replaces it under the same name.
 
+A disk image you build is signed for your own Mac only, and other Macs
+refuse it until someone clicks **Open Anyway** under Privacy & Security. To
+have Apple notarize it, you need a Developer ID of your own. Set
+`MIDGARD_SIGN` to its Developer ID Application identity, and
+`MIDGARD_NOTARY` to a keychain profile that
+`xcrun notarytool store-credentials` saved. `make dmg` then signs the disk
+image and has Apple notarize it.
+
 ### Moving from an Older Server
 
 An older server kept its shares as files, under `data/repo`, and a
@@ -161,10 +169,10 @@ server's web page, **Download for Mac**, or `Midgard.dmg` from the
 [releases](https://github.com/changkun/midgard/releases); open the disk image,
 and drag Midgard to Applications.
 
-It is not notarized by Apple yet, so the first time you open it the Mac
-refuses: in System Settings, under Privacy & Security, click **Open
-Anyway**. Or, once, in a terminal:
-`xattr -dr com.apple.quarantine /Applications/Midgard.app`.
+It is signed and notarized by Apple, so it opens like any other app. The
+disk images of v0.2.0 and earlier are not: the first time you open one of
+those, the Mac refuses, and in System Settings, under Privacy & Security,
+you click **Open Anyway**.
 
 The first time, it asks for your server and signs you in, in the browser.
 Its menu then has your recent copies, to put one back on the clipboard; the
