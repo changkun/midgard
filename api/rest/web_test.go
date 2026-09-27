@@ -375,6 +375,29 @@ func TestIcons(t *testing.T) {
 	}
 }
 
+// TestImages: the front page shows its pictures, and they are served, to
+// anyone.
+func TestImages(t *testing.T) {
+	m := testMidgard(t)
+	page := do(t, m, http.MethodGet, "/midgard/", "", false).Body.String()
+	for name, typ := range imageTypes {
+		path := "/midgard/images/" + name
+		if !strings.Contains(page, `src="`+path+`"`) {
+			t.Errorf("the front page does not show %s", path)
+		}
+		w := do(t, m, http.MethodGet, path, "", false)
+		if w.Code != http.StatusOK || w.Header().Get("Content-Type") != typ || w.Body.Len() < 1000 {
+			t.Errorf("GET %s: %d, %q, %d bytes", path, w.Code, w.Header().Get("Content-Type"), w.Body.Len())
+		}
+	}
+	if w := do(t, m, http.MethodGet, "/midgard/images/nope.png", "", false); w.Code != http.StatusNotFound {
+		t.Errorf("GET a picture there is not: %d, want 404", w.Code)
+	}
+	if code, _ := share(t, m, types.ShareInput{Data: b64("x"), Name: "images/hero.svg"}); code != http.StatusBadRequest {
+		t.Errorf("a share named like a picture: %d, want 400", code)
+	}
+}
+
 // TestDownload: the Mac app is handed out to anyone once the server has it,
 // and the page offers it only then; nothing else in the data folder is.
 func TestDownload(t *testing.T) {

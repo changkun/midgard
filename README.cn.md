@@ -2,6 +2,8 @@
 
 [English](./README.md) | 中文
 
+<p align="center"><img src="./api/rest/web/images/hero.svg" width="100%" alt="在 Mac 上复制的航班信息出现在 Midgard 菜单栏窗口的最上方，加密经过服务端，到达 iPhone"></p>
+
 米德加德（midgard）让你所有设备上的剪贴板保持一致：在一台设备上复制，在另一台上粘贴，并在任何一台上找到昨天复制的内容。可以把复制的内容或文件变成可分享的链接。你的复制内容端到端加密：服务端在你的设备之间转发它们，但无法读取。它运行在你自己的服务器上，只供你允许登录的人使用，支持 macOS、Linux 和 Windows，手机可通过网页使用。
 
 ## 工作方式
@@ -29,6 +31,26 @@ flowchart LR
 - **只有你能看到自己的剪贴板。** 所有人都通过 auth.latere.ai 登录，服务端只允许白名单上的人，每个人只能访问自己的剪贴板。
 
 [midgard 的工作方式](./docs/architecture.cn.md)有完整说明：什么保存在哪里、设备离线或服务端重启时会发生什么，以及服务端能看到什么。
+
+## 界面一览
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/images/mac-history-dark.png">
+  <img src="./docs/images/mac-history.png" width="100%" alt="Mac 应用的历史记录窗口：来自这台 Mac、一部 iPhone 和一台 Linux 台式机的复制内容，最新一条完整显示">
+</picture>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/images/mac-popover-copied-dark.png">
+    <img src="./docs/images/mac-popover-copied.png" height="440" alt="Mac 菜单栏中的 Midgard 窗口：最近的复制内容，可放回剪贴板">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/images/phone-copied-dark.jpg">
+    <img src="./docs/images/phone-copied.jpg" height="440" alt="iPhone 上的网页：剪贴板与历史记录，端到端加密">
+  </picture>
+</p>
+
+在 Mac 上，midgard 常驻菜单栏，它的窗口里有完整的历史记录。在手机或任何浏览器上，网页也能做到这些，并且像应用一样加密。
 
 ## 快速开始
 

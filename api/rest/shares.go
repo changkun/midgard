@@ -185,7 +185,7 @@ func ShareName(name string) (string, error) {
 		}
 	}
 	switch first, _, _ := strings.Cut(p, "/"); first {
-	case "api", "s", "ping", "shortcuts", "download", "icons":
+	case "api", "s", "ping", "shortcuts", "download", "icons", "images":
 		return "", fmt.Errorf("invalid name %q: %s/ is midgard's own", name, first)
 	}
 	return p, nil

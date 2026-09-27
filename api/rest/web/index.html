@@ -130,12 +130,16 @@ ul.items > li.more:hover { background: transparent; }
 .acts { display: flex; gap: 2px; opacity: .0; transition: opacity .15s; }
 ul.items > li:hover .acts, ul.items > li:focus-within .acts { opacity: 1; }
 @media (hover: none) { .acts { opacity: 1; } }
+@media (max-width: 380px) { #e2e { font-size: 0; gap: 0; } }
 @media (max-width: 600px) {
   ul.items > li { flex-wrap: wrap; }
   ul.items > li > .body { flex: 1 1 calc(100% - 52px); }
   ul.items > li > .acts { opacity: 1; width: 100%; padding-left: 50px; margin-top: -2px; }
   .who span { display: none; }
-  .bar-in { padding: 10px 16px; }
+  .bar-in { padding: 10px 16px; gap: 8px; }
+  /* a phone's width holds the logo, the pills and Sign out, not the name too */
+  .brand { font-size: 0; gap: 0; }
+  .bar .pill { font-size: 12px; padding: 4px 8px; }
   main { padding: 16px 12px 32px; }
   .card { padding: 16px; }
 }
@@ -190,7 +194,21 @@ body.front-page main { padding-top: 0; }
 .front .fine { font-size: 13px; color: rgba(224, 232, 255, .62); margin: 18px auto 0; }
 .front .alert { display: inline-block; font-size: 14px; color: #fff; background: rgba(220, 38, 38, .28); border: 1px solid rgba(248, 113, 113, .5);
   border-radius: 10px; padding: 8px 14px; margin: 0 auto 26px; }
-.features { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; max-width: 1020px; margin: -64px auto 0; }
+/* the hero: the Mac and an iPhone passing a copy (images/hero.svg), over
+   the mountains */
+.front .showcase { position: relative; z-index: 1; max-width: 1100px; margin: 60px auto 0; }
+.front .showcase img { display: block; width: 100%; height: auto; border-radius: 22px;
+  box-shadow: 0 50px 120px -24px rgba(2, 6, 30, .8), 0 0 0 1px rgba(255, 255, 255, .1); }
+/* the front page rises in as it loads, once */
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } }
+.front-in > *, .front .showcase { animation: rise .8s cubic-bezier(.2, .7, .2, 1) both; }
+.front-in > :nth-child(2) { animation-delay: .05s; }
+.front-in > :nth-child(3) { animation-delay: .1s; }
+.front-in > :nth-child(n+4) { animation-delay: .15s; }
+.front .showcase { animation-duration: 1.1s; animation-delay: .25s; }
+@media (prefers-reduced-motion: reduce) { .front-in > *, .front .showcase { animation: none; } }
+.features { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; max-width: 1100px; margin: -64px auto 0; }
+@media (max-width: 1060px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .feature { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 22px 22px 24px; }
 .feature .tile { width: 44px; height: 44px; border-radius: 12px; margin-bottom: 16px; }
 .feature .tile svg { width: 22px; height: 22px; }
@@ -199,6 +217,8 @@ body.front-page main { padding-top: 0; }
 @media (max-width: 760px) {
   .front { padding: 104px 20px 150px; }
   .front svg.logo { width: 92px; height: 92px; }
+  .front .showcase { margin-top: 40px; }
+  .front .showcase img { border-radius: 14px; }
   .features { grid-template-columns: minmax(0, 1fr); margin-top: -48px; }
 }
 @media (prefers-color-scheme: dark) { .front .ridge .far { opacity: .5; } }
@@ -219,6 +239,7 @@ footer a { color: var(--faint); }
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.2 19 6v5.3c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6l7-2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.2 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="16" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m7 9.5 3 2.5-3 2.5M12.5 15h4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-devices" viewBox="0 0 24 24"><rect x="2.5" y="5" width="12.5" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M1 17.5h15.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="17" y="8" width="5.5" height="11" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
   <symbol id="i-apple" viewBox="0 0 24 24"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></symbol>
   <symbol id="logo" viewBox="0 0 1024 1024">
@@ -257,6 +278,7 @@ footer a { color: var(--faint); }
       <p class="lede">Signing in from a browser is not set up on this server. The Midgard app and <code>mg</code> work as before.</p>
       {{if .MacApp}}<div class="cta">{{template "download" .}}</div>{{end}}
     </div>
+    {{template "showcase"}}
     {{template "ridge"}}
   </section>
 {{else if not .Email}}
@@ -265,7 +287,7 @@ footer a { color: var(--faint); }
     <div class="front-in">
       <svg class="logo"><use href="#logo"/></svg>
       <h1>Your clipboard, on all your devices</h1>
-      <p class="lede">Copy on one, paste on another, and find what you copied yesterday on any of them.</p>
+      <p class="lede">Copy on one, paste on another, and find what you copied yesterday on any of them. Encrypted end to end, on your own server.</p>
       {{if .AuthError}}<p class="alert" role="alert">Signing in failed ({{.AuthError}}). Please try again.</p>{{end}}
       <div class="cta">
         {{if .MacApp}}{{template "download" .}}{{end}}
@@ -273,23 +295,29 @@ footer a { color: var(--faint); }
       </div>
       {{if .MacApp}}<p class="fine mac-only">macOS 14 or later, on Apple silicon or Intel</p>{{end}}
     </div>
+    {{template "showcase"}}
     {{template "ridge"}}
   </section>
   <section class="features">
     <div class="feature">
       <div class="tile"><svg><use href="#i-shield"/></svg></div>
-      <h3>Your copies stay yours</h3>
-      <p>They live on your devices. This server passes them between them, and keeps none.</p>
+      <h3>Encrypted end to end</h3>
+      <p>Your devices share a key. This server passes your copies, cannot read them, and keeps none.</p>
     </div>
     <div class="feature">
       <div class="tile"><svg><use href="#i-devices"/></svg></div>
       <h3>Every device</h3>
-      <p>A Mac app in the menu bar, a daemon for Linux and Windows, Shortcuts on the iPhone, and this page.</p>
+      <p>A Mac app in the menu bar, a daemon for Linux and Windows, and this page on your phone’s Home Screen.</p>
     </div>
     <div class="feature">
       <div class="tile"><svg><use href="#i-clock"/></svg></div>
       <h3>One history</h3>
       <p>The same list, in the same order, on each of your devices, and links to share.</p>
+    </div>
+    <div class="feature">
+      <div class="tile"><svg><use href="#i-terminal"/></svg></div>
+      <h3>For scripts and agents</h3>
+      <p><code>mg</code> copies, pastes and reads your history, as text or JSON, with exit codes to rely on.</p>
     </div>
   </section>
 {{else if not .Allowed}}
@@ -1097,4 +1125,6 @@ footer a { color: var(--faint); }
 </html>
 {{define "download"}}<a class="button light mac-only" href="{{.MacApp}}" download><svg class="apple" aria-hidden="true"><use href="#i-apple"/></svg>Download for Mac</a>{{end}}
 {{define "stars"}}<svg class="stars" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="466" cy="64" r="0.7" opacity="0.35"/><circle cx="1182" cy="40" r="1.6" opacity="0.35"/><circle cx="1309" cy="92" r="0.7" opacity="0.80"/><circle cx="602" cy="103" r="1.6" opacity="0.80"/><circle cx="85" cy="243" r="0.9" opacity="0.95"/><circle cx="1364" cy="248" r="1.3" opacity="0.35"/><circle cx="1405" cy="20" r="0.9" opacity="0.65"/><circle cx="603" cy="232" r="1.6" opacity="0.65"/><circle cx="806" cy="293" r="0.7" opacity="0.95"/><circle cx="822" cy="80" r="0.7" opacity="0.95"/><circle cx="1025" cy="242" r="1.6" opacity="0.50"/><circle cx="714" cy="228" r="1.1" opacity="0.80"/><circle cx="843" cy="194" r="1.1" opacity="0.50"/><circle cx="1143" cy="300" r="0.9" opacity="0.35"/><circle cx="827" cy="225" r="1.1" opacity="0.80"/><circle cx="414" cy="421" r="0.7" opacity="0.95"/><circle cx="602" cy="325" r="0.9" opacity="0.80"/><circle cx="607" cy="413" r="0.7" opacity="0.95"/><circle cx="825" cy="376" r="1.1" opacity="0.65"/><circle cx="1001" cy="255" r="1.6" opacity="0.80"/><circle cx="99" cy="40" r="1.1" opacity="0.80"/><circle cx="1003" cy="27" r="1.1" opacity="0.95"/><circle cx="1430" cy="353" r="1.1" opacity="0.80"/><circle cx="1277" cy="149" r="1.3" opacity="0.65"/><circle cx="241" cy="50" r="0.7" opacity="0.50"/><circle cx="1106" cy="55" r="0.9" opacity="0.80"/><circle cx="562" cy="374" r="0.7" opacity="0.50"/><circle cx="646" cy="236" r="0.9" opacity="0.80"/><circle cx="1244" cy="119" r="1.3" opacity="0.65"/><circle cx="983" cy="163" r="0.9" opacity="0.50"/><circle cx="119" cy="65" r="0.9" opacity="0.35"/><circle cx="698" cy="253" r="1.1" opacity="0.65"/><circle cx="5" cy="180" r="1.1" opacity="0.95"/><circle cx="815" cy="409" r="1.6" opacity="0.95"/><circle cx="943" cy="318" r="1.3" opacity="0.95"/><circle cx="565" cy="171" r="0.7" opacity="0.80"/><circle cx="913" cy="26" r="0.7" opacity="0.50"/><circle cx="634" cy="47" r="1.6" opacity="0.35"/><circle cx="147" cy="243" r="1.6" opacity="0.35"/><circle cx="1366" cy="263" r="0.7" opacity="0.50"/><circle cx="884" cy="63" r="1.1" opacity="0.65"/><circle cx="867" cy="203" r="0.7" opacity="0.80"/><circle cx="1430" cy="200" r="1.3" opacity="0.65"/><circle cx="123" cy="43" r="1.1" opacity="0.65"/><circle cx="689" cy="297" r="1.6" opacity="0.35"/><circle cx="295" cy="409" r="1.1" opacity="0.50"/></svg>{{end}}
+{{define "showcase"}}<figure class="showcase"><img src="/midgard/images/hero.svg" width="1600" height="900" decoding="async"
+  alt="A flight’s details, copied on a Mac, show up at the top of Midgard’s menu bar window, pass the server sealed, and arrive on an iPhone"></figure>{{end}}
 {{define "ridge"}}<svg class="ridge" viewBox="0 0 1440 150" preserveAspectRatio="none" aria-hidden="true"><path class="far" d="M0 150V92l150-52 120 38 170-62 150 70 130-34 160 58 170-78 140 48 110-30 140 40v60Z"/><path d="M0 150v-34l210-58 150 54 190-76 180 88 150-40 180 56 160-62 220 46v26Z"/></svg>{{end}}

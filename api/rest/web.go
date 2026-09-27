@@ -205,13 +205,30 @@ var iconTypes = map[string]string{
 }
 
 // Icon hands out one of the page's icons.
-func (m *Midgard) Icon(c *gin.Context) {
-	typ, ok := iconTypes[c.Param("name")]
+func (m *Midgard) Icon(c *gin.Context) { embedded(c, iconFiles, "web/icons/", iconTypes) }
+
+// The front page's pictures: hero.svg, the Mac and an iPhone passing a copy
+// (docs/images/hero.py draws it, from the app's and the page's screenshots).
+//
+//go:embed web/images/*.svg
+var imageFiles embed.FS
+
+var imageTypes = map[string]string{
+	"hero.svg": "image/svg+xml",
+}
+
+// Image hands out one of the front page's pictures.
+func (m *Midgard) Image(c *gin.Context) { embedded(c, imageFiles, "web/images/", imageTypes) }
+
+// embedded hands out the file of fsys under dir that the request names, if
+// types knows it, to anyone, for a day.
+func embedded(c *gin.Context, fsys embed.FS, dir string, types map[string]string) {
+	typ, ok := types[c.Param("name")]
 	if !ok {
 		c.Status(http.StatusNotFound)
 		return
 	}
-	b, err := iconFiles.ReadFile("web/icons/" + c.Param("name"))
+	b, err := fsys.ReadFile(dir + c.Param("name"))
 	if err != nil {
 		c.Status(http.StatusNotFound)
 		return

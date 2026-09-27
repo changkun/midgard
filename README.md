@@ -2,6 +2,8 @@
 
 English | [中文](./README.cn.md)
 
+<p align="center"><img src="./api/rest/web/images/hero.svg" width="100%" alt="A flight's details, copied on a Mac, show up at the top of Midgard's menu bar window, pass the server sealed, and arrive on an iPhone"></p>
+
 midgard keeps your clipboard the same on all your devices: copy on one,
 paste on another, and find what you copied yesterday on any of them. Turn a
 copy or a file into a link to share. Your copies are encrypted end to end:
@@ -44,6 +46,28 @@ flowchart LR
 [How midgard works](./docs/architecture.md) explains it in full: what is kept
 where, what happens while a device is away or the server restarts, and what
 the server can see.
+
+## What it looks like
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/images/mac-history-dark.png">
+  <img src="./docs/images/mac-history.png" width="100%" alt="The Mac app's history window: copies from this Mac, an iPhone and a Linux desktop, and the newest shown whole">
+</picture>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/images/mac-popover-copied-dark.png">
+    <img src="./docs/images/mac-popover-copied.png" height="440" alt="Midgard's window in the Mac's menu bar: recent copies to put back">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/images/phone-copied-dark.jpg">
+    <img src="./docs/images/phone-copied.jpg" height="440" alt="The web page on an iPhone: the clipboard and the history, encrypted">
+  </picture>
+</p>
+
+On a Mac, midgard lives in the menu bar, and its window has the whole
+history. On a phone, or in any browser, the web page does the same, and
+encrypts as the apps do.
 
 ## Quick start
 
