@@ -191,10 +191,18 @@ struct Setup: View {
             Text("Welcome to Midgard").font(.title3.weight(.semibold))
             Text("Your clipboard, and its history, on all your devices.")
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            TextField("Your Midgard server", text: $server)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit { model.setServer(server) }
-                .frame(maxWidth: 260)
+            // a label and a line that stay in sight, as a field's own label
+            // shows only while it is empty, and this one starts filled
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Your Midgard server").font(.callout.weight(.semibold))
+                TextField("example.com", text: $server)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { model.setServer(server) }
+                Text("The server your devices sync through: the address whoever runs it gave you. Next, you sign in, in your browser.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: 280)
             Button("Continue") { model.setServer(server) }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
