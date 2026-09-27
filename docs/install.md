@@ -179,6 +179,12 @@ disk images of v0.2.0 and earlier are not: the first time you open one of
 those, the Mac refuses, and in System Settings, under Privacy & Security,
 you click **Open Anyway**.
 
+From v0.4.0 it keeps itself up to date: it looks for a new release once a
+day, and asks before it installs one. **Check for Updates…** is in its gear
+menu, and in Settings, under About, beside the switch for the daily check.
+An update comes from the project's releases, signed, whichever server you
+use. A version before v0.4.0 cannot update itself: download v0.4.0 once.
+
 The first time, it asks for your server and signs you in, in the browser.
 Its menu then has your recent copies, to put one back on the clipboard; the
 history, in a window; **Share Clipboard at a Link**, also on
