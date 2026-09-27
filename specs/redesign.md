@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12); §11, end-to-end encryption, designed 2026-09-26 |
+| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12); §11, end-to-end encryption, designed 2026-09-26 and built 2026-09-27 |
 | **Decided** | 2026-09-26, with changkun: clipboards belong to individuals, behind a hard barrier; history is shared across one's own devices; login through auth.latere.ai; code2img and the GitHub backup go; the API stays `/v1` and changes in place |
 | **Revised** | 2026-09-26, with changkun: the server keeps no copy of anyone's clipboard, only relays and orders them; history lives on the devices, in one order on all of them; a tray app is what people use, `mg` stays for agents and scripts; end-to-end encryption is a must, after this |
 | **Builds on** | #35–#53 (Phase 0 and 1: safe, and easy to run) |
@@ -456,4 +456,8 @@ Each step is its own PR, with its tests, merged when green.
     the `kid`, refuses what is not sealed, and keeps the pairing mailbox;
     shares made by the client; `mg pair` and exit code 6; pairing in the Mac
     app; the web page with WebCrypto, and on an iPhone's Home Screen; the
-    Shortcuts bridge; the end-to-end harness; the docs.
+    Shortcuts bridge; the end-to-end harness; the docs. *Done: 97fb467 and
+    2699027 (internal/e2e, wire), 252c1d3 (the store), a7b4614 (the device),
+    6f18eb3 (the server), b30d4fb (mg), ce3ed27 (the Mac app), 358ea7c (the
+    web page), 877c055 (the Shortcuts bridge); checked end to end with two
+    daemons and Chromium, and no copy in the clear on the server's disk.*

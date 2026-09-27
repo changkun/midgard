@@ -133,10 +133,26 @@ Your principal id is the owner the server records when you first sign in.
 Hidden files, such as the old git backup's `.git`, stay behind. Running it
 again imports only what is new.
 
+### Upgrading to Encryption
+
+From this version on, copies are encrypted with a key your devices share,
+and the server cannot read them ([How midgard works](./architecture.md#encryption-what-the-server-can-see)).
+After you upgrade the server:
+
+- the first device that connects with this version makes your key; each
+  other device pairs with it once ([Pairing a Device](./usage.md#pairing-a-device));
+- an older app or daemon is turned away, and says to update; update it;
+- the iPhone Shortcuts need adding again, from the web page, and reach your
+  copies only through a Mac you let them in on, in the clear.
+
+Your devices keep their histories as they are.
+
 ## Set Up Your Devices
 
 Every device signs in once, through auth.latere.ai, and must be on the
-server's allowlist.
+server's allowlist. The first to connect makes your key, which encrypts your
+copies; pair each other one with it once, with a code:
+[Pairing a Device](./usage.md#pairing-a-device).
 
 ### A Mac: the Midgard App
 

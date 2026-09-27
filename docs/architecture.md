@@ -4,7 +4,8 @@ English | [中文](./architecture.cn.md)
 
 midgard keeps your clipboard the same on all your devices. What you copy
 stays on your devices: the server passes it from one device to the others,
-and keeps none of it.
+keeps none of it, and cannot read it, as your devices encrypt it with a key
+they share.
 
 ```mermaid
 flowchart LR
@@ -14,17 +15,19 @@ flowchart LR
     end
     subgraph other["Other ways in"]
         W["Web page · phone"]
-        C["mg · agents · Shortcuts"]
+        C["mg · agents"]
+        P["iPhone Shortcuts"]
     end
-    subgraph server["Your midgard server: keeps no copies"]
-        R["Relay<br/>numbers each copy, holds it<br/>in memory until each of<br/>your devices has it"]
+    subgraph server["Your midgard server: keeps no copies, reads none"]
+        R["Relay<br/>numbers each sealed copy,<br/>holds it in memory until<br/>each of your devices has it"]
         S[("Database<br/>devices · shares · tokens")]
     end
     L["auth.latere.ai"]
-    A <-->|websocket| R
-    B <-->|websocket| R
-    W <-->|https| R
-    C <-->|https| R
+    A <-->|sealed| R
+    B <-->|sealed| R
+    W <-->|sealed| R
+    C <-->|sealed| R
+    P -.->|in the clear, through a<br/>bridge you switch on| R
     R --- S
     R -.->|checks sign-in| L
 ```
@@ -34,7 +37,8 @@ flowchart LR
 | | On your devices | On the server | In your browser |
 |---|---|---|---|
 | Your clipboard history | yes, on each device | no | no |
-| A copy on its way to a device that is off | | in memory only, until it arrives | what the web page sent, until it arrives |
+| A copy on its way to a device that is off | | in memory only, sealed, until it arrives | what the web page sent, until it arrives |
+| Your key | on each paired device, beside its sign-in | never; only its id | in the browser you paired, where it cannot be read out |
 | Your devices, and how far each has synced | | yes | |
 | Shares (links you published) | | yes, until they expire or you revoke them | |
 | App tokens | | a hash of each | |
@@ -123,10 +127,16 @@ same way. It does not change what is on anyone's clipboard right now.
 
 ## The web page, the phone, and mg
 
-The web page, iOS Shortcuts and `mg` do not keep a history. What they read
-comes from one of your devices that is online; when none is, the page says
-so. What they copy goes to your devices like a copy made on one of them. `mg`
-is also how agents and scripts use midgard.
+The web page and `mg` do not keep a history. What they read comes from one
+of your devices that is online, sealed, and they open it with your key; when
+no device is online, the page says so. What they copy they seal, and it goes
+to your devices like a copy made on one of them. `mg` is also how agents and
+scripts use midgard.
+
+On an iPhone, the web page does it all: pair it by scanning a QR your Mac
+shows, and add it to the Home Screen. iPhone Shortcuts cannot encrypt, so
+they reach your copies only through a Mac you switch on as their bridge, in
+the clear (below).
 
 ## Signing in
 
@@ -135,9 +145,49 @@ with `mg login` once, the web page in the browser, and a Shortcut with an app
 token you issue on the web page. The server lets in only the people on its
 allowlist, and each reaches only their own clipboard.
 
-## What the server can see
+## Encryption: what the server can see
 
-The server does not keep your copies, but it does see each one while it
-passes it on. End-to-end encryption, where your devices share a key and the
-server passes on only what it cannot read, is next
-([specs/redesign.md](../specs/redesign.md) §11).
+Your devices share one key. Each seals what it copies with it before it
+leaves the device, and opens what arrives; the server passes on what it
+cannot read. The first of your devices to connect makes the key, and you give
+it to each other one by pairing:
+
+```mermaid
+sequenceDiagram
+    participant M as Your Mac (has the key)
+    participant S as Server
+    participant N as A new device
+    M->>M: a pairing code, and the key sealed under it
+    M->>S: the sealed key, in a mailbox named by a hash of the code
+    Note over M,N: you type the code, or scan its QR
+    N->>S: what waits in that mailbox?
+    S->>N: the sealed key, once
+    N->>N: open it with the code: it has the key
+```
+
+The code is 128 random bits, too many for the server to guess, and it works
+once, for ten minutes. The Mac app shows one, with a QR, and `mg pair` does;
+a browser joins with one, or by the QR's link, whose code never reaches the
+server. A browser keeps the key where nothing can read it out, so it pairs
+no other device.
+
+**What the server still sees** of a copy: when it came, from which of your
+devices, whether it is text or an image, and its size; and which of your
+devices are online. It can delay, drop or replay what it has seen, as it
+numbers everything, but not read a copy, nor make one your devices accept.
+
+**Where the guarantee has limits:**
+
+- **The web page** comes from your server: a key in a browser is as safe as
+  the JavaScript the server sends, and as the rest of the site it shares an
+  address with. The Mac app, `mg daemon` and `mg` are safe whatever the
+  server sends.
+- **Shares** are published in the clear, as a link is for people without
+  your key.
+- **The Shortcuts bridge**, while you have it on: a Mac you switch on for it,
+  or a machine with `plain_bridge: true` in `mg daemon`'s `config.yml`, hands
+  your server its newest copy in the clear, for Get from Midgard, and seals
+  in what Send to Midgard sends. Your server can read both, and could send
+  copies of its own that way.
+
+The whole design is in [specs/redesign.md](../specs/redesign.md) §11.

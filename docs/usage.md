@@ -4,7 +4,8 @@ English | [中文](./usage.cn.md)
 
 Copy on one of your devices, and paste on any other. Every copy goes into
 your history, the same on every device, and any copy or file can become a
-link to share. How to install each piece is in [Installing midgard](./install.md).
+link to share. Your devices encrypt your copies with a key they share: your
+server passes them, and cannot read them. How to install each piece is in [Installing midgard](./install.md).
 
 ## On a Mac: the Midgard App
 
@@ -20,7 +21,8 @@ has:
   your clipboard;
 - **Pause Syncing**: Midgard stops reading and writing the Mac's clipboard
   until you resume;
-- **Start at Login**, and **Settings…** for the server and your sign-in.
+- **Start at Login**, and **Settings…** for the server, your sign-in, and
+  encryption: **Pair Another Device** shows a code, and a QR for a phone.
 
 ## On Linux and Windows: `mg daemon`
 
@@ -32,24 +34,68 @@ at a link. `mg history` and the web page show your history.
 ## In a Browser
 
 Open `https://your.domain/midgard/` and sign in, on any computer or phone.
-You see your clipboard and send text to your devices; go through your
-history; see what is on its way to devices that are off, and your devices;
-share a file or your clipboard at a link; and issue app tokens.
+The first time, pair the browser: **Pair this browser** takes a code (see
+[Pairing a Device](#pairing-a-device)). Then you see your clipboard and send
+text and images to your devices; go through your history; see what is on its
+way to devices that are off, and your devices; share a file or your clipboard
+at a link; and issue app tokens.
 
-## On an iPhone: Shortcuts
+## On an iPhone
 
-Two Shortcuts sync the iPhone's clipboard, as an iPhone lets no app watch
-it:
+**The web page**, encrypted. On your Mac, in the Midgard app, open Settings →
+Encryption → **Pair Another Device**, and scan its QR with the iPhone's
+camera: the web page opens in Safari, paired, and signs you in if it must.
+Then Share → **Add to Home Screen**, to open it in a tap: copy your clipboard
+to the iPhone, or send the iPhone's to your devices.
+
+**Shortcuts**, unencrypted, if you want them. An iPhone lets no app watch its
+clipboard, and Shortcuts cannot encrypt, so two Shortcuts reach your copies
+through a Mac you let them in on, in the clear:
 
 - **Get from Midgard** puts your newest copy on the iPhone's clipboard, text
   or an image.
 - **Send to Midgard** sends what you share to it, from any app's share
   sheet, or else the clipboard, to your devices.
 
-To add them, open the web page on the iPhone, and follow **Your iPhone**:
-issue a token for it, add the two Shortcuts, and paste the token when
-Shortcuts asks. Put them on the Home Screen, or on Back Tap under
-Accessibility, to run them in a tap.
+On that Mac, switch on Settings → Encryption → **Let iPhone Shortcuts in,
+unencrypted**; or, on a machine with `mg daemon`, put `plain_bridge: true`
+in its `config.yml`. Your server can then read what passes that way, and
+could send copies of its own. Then open the web page on the iPhone, and under
+**Your iPhone**, **Or Shortcuts, unencrypted**: issue a token for it, add the
+two Shortcuts, and paste the token when Shortcuts asks. Put them on the Home
+Screen, or on Back Tap under Accessibility, to run them in a tap.
+
+Tasker on Android can do the same: `GET` and `POST`
+`/midgard/api/v1/plain/clipboard`, with the token, and `{"type": "text",
+"data": "...", "daemon_id": "pixel"}` to post, where `daemon_id` names the
+device the copy shows as coming from.
+
+## Pairing a Device
+
+Your copies are encrypted with a key your devices share. The first of them
+to connect makes it; each other device gets it by pairing with one that has
+it, once:
+
+1. On a device that has the key, show a code: in the Midgard app, Settings →
+   Encryption → **Pair Another Device**, which shows a QR too; or
+   `mg pair`.
+2. On the new one, give the code: the Midgard app asks for it; `mg pair
+   <code>`; the web page's **Pair this browser**; or scan the QR with a phone.
+
+A code works once, for ten minutes. The server keeps the key, sealed under
+the code, only until the new device takes it, and cannot open it: it never
+sees the code. A browser joins, but shows no codes, as it keeps the key where
+nothing can read it out.
+
+```sh
+$ mg pair                  # on a machine that has the key
+7K2M-9QXR-A4BC-8DEF-GH1J-KMNP-QR
+$ mg pair 7K2M-9QXR-A4BC-8DEF-GH1J-KMNP-QR   # on the new one
+```
+
+A device without the key syncs nothing until it pairs; `mg` exits with 6 and
+says so. How it works, and where it has limits, is in
+[How midgard works](./architecture.md#encryption-what-the-server-can-see).
 
 ## Your History
 
@@ -130,7 +176,9 @@ while you are on the server's allowlist.
 
 ## `mg` for Scripts and Agents
 
-`mg` is also how a script or an agent uses midgard:
+`mg` is also how a script or an agent uses midgard. On a machine that is not
+one of your devices, pair it first, with `mg pair <code>`: it seals and opens
+your copies with the key, as your devices do.
 
 ```sh
 $ mg copy hello world          # to the clipboard of all your devices

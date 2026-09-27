@@ -4,9 +4,10 @@ English | [中文](./README.cn.md)
 
 midgard keeps your clipboard the same on all your devices: copy on one,
 paste on another, and find what you copied yesterday on any of them. Turn a
-copy or a file into a link to share. It runs on a server you own, for the
-people you let sign in, on macOS, Linux and Windows, and on phones through
-the web page and iOS Shortcuts.
+copy or a file into a link to share. Your copies are encrypted end to end:
+the server passes them between your devices and cannot read them. It runs on
+a server you own, for the people you let sign in, on macOS, Linux and
+Windows, and on phones through the web page.
 
 ## How it works
 
@@ -18,13 +19,13 @@ flowchart LR
     end
     subgraph other["Other ways in"]
         W["Web page · phone"]
-        C["mg · agents · Shortcuts"]
+        C["mg · agents"]
     end
-    R["Your midgard server<br/>relays and orders copies,<br/>keeps none of them"]
-    A <-->|websocket| R
-    B <-->|websocket| R
-    W <-->|https| R
-    C <-->|https| R
+    R["Your midgard server<br/>relays and orders sealed copies,<br/>keeps none, reads none"]
+    A <-->|sealed| R
+    B <-->|sealed| R
+    W <-->|sealed| R
+    C <-->|sealed| R
 ```
 
 - **Your copies stay on your devices.** Each device keeps the history, the
@@ -33,6 +34,9 @@ flowchart LR
   devices to the others, numbering them so every device agrees on the order,
   and holds a copy in memory only until each device has it: one that was off
   gets it when it comes back.
+- **The server cannot read them.** Your devices encrypt every copy with a
+  key they share, which the first of them makes; you give it to each other
+  one by pairing, with a code or a QR.
 - **Only you see your clipboard.** Everyone signs in through auth.latere.ai,
   the server lets in the people on its allowlist, and each reaches only their
   own.
@@ -81,8 +85,12 @@ server status: OK
 daemon status: OK
 ```
 
-A device that cannot open a browser to sign in, and an iOS Shortcut, can use
-an app token instead: `mg server token add <name> --owner <you>` on the server
+If another of your devices connected first, pair this one with it: show a
+code on that one (the Mac app's Settings, Encryption, or `mg pair`), then
+`mg pair <code>` here. See [Pairing a Device](./docs/usage.md#pairing-a-device).
+
+A device that cannot open a browser to sign in can use an app token
+instead: `mg server token add <name> --owner <you>` on the server
 (see [Usage](./docs/usage.md)).
 
 Now copy something on one device and paste it on another. `mg share` turns the
