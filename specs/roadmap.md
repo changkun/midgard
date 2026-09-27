@@ -297,6 +297,35 @@ Play (a one-time fee), or both.
 
 *Open:* the engine; F-Droid, Play, or both. *Size: large.*
 
+### 3.4 Keyboard first, as Raycast is
+
+A friend setting up the Mac app, on 2026-09-27, pointed at Raycast's
+Clipboard History as the better one to use. What it does better is speed,
+and midgard can take that over, while Raycast has none of what midgard is
+for: its history stays on one Mac, with no other devices, no encryption
+between them, no phone and no agents.
+
+- **A hotkey that opens the history where one types.** Typing filters it,
+  the arrow keys move, and Return pastes into the app one came from: the
+  copy goes on the clipboard, and ⌘V is sent to that app. Sending ⌘V takes
+  the Accessibility permission. Without it, Return copies, and says to
+  press ⌘V. ⌘1 to ⌘9 paste the newest nine.
+- **Rows that say more.** Each copy shows the app it was copied in, with
+  that app's icon, an image its size ("Image, 468 × 258"), and a link its
+  site's icon; a menu filters by type. The app is recorded on the device
+  that makes the copy, and travels sealed inside it, not in the envelope
+  the server reads (redesign §11), as which app one copies from is one's
+  own business.
+- **A detail pane** with the source app, the type, an image's size, the
+  bytes, and when.
+- **A Raycast extension**, for those who live in Raycast: midgard's history
+  in Raycast's own list, through `mg history --json`, `mg paste` and
+  `mg copy`, so they get the history from all their devices where they
+  already look.
+
+*Open:* the hotkey. ⌃⌥S shares already; ⌃⌥V would pair with it.
+*Size: medium for the hotkey and the rows; small for the extension.*
+
 ## 4. Proposed
 
 ### 4.1 Held copies survive a restart
@@ -364,7 +393,9 @@ A new version is a manual download. Notarizing needs changkun's Mac, so each
 release's disk image is built there and put in place of the one CI built.
 
 - **Updates**: Sparkle 2, with an EdDSA-signed appcast and *Check for
-  Updates* in the menu, from the GitHub releases.
+  Updates* in the menu, from the GitHub releases. *Done, in v0.4.0
+  (f68fccf): the key is in changkun's Keychain, and each release attaches
+  appcast.xml beside its disk image (apple/appcast.sh).*
 - **CI**: the Developer ID certificate and an App Store Connect API key, as
   GitHub secrets, let `release.yml`'s `mac_app` job sign and notarize. The
   API key is preferred over the app-specific password. changkun adds the
@@ -409,23 +440,23 @@ Proposed:
 1. Held copies survive a restart (§4.1). It is small, and files and phones
    wait on it.
 2. Kinds and addresses in the wire (§2.1). Everything after rides on them.
-3. Notarization in CI (§4.4), which ends a manual step in each release.
-4. Formats on the Mac (§3.1).
-5. A new key by re-pairing (§4.2a), before any phone is a device.
-6. Files, and sending one to a device (§3.1, §2.2).
-7. Handoff: links and tabs to a device, and the browser extension (§2.2).
-8. The iPhone app (§3.2), with capabilities (§2.1), and Sparkle for the Mac
-   alongside (§4.4).
-9. The Android app (§3.3), with its notifications on the computer (§2.2).
-10. Agents: tell, ask and approve (§2.2), once phones can show and answer.
-11. Windows and Linux in the tray (§4.3).
+3. Keyboard first on the Mac (§3.4): the hotkey, the rows, the extension.
+4. Notarization in CI (§4.4), which ends a manual step in each release.
+5. Formats on the Mac (§3.1).
+6. A new key by re-pairing (§4.2a), before any phone is a device.
+7. Files, and sending one to a device (§3.1, §2.2).
+8. Handoff: links and tabs to a device, and the browser extension (§2.2).
+9. The iPhone app (§3.2), with capabilities (§2.1).
+10. The Android app (§3.3), with its notifications on the computer (§2.2).
+11. Agents: tell, ask and approve (§2.2), once phones can show and answer.
+12. Windows and Linux in the tray (§4.3).
 
 Encrypted shares (§4.5), rules (§4.6), OSC 52 and snippets (§2.2) fit
 anywhere. Beyond one person, and devices passing bytes directly (§2.2), come
 after these, as each rests on the ones before.
 
 1.0 is changkun's call. This proposes it once phones are devices, files pass,
-and a link opens on the device it was sent to (steps 1–9).
+and a link opens on the device it was sent to (steps 1–10).
 
 ## 6. Decisions for changkun
 
