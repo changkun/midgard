@@ -125,6 +125,14 @@ var migrations = []string{
 		forgotten INTEGER NOT NULL DEFAULT 0,
 		PRIMARY KEY (owner, id)
 	)`,
+	// 6: the id of each person's key (specs/redesign.md §11), never the
+	// key: set once, by their first device to seal, so a device with
+	// another is told to pair.
+	`CREATE TABLE keys (
+		owner   TEXT    PRIMARY KEY,
+		kid     TEXT    NOT NULL,
+		created INTEGER NOT NULL
+	)`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {

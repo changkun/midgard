@@ -87,3 +87,22 @@ func TestDevices(t *testing.T) {
 		t.Fatalf("a1 after connecting again: %+v", ds[0])
 	}
 }
+
+// TestKid: a person's key id is set once, by the first; another cannot take
+// its place, and each person has their own.
+func TestKid(t *testing.T) {
+	s, _ := open(t)
+	ctx := context.Background()
+	if kid, err := s.Kid(ctx, "alice"); err != nil || kid != "" {
+		t.Fatalf("Kid before one = %q, %v", kid, err)
+	}
+	if kid, err := s.SetKid(ctx, "alice", "aaaa"); err != nil || kid != "aaaa" {
+		t.Fatalf("SetKid = %q, %v", kid, err)
+	}
+	if kid, err := s.SetKid(ctx, "alice", "bbbb"); err != nil || kid != "aaaa" {
+		t.Fatalf("a second SetKid = %q, %v, want the first, aaaa", kid, err)
+	}
+	if kid, _ := s.Kid(ctx, "bob"); kid != "" {
+		t.Errorf("bob has alice's key id %q", kid)
+	}
+}

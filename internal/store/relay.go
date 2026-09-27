@@ -101,3 +101,23 @@ func (s *Store) ForgetDevice(ctx context.Context, owner, id string) error {
 	}
 	return nil
 }
+
+// Kid is the id of owner's key, "" while they have none (§11).
+func (s *Store) Kid(ctx context.Context, owner string) (string, error) {
+	var kid string
+	err := s.db.QueryRowContext(ctx, `SELECT kid FROM keys WHERE owner = ?`, owner).Scan(&kid)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	return kid, err
+}
+
+// SetKid sets owner's key id, unless one is set: two devices making a key at
+// once, the first wins. It returns the key id owner has now.
+func (s *Store) SetKid(ctx context.Context, owner, kid string) (string, error) {
+	if _, err := s.db.ExecContext(ctx, `INSERT INTO keys (owner, kid, created) VALUES (?, ?, ?) ON CONFLICT (owner) DO NOTHING`,
+		owner, kid, time.Now().UnixMilli()); err != nil {
+		return "", err
+	}
+	return s.Kid(ctx, owner)
+}
