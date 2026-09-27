@@ -3,11 +3,16 @@
 | | |
 |---|---|
 | **Status** | Proposed, 2026-09-27. Nothing here is decided until its section says so |
-| **Decided** | 2026-09-27, with changkun: the release with end-to-end encryption is v0.3.0, not 1.0, since Android, iOS, and more than text and images are still to come |
+| **Decided** | 2026-09-27, with changkun: the release with end-to-end encryption is v0.3.0, not 1.0, since Android, iOS, and more than text and images are still to come. midgard is about continuity between one's devices, and the clipboard is the first thing it carries, not the last |
 | **Builds on** | [redesign.md](./redesign.md), built through its §12 |
 
-This records what changkun asked for next (§2) and what else the work so far
-suggests (§3), in the order proposed (§4), with the decisions each needs (§5).
+This records:
+
+- what midgard is becoming, beyond a clipboard (§2);
+- what changkun asked for next (§3);
+- what else the work so far suggests (§4);
+- the order proposed (§5), and the decisions each part needs (§6).
+
 Each section goes as far as a decision, not as far as an implementation.
 
 ## 1. Where v0.3.0 leaves us
@@ -30,9 +35,135 @@ end to end (redesign §11). Six limits shape everything below:
 - **The iPhone's Shortcuts and Tasker** reach an encrypted clipboard only
   through the bridge, in the clear.
 
-## 2. Asked for
+## 2. Beyond the clipboard: continuity
 
-### 2.1 More than text and images
+What midgard has built is not really a clipboard. It is five things a
+person's devices share, and the clipboard is one use of them:
+
+- **A log**: one ordered history of events per person. Every device keeps it,
+  and applies it in the same order (redesign §6).
+- **Presence**: which of the person's devices are online, and when each was
+  last seen.
+- **Reach**: the server can ask an online device for something (a copy, a
+  preview, the history) and pass the answer on.
+- **A key**: only the person's devices can read what passes (redesign §11),
+  and pairing gives the key to a new one.
+- **Shares**: a way out, to people without the key.
+
+Continuity is what these make possible: what you do on one device carries to
+the others. Apple does this between Apple devices. midgard can do it between
+any devices, on a server of one's own, end to end encrypted, and for the
+agents one runs as well as for oneself.
+
+### 2.1 What the core needs
+
+Three generalizations, each small in the wire, let what follows ride on the
+same log.
+
+**Kinds.** An event is a copy today. It becomes one of several kinds: a copy,
+a file, a link, a note, a notification, a request. Each kind has its own
+handling on a device, and its own durability:
+
+- *passing*: presence, or ringing a phone; never held;
+- *held until delivered*: a copy today;
+- *kept on devices*: the history;
+- *published*: a share.
+
+**Addresses.** An event goes to all of a person's devices today. It may also
+go to:
+
+- one device: "open this on my phone";
+- the device the person is using now, which presence can tell;
+- by explicit sharing, another person (below).
+
+**Capabilities.** A device says in its hello what it can do: show a
+notification, open a link, take a photo, ring, answer an agent. Clients offer
+only what some device can do.
+
+### 2.2 What it opens
+
+**Handoff.** Send a tab, a link, a document, or a place in one (a page, a
+moment in a video) to a device, and it opens there: *Open on My Phone* from
+the browser, *Continue on My Mac* from the phone. A browser extension for
+Chrome, Firefox and Safari, holding the key as the web page does, sends tabs
+and receives them, and offers the history wherever one types.
+
+**The phone as part of the computer.**
+
+- On Android, the phone's notifications show on the computer. A one-time code
+  in one is a click from the clipboard. Android lets an app the person allows
+  read notifications; iOS lets none.
+- A photo taken on the phone lands on the Mac's clipboard, or where its
+  cursor is, as Continuity Camera does between Apple devices.
+- Ring a device to find it, see its battery, and lock a lost one, with §4.2's
+  new key.
+
+**Files as a drop.** §3.1's files, addressed to one device, work like
+AirDrop, across platforms.
+
+**Everywhere text goes.**
+
+- Over SSH, a terminal's OSC 52 copy, from tmux or vim on a server, reaches
+  the person's clipboard through `mg`, and `mg paste` brings a copy back.
+- Snippets: copies pinned beyond the history's bounds, and text one types
+  often.
+
+**Agents.** `mg` already lets an agent copy, paste and read the history. With
+kinds, addresses and capabilities, midgard becomes how an agent reaches its
+person, on whatever device they hold:
+
+- **Tell**: an agent's result, or its question, as a notification on the
+  device in use, sealed, so the server that relays it cannot read it.
+- **Ask and approve**: an agent asks for a yes, a choice or a code, and waits
+  while the person answers on their phone. It is how one approves what an
+  agent may not do alone.
+- **Context**: with the person's leave, an agent reads what they just copied,
+  or the tab they had open, on any of their devices.
+- **Tools on a device**: an agent on one machine uses what another has, a
+  phone's camera or a desktop's files. Each device must allow it, per agent,
+  and shows what it did.
+
+This is where midgard differs most from what exists: continuity for the
+agents one runs, across all of one's devices, end to end encrypted, on one's
+own server.
+
+**Beyond one person**, by explicit sharing only, as the hard barrier stays
+(redesign §5):
+
+- **Send to a person**: a copy or a file, to someone's devices, sealed to their
+  key. So people need public keys, which the key pairs of §4.2(b) give.
+- **Shared spaces**: a household's or a team's clipboard, snippets or drop,
+  with a key of its own. A group's key is best kept by MLS (RFC 9420), the
+  standard for keys as people join and leave.
+
+**Local first.** Devices on one network pass bytes directly, finding each
+other by mDNS, encrypted as always. The server is where devices meet: it
+orders the log and holds what waits, and not every byte has to pass through
+it. This matters most for files.
+
+### 2.3 What stays
+
+- **End to end.** The server reads no kind of event, except what a person
+  publishes (shares) or switches on in the clear (the bridge).
+- **The hard barrier.** Nothing crosses between people but what one sends or
+  shares on purpose.
+- **Consent to act.** Anything that acts on a device (opening, ringing,
+  running, reading) does so only if that device allows it, and says it did.
+- **A small core.** New things are kinds on the log, not services beside it.
+
+### 2.4 What it changes below
+
+- The order (§5) gains a step, early: kinds and addresses in the wire, right
+  after held copies survive a restart (§4.1). Files, handoff, notifications
+  and agents all ride on them.
+- Capabilities come with the first device that has something to offer, the
+  phone apps.
+- The phone apps (§3.2, §3.3) become more than a clipboard: the device that
+  rings, takes the photo, and shows what an agent asks.
+
+## 3. Asked for
+
+### 3.1 More than text and images
 
 A copy on a computer is rarely one thing:
 
@@ -70,7 +201,7 @@ not as bytes in a frame.
 
 - **Too big for a frame or for memory**, its bytes go up sealed, in chunks, to
   a store on the server's disk. That is possible only once sealed bytes may be
-  written there (§3.1).
+  written there (§4.1).
 - Each chunk is sealed with the person's key. Its additional data binds the
   file and the chunk's place, so the server cannot swap or reorder chunks.
 - The copy event carries the file's manifest, sealed like any copy: its name,
@@ -82,12 +213,12 @@ not as bytes in a frame.
 - The server keeps the chunks for a time (a day, say) and within a quota per
   person. The history keeps the entry, not the bytes.
 - Later, between devices on one network, the bytes can go directly, without
-  the server (§11, *Not now*).
+  the server (§2.2, *Local first*).
 
 *Open:* the largest file, how long the server keeps one, the quota, and
 whether a folder goes as a zip. *Size: medium.*
 
-### 2.2 An iPhone and iPad app
+### 3.2 An iPhone and iPad app
 
 Today the iPhone has the web page on its Home Screen, encrypted, and the
 Shortcuts through the bridge, in the clear.
@@ -115,7 +246,7 @@ websocket; it catches up when opened.
 
 **A device or a client?** As a device, it keeps a history and the server
 holds copies for it (7 days, 64 MB), so it works while every computer sleeps.
-That needs held copies to outlive a restart (§3.1).
+That needs held copies to outlive a restart (§4.1).
 
 **New copies while closed** would need notifications, and those have a catch.
 Pushing to an App Store app takes the publisher's APNs key. A self-hosted
@@ -129,7 +260,7 @@ notarized with. Review needs a way to sign in: a demo account on a server.
 *Open:* device or client; notifications, and through what; whether App
 Intents retire the bridge. *Size: large.*
 
-### 2.3 An Android app (#11)
+### 3.3 An Android app (#11)
 
 Today Android has the web page, and Tasker with an app token, through the
 bridge.
@@ -166,9 +297,9 @@ Play (a one-time fee), or both.
 
 *Open:* the engine; F-Droid, Play, or both. *Size: large.*
 
-## 3. Proposed
+## 4. Proposed
 
-### 3.1 Held copies survive a restart
+### 4.1 Held copies survive a restart
 
 Redesign §7 kept copies in memory only, so nothing of a copy reached the
 server's disk. A restart or a deploy loses what waits, a phone's paste while
@@ -182,15 +313,15 @@ days). A person without a key keeps memory only. The pairing mailbox and the
 bridge's copy stay in memory: one holds a key under a code, the other is in
 the clear.
 
-**Why first**: files (§2.1) need a store on disk, and phone apps need what
+**Why first**: files (§3.1) need a store on disk, and phone apps need what
 they send to outlive a deploy. *Needs:* changkun's call, as it reverses §7
 for sealed copies. *Size: small.*
 
-### 3.2 A new key when a device is lost
+### 4.2 A new key when a device is lost
 
 Forgetting a device leaves the key on it: a stolen laptop's `key.json` opens
 every copy that passes after. Phones are lost more often than laptops, so
-this comes before the phone apps (§4).
+this comes before the phone apps (§5).
 
 **What**: from a paired device, *Forget and Make a New Key*.
 
@@ -212,7 +343,7 @@ this comes before the phone apps (§4).
 
 *Size: medium for (a), large for (b).*
 
-### 3.3 Windows and Linux in the tray (#13)
+### 4.3 Windows and Linux in the tray (#13)
 
 `mg daemon` has no face: no menu, no history window, no sign-in but the
 terminal's. The Mac got a native app (redesign §12, step 9).
@@ -227,7 +358,7 @@ already, and the web page's UI is there to reuse.
 
 *Open:* Wails, or native per platform; Windows signing. *Size: large.*
 
-### 3.4 The Mac: updates, and notarization in CI
+### 4.4 The Mac: updates, and notarization in CI
 
 A new version is a manual download. Notarizing needs changkun's Mac, so each
 release's disk image is built there and put in place of the one CI built.
@@ -241,7 +372,7 @@ release's disk image is built there and put in place of the one CI built.
 
 *Size: small each.*
 
-### 3.5 Shares that stay encrypted
+### 4.5 Shares that stay encrypted
 
 A share is published in the clear (§9, §11), so the server can read every
 share, while many are meant for one person, not the world.
@@ -258,7 +389,7 @@ share, while many are meant for one person, not the world.
 
 *Size: small.*
 
-### 3.6 Rules on copies (#30)
+### 4.6 Rules on copies (#30)
 
 #30 asks for rules applied on the fly, such as a regular expression that
 rewrites links copied on one device.
@@ -271,32 +402,43 @@ daemon's `config.yml`.
 
 *Open:* whether the history keeps the original too. *Size: small.*
 
-## 4. Order
+## 5. Order
 
 Proposed:
 
-1. Held copies survive a restart (§3.1). It is small, and files and phones
+1. Held copies survive a restart (§4.1). It is small, and files and phones
    wait on it.
-2. Notarization in CI (§3.4), which ends a manual step in each release.
-3. Formats on the Mac (§2.1).
-4. A new key by re-pairing (§3.2a), before any phone is a device.
-5. Files (§2.1).
-6. The iPhone app (§2.2), with Sparkle for the Mac alongside (§3.4).
-7. The Android app (§2.3).
-8. Windows and Linux in the tray (§3.3).
+2. Kinds and addresses in the wire (§2.1). Everything after rides on them.
+3. Notarization in CI (§4.4), which ends a manual step in each release.
+4. Formats on the Mac (§3.1).
+5. A new key by re-pairing (§4.2a), before any phone is a device.
+6. Files, and sending one to a device (§3.1, §2.2).
+7. Handoff: links and tabs to a device, and the browser extension (§2.2).
+8. The iPhone app (§3.2), with capabilities (§2.1), and Sparkle for the Mac
+   alongside (§4.4).
+9. The Android app (§3.3), with its notifications on the computer (§2.2).
+10. Agents: tell, ask and approve (§2.2), once phones can show and answer.
+11. Windows and Linux in the tray (§4.3).
 
-Encrypted shares (§3.5) and rules (§3.6) fit anywhere.
+Encrypted shares (§4.5), rules (§4.6), OSC 52 and snippets (§2.2) fit
+anywhere. Beyond one person, and devices passing bytes directly (§2.2), come
+after these, as each rests on the ones before.
 
-1.0 is changkun's call. This proposes it once phones are devices and files
-pass (steps 1–7).
+1.0 is changkun's call. This proposes it once phones are devices, files pass,
+and a link opens on the device it was sent to (steps 1–9).
 
-## 5. Decisions for changkun
+## 6. Decisions for changkun
 
-1. Held copies on the server's disk, sealed (§3.1): reverses redesign §7.
-2. The phone apps as devices, with a history, or as clients (§2.2, §2.3).
-3. The Android engine: Go as a shared library behind JNI, or Kotlin (§2.3).
-4. Notifications on phones, and through whose push service (§2.2, §2.3).
-5. Whether App Intents retire the Shortcuts bridge on the iPhone (§2.2).
-6. The largest file, how long the server keeps one, and the quota (§2.1).
-7. Wails or native for Windows and Linux, and signing on Windows (§3.3).
-8. What 1.0 means (§4).
+1. Held copies on the server's disk, sealed (§4.1): reverses redesign §7.
+2. Kinds, addresses and capabilities as the core's shape (§2.1), and which
+   kinds come first.
+3. How far midgard goes for agents (§2.2): telling and asking first; context
+   and tools on a device only with a consent model decided before them.
+4. Beyond one person (§2.2): whether, and when.
+5. The phone apps as devices, with a history, or as clients (§3.2, §3.3).
+6. The Android engine: Go as a shared library behind JNI, or Kotlin (§3.3).
+7. Notifications on phones, and through whose push service (§3.2, §3.3).
+8. Whether App Intents retire the Shortcuts bridge on the iPhone (§3.2).
+9. The largest file, how long the server keeps one, and the quota (§3.1).
+10. Wails or native for Windows and Linux, and signing on Windows (§4.3).
+11. What 1.0 means (§5).

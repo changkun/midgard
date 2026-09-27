@@ -414,7 +414,7 @@ copies refused, and needs updating.
 not take the key from it; a new one, sent to the remaining devices by
 pairing, would. Also not now: a native mobile app (the web page covers
 phones), and peer-to-peer sync on a LAN without the server. All three are
-proposed in [roadmap.md](./roadmap.md) (§3.2, §2.2–§2.3, §2.1).
+proposed in [roadmap.md](./roadmap.md) (§4.2, §3.2–§3.3, §2.2).
 
 ## 12. Plan
 
