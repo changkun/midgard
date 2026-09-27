@@ -43,7 +43,11 @@ func (m *Midgard) appTokens() appTokens {
 
 // NewMidgard creates a new midgard server
 func NewMidgard() *Midgard {
-	return &Midgard{keepalive: defaultKeepalive, latere: newLatereAuth(), web: newWebAuth()}
+	m := &Midgard{keepalive: defaultKeepalive, latere: newLatereAuth(), web: newWebAuth()}
+	if m.latere != nil {
+		m.latere.emails = &principals{store: func() *store.Store { return m.store }}
+	}
+	return m
 }
 
 // rel is the relay, on the server's store; made on first use, once the

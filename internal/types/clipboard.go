@@ -15,6 +15,11 @@ type ClipboardData struct {
 	Device string `json:"device,omitempty"`
 }
 
+// MsgNotOnList is what the server answers, with 403, a sign-in that is
+// good but not on its allowlist: the device says so, rather than that it
+// is offline.
+const MsgNotOnList = "not on this server's list"
+
 // HeaderSealed is the header a client sends to say it opens sealed copies:
 // without it, a person's server refuses to hand theirs out, rather than give
 // ciphertext to a client that would take it for text (§11).

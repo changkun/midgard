@@ -171,8 +171,8 @@ func TestWebSession(t *testing.T) {
 	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"mine"`) {
 		t.Fatalf("reading with the session: %d %s", w.Code, w.Body)
 	}
-	if w := browse(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", []*http.Cookie{sessionFor(t, a, "sub-eve", "eve@example.com")}, nil); w.Code != http.StatusUnauthorized {
-		t.Errorf("someone not on the allowlist: %d, want 401", w.Code)
+	if w := browse(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", []*http.Cookie{sessionFor(t, a, "sub-eve", "eve@example.com")}, nil); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), types.MsgNotOnList) {
+		t.Errorf("someone not on the allowlist: %d %s, want 403 saying so", w.Code, w.Body)
 	}
 	bad := &http.Cookie{Name: session.Name, Value: "not a session"}
 	w = browse(t, m, http.MethodGet, "/midgard/api/v1/clipboard", "", []*http.Cookie{bad}, nil)

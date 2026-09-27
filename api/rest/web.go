@@ -311,6 +311,7 @@ func (m *Midgard) WebPage(c *gin.Context) {
 	if m.web != nil {
 		p.CSRF = m.web.csrfToken(c.Writer, c.Request)
 		if sub, email, ok := m.web.session(c.Writer, c.Request); ok {
+			m.latere.learn(sub, email) // turned away too: the list may name them later
 			p.Email = cmp.Or(email, sub)
 			p.Allowed = m.latere.permits(sub, email)
 		}

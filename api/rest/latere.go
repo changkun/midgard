@@ -6,10 +6,16 @@ package rest
 
 import (
 	"cmp"
+	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
+
+	"changkun.de/x/midgard/internal/store"
 
 	"latere.ai/x/pkg/authkit"
 	"latere.ai/x/pkg/authkit/jwt"
@@ -30,6 +36,76 @@ const audience = "midgard"
 type latereAuth struct {
 	auth    *jwt.Authenticator
 	allowed map[string]bool // lowercased email or principal id (sub)
+	emails  *principals     // who signed in on the web page, by email; nil keeps none
+}
+
+// errNotOnList is a good sign-in the allowlist does not admit: it is
+// answered 403 with types.MsgNotOnList, and not counted against the
+// address, as a guess at a token is.
+var errNotOnList = errors.New("not on the allowlist")
+
+// principals remembers the email auth.latere.ai vouched for each principal
+// who signed in on the web page. A device's token names its principal alone
+// (auth.latere.ai's actor tokens carry no email), so an allowlist that
+// names someone by email admits their devices once they have signed in on
+// the page, from any of its sessions, allowed or turned away.
+type principals struct {
+	store func() *store.Store // read when asked: a test sets it late
+	mu    sync.Mutex
+	known map[string]string // sub → email, as last learned or read
+}
+
+// learn records that sub is known by email.
+func (p *principals) learn(sub, email string) {
+	if p == nil || sub == "" || email == "" {
+		return
+	}
+	email = strings.ToLower(email)
+	p.mu.Lock()
+	same := p.known[sub] == email
+	if p.known == nil {
+		p.known = map[string]string{}
+	}
+	p.known[sub] = email
+	p.mu.Unlock()
+	if s := p.store(); s != nil && !same {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.LearnPrincipal(ctx, sub, email); err != nil {
+			slog.Error("cannot remember a principal's email", "sub", sub, "err", err)
+		}
+	}
+}
+
+// emailOf is the email sub is known by, "" if none.
+func (p *principals) emailOf(sub string) string {
+	if p == nil {
+		return ""
+	}
+	p.mu.Lock()
+	email, ok := p.known[sub]
+	p.mu.Unlock()
+	if ok {
+		return email
+	}
+	s := p.store()
+	if s == nil {
+		return ""
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	email, err := s.PrincipalEmail(ctx, sub)
+	if err != nil {
+		slog.Error("cannot read a principal's email", "sub", sub, "err", err)
+		return ""
+	}
+	p.mu.Lock()
+	if p.known == nil {
+		p.known = map[string]string{}
+	}
+	p.known[sub] = email // "" too, until learn says otherwise
+	p.mu.Unlock()
+	return email
 }
 
 // newLatereAuth builds the verifier from the environment: AUTH_URL (the
@@ -67,28 +143,46 @@ func principalSet(s string) map[string]bool {
 }
 
 // identify reports the principal a latere token in r belongs to, when it is
-// one for midgard from someone the allowlist admits. The owner of everything
-// they store is its principal id, Sub, which, unlike an email, never changes.
-func (a *latereAuth) identify(r *http.Request) (id authkit.Identity, ok bool) {
+// one for midgard from someone the allowlist admits; errNotOnList when it is
+// good, but its principal is not admitted. The owner of everything they
+// store is its principal id, Sub, which, unlike an email, never changes.
+func (a *latereAuth) identify(r *http.Request) (id authkit.Identity, err error) {
 	if a == nil {
-		return id, false
+		return id, errors.New("no sign-in through auth.latere.ai")
 	}
-	id, err := a.auth.Authenticate(r)
-	if err != nil || id.Sub == "" {
-		return id, false
+	id, err = a.auth.Authenticate(r)
+	if err != nil {
+		return id, err
+	}
+	if id.Sub == "" {
+		return id, errors.New("a token for no one")
 	}
 	if !a.permits(id.Sub, id.Email) {
 		slog.Warn("latere principal not allowed", "sub", id.Sub, "email", id.Email)
-		return id, false
+		return id, errNotOnList
 	}
-	return id, true
+	return id, nil
 }
 
 // permits reports whether the allowlist admits the principal sub, known by
-// email. A nil receiver admits no one.
+// email, or, when the token says no email, by the one they signed in on the
+// web page with. A nil receiver admits no one.
 func (a *latereAuth) permits(sub, email string) bool {
 	if a == nil {
 		return false
 	}
-	return a.allowed[strings.ToLower(sub)] || (email != "" && a.allowed[strings.ToLower(email)])
+	if a.allowed[strings.ToLower(sub)] {
+		return true
+	}
+	if email == "" {
+		email = a.emails.emailOf(sub)
+	}
+	return email != "" && a.allowed[strings.ToLower(email)]
+}
+
+// learn records that sub signed in on the web page as email.
+func (a *latereAuth) learn(sub, email string) {
+	if a != nil {
+		a.emails.learn(sub, email)
+	}
 }

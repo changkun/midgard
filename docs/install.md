@@ -37,7 +37,12 @@ In `.env`:
 - `AUTH_ALLOWED_PRINCIPALS`: who may use this server, by email or principal
   id, comma-separated. Everyone signs in through
   [auth.latere.ai](https://auth.latere.ai); the list decides who is let in,
-  and each person reaches only their own clipboard.
+  and each person reaches only their own clipboard. A principal id admits
+  the person everywhere at once. An email admits them on the web page at
+  once, and their Mac app and `mg` once they have signed in on the web
+  page, as a device's sign-in names its principal id alone. The server logs
+  the principal id of each sign-in it turns away, with the line
+  `latere principal not allowed`.
 - `AUTH_CLIENT_ID` and `AUTH_COOKIE_KEY`: for signing in to the web page.
   The client is `midgard-web`, registered with auth.latere.ai for
   `https://changkun.de/midgard/.auth/callback`; on another domain, register a

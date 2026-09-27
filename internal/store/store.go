@@ -133,6 +133,14 @@ var migrations = []string{
 		kid     TEXT    NOT NULL,
 		created INTEGER NOT NULL
 	)`,
+	// 7: the email auth.latere.ai vouched for, for each principal who
+	// signed in on the web page: a device's token names its principal
+	// alone, and the allowlist may name them by email.
+	`CREATE TABLE principals (
+		sub   TEXT    PRIMARY KEY,
+		email TEXT    NOT NULL,
+		seen  INTEGER NOT NULL
+	)`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {

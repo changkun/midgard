@@ -6,6 +6,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"changkun.de/x/midgard/internal/store"
+	"changkun.de/x/midgard/internal/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -121,6 +123,7 @@ func signIn(tokens appTokens, latere *latereAuth, web *webAuth) gin.HandlerFunc 
 
 		var owner, email, device, via string
 		found := false
+		refused := false // a good sign-in, of someone not on the allowlist
 		auth := c.Request.Header.Get("Authorization")
 		if bearer, ok := strings.CutPrefix(auth, "Bearer "); ok {
 			switch {
@@ -128,18 +131,36 @@ func signIn(tokens appTokens, latere *latereAuth, web *webAuth) gin.HandlerFunc 
 				if tokens == nil {
 					break
 				}
-				if h, ok := tokens.CheckAppToken(c.Request.Context(), bearer); ok && latere.permits(h.Owner, h.Email) {
-					owner, email, device, via, found = h.Owner, h.Email, h.Name, viaAppToken, true
+				if h, ok := tokens.CheckAppToken(c.Request.Context(), bearer); ok {
+					if latere.permits(h.Owner, h.Email) {
+						owner, email, device, via, found = h.Owner, h.Email, h.Name, viaAppToken, true
+					} else {
+						refused = true
+					}
 				}
 			default:
-				if id, ok := latere.identify(c.Request); ok {
+				id, err := latere.identify(c.Request)
+				switch {
+				case err == nil:
 					owner, email, via, found = id.Sub, id.Email, viaLatere, true
+				case errors.Is(err, errNotOnList):
+					refused = true
 				}
 			}
 		} else if auth == "" {
-			if sub, mail, ok := web.session(c.Writer, c.Request); ok && latere.permits(sub, mail) {
-				owner, email, device, via, found = sub, mail, "web", viaSession, true
+			if sub, mail, ok := web.session(c.Writer, c.Request); ok {
+				latere.learn(sub, mail)
+				if latere.permits(sub, mail) {
+					owner, email, device, via, found = sub, mail, "web", viaSession, true
+				} else {
+					refused = true
+				}
 			}
+		}
+		if !found && refused {
+			// who it is is known, and they may not: no guess to count
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"msg": types.MsgNotOnList})
+			return
 		}
 		if !found {
 			if i, ok := blocklist.Load(ip); !ok {

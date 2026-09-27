@@ -112,6 +112,24 @@ func (s *Store) Kid(ctx context.Context, owner string) (string, error) {
 	return kid, err
 }
 
+// LearnPrincipal records that sub, signed in, is known by email.
+func (s *Store) LearnPrincipal(ctx context.Context, sub, email string) error {
+	_, err := s.db.ExecContext(ctx, `INSERT INTO principals (sub, email, seen) VALUES (?, ?, ?)
+		ON CONFLICT (sub) DO UPDATE SET email = excluded.email, seen = excluded.seen`,
+		sub, email, time.Now().UnixMilli())
+	return err
+}
+
+// PrincipalEmail is the email sub was last known by, "" if none.
+func (s *Store) PrincipalEmail(ctx context.Context, sub string) (string, error) {
+	var email string
+	err := s.db.QueryRowContext(ctx, `SELECT email FROM principals WHERE sub = ?`, sub).Scan(&email)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	return email, err
+}
+
 // SetKid sets owner's key id, unless one is set: two devices making a key at
 // once, the first wins. It returns the key id owner has now.
 func (s *Store) SetKid(ctx context.Context, owner, kid string) (string, error) {

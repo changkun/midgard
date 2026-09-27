@@ -106,3 +106,24 @@ func TestKid(t *testing.T) {
 		t.Errorf("bob has alice's key id %q", kid)
 	}
 }
+
+func TestPrincipals(t *testing.T) {
+	s, _ := open(t)
+	ctx := context.Background()
+	if email, err := s.PrincipalEmail(ctx, "sub-new"); err != nil || email != "" {
+		t.Fatalf("PrincipalEmail before any = %q, %v", email, err)
+	}
+	if err := s.LearnPrincipal(ctx, "sub-new", "new@example.com"); err != nil {
+		t.Fatal(err)
+	}
+	if email, _ := s.PrincipalEmail(ctx, "sub-new"); email != "new@example.com" {
+		t.Fatalf("PrincipalEmail = %q", email)
+	}
+	// an email changed at auth.latere.ai is learned again
+	if err := s.LearnPrincipal(ctx, "sub-new", "renamed@example.com"); err != nil {
+		t.Fatal(err)
+	}
+	if email, _ := s.PrincipalEmail(ctx, "sub-new"); email != "renamed@example.com" {
+		t.Fatalf("PrincipalEmail after a change = %q", email)
+	}
+}

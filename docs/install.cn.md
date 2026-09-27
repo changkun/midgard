@@ -29,7 +29,7 @@ $ cp .env.template .env              # 设置允许登录的人
 
 在 `.env` 中：
 
-- `AUTH_ALLOWED_PRINCIPALS`：允许使用该服务端的人，邮箱或主体 ID，以逗号分隔。所有人都通过 [auth.latere.ai](https://auth.latere.ai) 登录；由这份名单决定谁能进入，每个人只能访问自己的剪贴板。
+- `AUTH_ALLOWED_PRINCIPALS`：允许使用该服务端的人，邮箱或主体 ID，以逗号分隔。所有人都通过 [auth.latere.ai](https://auth.latere.ai) 登录；由这份名单决定谁能进入，每个人只能访问自己的剪贴板。主体 ID 让此人在所有地方立即可用。邮箱让此人在网页上立即可用；而他们的 Mac 应用和 `mg` 要在他们于网页上登录过一次之后才可用，因为设备登录时只带有主体 ID。服务端会把每个被拒绝的登录的主体 ID 记入日志，日志行为 `latere principal not allowed`。
 - `AUTH_CLIENT_ID` 和 `AUTH_COOKIE_KEY`：用于网页登录。客户端为 `midgard-web`，在 auth.latere.ai 注册的回调地址是 `https://changkun.de/midgard/.auth/callback`；在其他域名上，请注册你自己的客户端和回调地址。密钥用于加密会话 Cookie：`openssl rand -hex 32`。两者都留空则不启用网页登录，其余功能不受影响。
 
 **3. 启动。**
