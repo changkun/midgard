@@ -1,7 +1,8 @@
 # The disk image's window, for dmgbuild, which apple/build.sh runs: Midgard
 # on the left, Applications on the right, and between them the arrow of
 # background.svg (drawn at 1x and 2x in background.png and background@2x.png,
-# which build.sh joins into one TIFF, the form Finder shows).
+# on which build.sh writes the version, with stamp.swift, and joins into one
+# TIFF, the form Finder shows).
 #
 # The background is light: on a picture, Finder draws the labels under the
 # icons black, whatever the Mac's appearance.

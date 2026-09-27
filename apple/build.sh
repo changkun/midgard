@@ -106,8 +106,12 @@ echo "packing the disk image"
 dmg=apple/build/Midgard.dmg
 rm -f "$dmg"
 if dmgbuild=$(dmgbuild); then
-	# the window's picture, for both kinds of screen, in the TIFF Finder shows
-	tiffutil -cathidpicheck apple/Midgard/DMG/background.png apple/Midgard/DMG/background@2x.png \
+	# the window's picture, with the version under its title, for both kinds
+	# of screen, in the TIFF Finder shows
+	swift apple/Midgard/DMG/stamp.swift "Version ${VERSION:-0}" \
+		apple/Midgard/DMG/background.png apple/build/background.png \
+		apple/Midgard/DMG/background@2x.png apple/build/background@2x.png
+	tiffutil -cathidpicheck apple/build/background.png apple/build/background@2x.png \
 		-out apple/build/background.tiff >/dev/null
 	"$dmgbuild" -s apple/Midgard/DMG/settings.py -D app="$app" -D background=apple/build/background.tiff Midgard "$dmg" >/dev/null
 else

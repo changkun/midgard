@@ -3,7 +3,10 @@
        left, Applications on the right, an arrow from one to the other. Light
        and opaque, as Finder draws the labels under the icons black whatever
        the appearance. The icons sit at y 160; the text stays clear of the
-       bottom, which the window's title bar may take from its height. -->
+       bottom, which the window's title bar may take from its height. Under
+       the title, build.sh writes the version (stamp.swift), where the line
+       this file leaves room for would be:
+       <text x="330" y="314" font-size="12.5" fill="#56648a">Version 1.2.3</text> -->
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="400" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#fbfcff"/>
@@ -23,6 +26,5 @@
   <path d="M378 142 L396 162 L372 168" fill="none" stroke="#2c66d4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
   <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif" text-anchor="middle">
     <text x="330" y="290" font-size="17" font-weight="600" fill="#1d2a52">Drag Midgard to Applications</text>
-    <text x="330" y="314" font-size="12.5" fill="#56648a">The first time you open it, allow it in System Settings › Privacy &amp; Security.</text>
   </g>
 </svg>
