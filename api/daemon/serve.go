@@ -59,9 +59,16 @@ func NewDaemon() (*Daemon, error) {
 		name = id
 	}
 	m := &Daemon{release: release}
+	key, since, err := device.LoadKey()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read this device's key: %w", err)
+	}
 	m.engine = &device.Engine{
 		ID: id, Name: name, History: h, Keepalive: device.DefaultKeepalive,
 		Dial: m.dial, Changed: m.changed,
+		// the person's key (specs/redesign.md §11), which mg pair may give
+		// it while it runs
+		Key: key, Since: since, LoadKey: device.LoadKey, SaveKey: device.SaveKey,
 	}
 	return m, nil
 }

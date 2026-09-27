@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -70,8 +71,15 @@ func start(changed func(mime string, data []byte)) error {
 	if err != nil || name == "" {
 		name = id
 	}
+	key, since, err := device.LoadKey()
+	if err != nil {
+		h.Close()
+		return fail(fmt.Errorf("cannot read this Mac's key: %w", err))
+	}
 	e := &device.Engine{
 		ID: id, Name: name, History: h, Keepalive: device.DefaultKeepalive, Dial: device.Dial,
+		// the person's key (specs/redesign.md §11)
+		Key: key, Since: since, LoadKey: device.LoadKey, SaveKey: device.SaveKey,
 		Changed: func(c history.Entry) {
 			if mime, data, ok := firstFormat(c); ok && changed != nil {
 				changed(mime, data)

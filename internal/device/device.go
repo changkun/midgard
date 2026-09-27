@@ -7,6 +7,10 @@
 // and of the tray app, that is not the clipboard: it stays connected, sends
 // what happens on the device, applies what the server numbers to the
 // device's history, and answers the server's questions from it.
+//
+// Once its person has a key (§11), it seals every copy it sends, and every
+// answer, as it writes them, and opens every copy it receives before it
+// keeps it: its history stays in the clear, on the device.
 package device
 
 import (
@@ -17,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"changkun.de/x/midgard/internal/e2e"
 	"changkun.de/x/midgard/internal/history"
 	"changkun.de/x/midgard/internal/wire"
 	"github.com/gorilla/websocket"
@@ -66,10 +71,75 @@ type Engine struct {
 	Changed   func(history.Entry)
 	Keepalive Keepalive
 
+	// Key is the person's key (§11), nil until the device has it; Since is
+	// the last seq numbered before it was made. LoadKey, when set, is asked
+	// for it again while the device must pair, as pairing may happen
+	// elsewhere (mg pair); SaveKey, when set, keeps a key the device makes,
+	// as its person's first. Without SaveKey, the device makes none.
+	Key     *e2e.Key
+	Since   uint64
+	LoadKey func() (*e2e.Key, uint64, error)
+	SaveKey func(*e2e.Key, uint64) error
+
 	mu      sync.Mutex
 	send    chan wire.Frame // the connection's, while there is one
 	applied map[uint64]bool // copies applied since the clipboard was last looked at
 	settle  *time.Timer
+	sealing bool          // the connection seals: its person has a key, and this device it
+	pairing bool          // its person has a key this device lacks
+	kid     string        // the id of its person's key, as the server said
+	rekey   chan struct{} // a key came, by pairing: connect again now
+}
+
+// Errors connecting ends in, on the way to sealing (§11).
+var (
+	errNewKey       = errors.New("made this person's key; saying hello with it")
+	errNeedsPairing = errors.New("this device's person has a key it lacks: pair it with one of their devices")
+)
+
+// NeedsPairing reports whether the device's person has a key it lacks, and
+// the id of that key: until it pairs, it syncs nothing.
+func (e *Engine) NeedsPairing() (bool, string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.pairing, e.kid
+}
+
+// Sealing reports whether the device seals what it sends: its person has a
+// key, and it has it too.
+func (e *Engine) Sealing() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.sealing
+}
+
+// PersonKey is the key the device has, and since, to pair another with;
+// nil when it has none.
+func (e *Engine) PersonKey() (*e2e.Key, uint64) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.Key, e.Since
+}
+
+// SetKey gives the device its person's key, as pairing did: it keeps it, and
+// connects again with it at once.
+func (e *Engine) SetKey(k *e2e.Key, since uint64) error {
+	if e.SaveKey != nil {
+		if err := e.SaveKey(k, since); err != nil {
+			return err
+		}
+	}
+	e.mu.Lock()
+	e.Key, e.Since, e.pairing = k, since, false
+	rekey := e.rekey
+	e.mu.Unlock()
+	if rekey != nil {
+		select {
+		case rekey <- struct{}{}:
+		default:
+		}
+	}
+	return nil
 }
 
 // Online reports whether the device is connected to the server.
@@ -127,9 +197,30 @@ func (e *Engine) enqueue(f wire.Frame) {
 func (e *Engine) Run(ctx context.Context) {
 	ka := e.Keepalive
 	wait := ka.RetryMin
+	e.mu.Lock()
+	if e.rekey == nil {
+		e.rekey = make(chan struct{}, 1)
+	}
+	rekey := e.rekey
+	e.mu.Unlock()
 	for ctx.Err() == nil {
 		conn, err := e.connect(ctx)
-		if err != nil {
+		switch {
+		case errors.Is(err, errNewKey):
+			slog.Info("made this person's key, the first of their devices to seal")
+			continue
+		case errors.Is(err, errNeedsPairing):
+			// until it pairs, here or through mg pair, it asks again now and
+			// then, and at once when SetKey gives it the key
+			slog.Warn(err.Error())
+			select {
+			case <-ctx.Done():
+				return
+			case <-rekey:
+			case <-time.After(ka.RetryMax):
+			}
+			continue
+		case err != nil:
 			slog.Error("cannot connect to the midgard server", "err", err, "retry_in", wait)
 			select {
 			case <-ctx.Done():
@@ -163,9 +254,31 @@ func (e *Engine) Run(ctx context.Context) {
 	}
 }
 
-// connect dials the server and says hello: which device this is, and what
-// of the history it has.
+// connect dials the server and says hello: which device this is, what of
+// the history it has, and which key. The welcome says the person's key: the
+// device seals with it, makes it when it is the person's first device to
+// seal, or must pair when it lacks it (§11).
 func (e *Engine) connect(ctx context.Context) (*websocket.Conn, error) {
+	e.mu.Lock()
+	reload := e.LoadKey != nil && (e.Key == nil || e.pairing)
+	e.mu.Unlock()
+	if reload {
+		if k, since, err := e.LoadKey(); err != nil {
+			slog.Error("cannot read this device's key", "err", err)
+		} else if k != nil {
+			e.mu.Lock()
+			e.Key, e.Since = k, since
+			e.mu.Unlock()
+		}
+	}
+	e.mu.Lock()
+	key := e.Key
+	e.mu.Unlock()
+	kid := ""
+	if key != nil {
+		kid = key.ID()
+	}
+
 	conn, err := e.Dial(ctx)
 	if err != nil {
 		return nil, err
@@ -185,7 +298,7 @@ func (e *Engine) connect(ctx context.Context) (*websocket.Conn, error) {
 	conn.SetReadDeadline(time.Now().Add(e.Keepalive.Wait))
 	if err := write(conn, wire.Frame{Envelope: wire.Envelope{
 		Type: wire.Hello, V: wire.Version, Device: e.ID, Name: e.Name,
-		Clock: time.Now().UnixMilli(), Acked: acked, Gaps: gaps,
+		Clock: time.Now().UnixMilli(), Acked: acked, Gaps: gaps, Kid: kid,
 	}}); err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("cannot say hello: %w", err)
@@ -199,6 +312,36 @@ func (e *Engine) connect(ctx context.Context) (*websocket.Conn, error) {
 	if err != nil || f.Type != wire.Welcome {
 		conn.Close()
 		return nil, fmt.Errorf("the server did not welcome the device: %q", b)
+	}
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.kid = f.Kid
+	switch {
+	case f.V < 2:
+		// a server from before encryption: nothing is sealed
+		e.sealing, e.pairing = false, false
+	case f.Kid == "" && key == nil && e.SaveKey != nil:
+		// The person has no key, and this is their first device to seal: it
+		// makes their key, and says hello again with it, which registers
+		// it. Before it, the history is in the clear.
+		k, err := e2e.NewKey()
+		if err == nil {
+			err = e.SaveKey(k, acked)
+		}
+		conn.Close()
+		if err != nil {
+			return nil, fmt.Errorf("cannot make this person's key: %w", err)
+		}
+		e.Key, e.Since = k, acked
+		return nil, errNewKey
+	case f.Kid != "" && f.Kid != kid:
+		e.sealing, e.pairing = false, true
+		conn.Close()
+		return nil, errNeedsPairing
+	default:
+		// the person's key is this device's, or no one has one yet
+		e.sealing, e.pairing = f.Kid != "", false
 	}
 	return conn, nil
 }
@@ -232,7 +375,19 @@ func (e *Engine) serve(ctx context.Context, conn *websocket.Conn) error {
 		return err
 	}
 	e.send = send
+	var key *e2e.Key // what this connection seals with and opens with
+	if e.sealing {
+		key = e.Key
+	}
+	since := e.Since
 	e.mu.Unlock()
+	write := func(conn *websocket.Conn, f wire.Frame) error {
+		f, err := seal(key, f)
+		if err != nil {
+			return err
+		}
+		return write(conn, f)
+	}
 	defer func() {
 		e.mu.Lock()
 		e.send = nil
@@ -240,7 +395,7 @@ func (e *Engine) serve(ctx context.Context, conn *websocket.Conn) error {
 	}()
 
 	readErr := make(chan error, 1)
-	go func() { readErr <- e.readFrom(ctx, conn, send, alive) }()
+	go func() { readErr <- e.readFrom(ctx, conn, send, alive, key, since) }()
 
 	for _, f := range outbox {
 		conn.SetWriteDeadline(time.Now().Add(ka.Write))
@@ -276,7 +431,7 @@ func (e *Engine) serve(ctx context.Context, conn *websocket.Conn) error {
 
 // readFrom applies what the server sends, and answers what it asks, until
 // the connection fails.
-func (e *Engine) readFrom(ctx context.Context, conn *websocket.Conn, send chan<- wire.Frame, alive func()) error {
+func (e *Engine) readFrom(ctx context.Context, conn *websocket.Conn, send chan<- wire.Frame, alive func(), key *e2e.Key, since uint64) error {
 	for {
 		_, b, err := conn.ReadMessage()
 		if err != nil {
@@ -290,6 +445,7 @@ func (e *Engine) readFrom(ctx context.Context, conn *websocket.Conn, send chan<-
 		}
 		switch f.Type {
 		case wire.Event:
+			f = open(key, since, f)
 			applied, ours, err := e.History.Apply(ctx, f)
 			if err != nil {
 				slog.Error("cannot apply an event", "seq", f.Seq, "err", err)
@@ -399,6 +555,55 @@ func (e *Engine) answer(ctx context.Context, want wire.Frame) []wire.Frame {
 		done.Err = err.Error()
 	}
 	return append(out, done)
+}
+
+// seal seals the bytes of a copy the device sends, or answers with, when the
+// connection seals: a copy's as a copy, a preview's as a preview (§11).
+func seal(key *e2e.Key, f wire.Frame) (wire.Frame, error) {
+	if key == nil || len(f.Payload) == 0 || f.Kid != "" || f.Kind != wire.KindCopy {
+		return f, nil
+	}
+	kind := e2e.Copy
+	if f.Bare {
+		kind = e2e.Preview
+	}
+	sealed, err := key.Seal(kind, f.Formats, f.Payload)
+	if err != nil {
+		return f, err
+	}
+	f.Payload, f.Kid = sealed, key.ID()
+	return f, nil
+}
+
+// open opens a copy the server sent, when the connection seals. One the
+// device cannot open, and one in the clear numbered after its person's key
+// was made, cannot be theirs: the device keeps it as a void, a number that
+// holds nothing, so its history stays whole (§11).
+func open(key *e2e.Key, since uint64, f wire.Frame) wire.Frame {
+	if f.Kind != wire.KindCopy {
+		return f
+	}
+	void := wire.Frame{Envelope: wire.Envelope{Type: wire.Event, Kind: wire.KindVoid, Seq: f.Seq, Time: f.Time, Origin: f.Origin, Ref: f.Ref}}
+	switch {
+	case f.Kid != "":
+		if key == nil || f.Kid != key.ID() {
+			slog.Error("a copy sealed with another key; keeping it as nothing", "seq", f.Seq)
+			return void
+		}
+		plain, err := key.Open(e2e.Copy, f.Formats, f.Payload)
+		if err != nil {
+			slog.Error("a copy that does not open; keeping it as nothing", "seq", f.Seq, "err", err)
+			return void
+		}
+		f.Payload, f.Kid = plain, ""
+		if len(plain) == 0 {
+			f.Payload = nil
+		}
+	case key != nil && f.Seq > since:
+		slog.Error("a copy in the clear, numbered after the key was made; keeping it as nothing", "seq", f.Seq)
+		return void
+	}
+	return f
 }
 
 func write(conn *websocket.Conn, f wire.Frame) error {

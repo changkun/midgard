@@ -186,3 +186,28 @@ func decode(d types.ClipboardData) (types.MIME, []byte, error) {
 	}
 	return d.Type, []byte(d.Data), nil
 }
+
+// Kid is the id of this person's key, "" while they have none
+// (specs/redesign.md §11).
+func Kid() (string, error) {
+	var out types.KeyOutput
+	err := call(http.MethodGet, types.EndpointKey(), nil, &out)
+	return out.Kid, err
+}
+
+// LeavePairing leaves a pairing box in its mailbox, for a new device.
+func LeavePairing(mailbox string, box []byte) error {
+	return call(http.MethodPost, types.EndpointPair(), types.PairInput{
+		Mailbox: mailbox, Box: base64.StdEncoding.EncodeToString(box),
+	}, nil)
+}
+
+// TakePairing takes the pairing box waiting in its mailbox; ErrNotFound when
+// none does, as it was used or its ten minutes passed.
+func TakePairing(mailbox string) ([]byte, error) {
+	var out types.PairOutput
+	if err := call(http.MethodGet, types.EndpointPair()+"/"+mailbox, nil, &out); err != nil {
+		return nil, err
+	}
+	return base64.StdEncoding.DecodeString(out.Box)
+}
