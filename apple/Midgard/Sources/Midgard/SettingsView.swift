@@ -221,7 +221,11 @@ struct WelcomeView: View {
             Image(systemName: "checkmark.circle.fill").font(.system(size: 48)).foregroundStyle(.green)
             Text("You're all set").font(.title3.weight(.semibold))
             VStack(alignment: .leading, spacing: 8) {
-                Label("Midgard lives in the menu bar: your recent copies are a click away.", systemImage: "menubar.arrow.up.rectangle")
+                Label {
+                    Text("Midgard lives in the menu bar, at the top right of your screen, not in the Dock: your recent copies are a click on this icon away.")
+                } icon: {
+                    MenuBarIcon()
+                }
                 Label("Copy on any of your devices, paste on this Mac.", systemImage: "arrow.triangle.2.circlepath")
                 Label("⌃⌥S shares the clipboard at a link.", systemImage: "link")
             }

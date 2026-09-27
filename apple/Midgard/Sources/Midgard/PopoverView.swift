@@ -180,10 +180,21 @@ struct Notice: View {
     }
 }
 
-/// The first start, in the popover: the server.
+/// The first start, in the popover: the server, chosen from those midgard
+/// knows, or typed. None is chosen for one: whoever runs a server decides who
+/// may sign in to it, by its allowlist.
 struct Setup: View {
     @ObservedObject var model: Model
-    @State private var server = "changkun.de"
+    /// The servers one may choose from, as well as typing another.
+    static let known = ["changkun.de"]
+    private static let another = "another"
+    @State private var choice = ""
+    @State private var typed = ""
+
+    private var server: String {
+        (choice == Self.another ? typed : choice).trimmingCharacters(in: .whitespaces)
+    }
+
     var body: some View {
         VStack(spacing: 14) {
             Spacer()
@@ -191,14 +202,22 @@ struct Setup: View {
             Text("Welcome to Midgard").font(.title3.weight(.semibold))
             Text("Your clipboard, and its history, on all your devices.")
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            // a label and a line that stay in sight, as a field's own label
-            // shows only while it is empty, and this one starts filled
             VStack(alignment: .leading, spacing: 6) {
                 Text("Your Midgard server").font(.callout.weight(.semibold))
-                TextField("example.com", text: $server)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { model.setServer(server) }
-                Text("The server your devices sync through: the address whoever runs it gave you. Next, you sign in, in your browser.")
+                Picker("Your Midgard server", selection: $choice) {
+                    Text("Choose a server").tag("")
+                    ForEach(Self.known, id: \.self) { Text($0).tag($0) }
+                    Divider()
+                    Text("Another server…").tag(Self.another)
+                }
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
+                if choice == Self.another {
+                    TextField("example.com, or http://mg.local:8456", text: $typed)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { if !server.isEmpty { model.setServer(server) } }
+                }
+                Text("The server your devices sync through. Whoever runs it lets you in by your email; next, you sign in, in your browser.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
