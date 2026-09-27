@@ -415,7 +415,7 @@ func TestDownload(t *testing.T) {
 	if !strings.Contains(page(), `href="`+path+`"`) {
 		t.Error("the signed-out page does not offer the app")
 	}
-	if body := page(sessionFor(t, a, testUser, testEmail)); !strings.Contains(body, `id="mac"`) || !strings.Contains(body, "Open Anyway") {
+	if body := page(sessionFor(t, a, testUser, testEmail)); !strings.Contains(body, `id="mac"`) || !strings.Contains(body, "drag Midgard to Applications") {
 		t.Error("the signed-in page does not say how to install the app")
 	}
 
