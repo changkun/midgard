@@ -22,6 +22,9 @@ final class Model: ObservableObject {
     @Published var lastShare: URL?
     /// The copy just put back on the clipboard, for a moment, to show it.
     @Published private(set) var justCopied: String?
+    /// A pairing is under way, and why the last one failed, if it did.
+    @Published private(set) var pairing = false
+    @Published private(set) var pairingProblem: String?
 
     /// Paused, midgard neither reads this Mac's clipboard nor writes to it.
     @Published var paused: Bool {
@@ -148,6 +151,7 @@ final class Model: ObservableObject {
     enum Phase: Equatable {
         case needsServer          // the first start
         case needsSignIn
+        case needsPairing         // its person has a key this Mac lacks (§11)
         case blocked(String)      // it cannot run, and why
         case ready
     }
@@ -156,6 +160,7 @@ final class Model: ObservableObject {
         if !status.configured { return .needsServer }
         if !status.running { return .blocked(problem ?? "Midgard is not running.") }
         if !status.signedIn { return .needsSignIn }
+        if status.needsPairing { return .needsPairing }
         return .ready
     }
 
@@ -256,6 +261,7 @@ final class Model: ObservableObject {
         switch phase {
         case .needsServer: return ("Set up", .systemOrange)
         case .needsSignIn: return ("Sign in", .systemOrange)
+        case .needsPairing: return ("Pair", .systemOrange)
         case .blocked: return ("Stopped", .systemRed)
         case .ready:
             if paused { return ("Paused", .systemYellow) }
@@ -263,8 +269,42 @@ final class Model: ObservableObject {
         }
     }
 
+    /// Takes the person's key with a pairing code, away from the main thread,
+    /// as it asks the server.
+    func pairJoin(_ code: String) {
+        let code = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !code.isEmpty, !pairing else { return }
+        pairing = true
+        pairingProblem = nil
+        Task {
+            let failed = await Task.detached { () -> String? in
+                do { try Engine.pairJoin(code); return nil } catch { return Model.say(error) }
+            }.value
+            pairing = false
+            pairingProblem = failed
+            refresh()
+        }
+    }
+
+    /// Leaves this Mac's key for another device: the code to give it, and
+    /// the link a phone opens.
+    func pairShow() async -> Result<(code: String, link: URL), PairError> {
+        await Task.detached {
+            do { return .success(try Engine.pairShow()) } catch { return .failure(PairError(message: Model.say(error))) }
+        }.value
+    }
+
+    struct PairError: Error { let message: String }
+
+    /// An engine's error, as words.
+    nonisolated static func say(_ error: Error) -> String {
+        if case Engine.StartError.failed(let why) = error { return why }
+        return "\(error)"
+    }
+
     /// A line on what Midgard does now.
     var summary: String {
+        if phase == .needsPairing { return "Pair this Mac with one of your devices to sync: your copies are encrypted." }
         if let problem, phase != .ready { return problem }
         if paused { return "Paused: Midgard leaves this Mac's clipboard alone." }
         if status.online { return "Syncing as \(shortName(status.name ?? "this Mac"))." }

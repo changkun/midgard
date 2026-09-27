@@ -23,6 +23,8 @@ final class SnapshotTests: XCTestCase {
             m.status = Status()
         case "signin":
             m.status = Status(configured: true, server: "https://changkun.de", signedIn: false, running: true)
+        case "pairing":
+            m.status = Status(configured: true, server: "https://changkun.de", signedIn: true, running: true, needsPairing: true)
         default:
             m.status = Status(configured: true, server: "https://changkun.de", signedIn: true, running: true,
                               online: true, device: "a1", name: "Changkun-MacBook-Pro.local")
@@ -68,6 +70,14 @@ final class SnapshotTests: XCTestCase {
         }
         try render("popover-setup", PopoverView(model: model("server")).background(Color(nsColor: .windowBackgroundColor)), size: CGSize(width: 360, height: 480))
         try render("popover-signin", PopoverView(model: model("signin")).background(Color(nsColor: .windowBackgroundColor)), size: CGSize(width: 360, height: 480))
+        try render("popover-pairing", PopoverView(model: model("pairing")).background(Color(nsColor: .windowBackgroundColor)), size: CGSize(width: 360, height: 480))
+    }
+
+    func testPairingCode() throws {
+        let link = try XCTUnwrap(URL(string: "https://changkun.de/midgard/#pair=7K2M9QXRA4BC8DEFGH1JKMNPQR"))
+        try render("pairing-code", PairingCode(code: "7K2M-9QXR-A4BC-8DEF-GH1J-KMNP-QR", link: link).padding().background(Color(nsColor: .windowBackgroundColor)),
+                   size: CGSize(width: 420, height: 180))
+        XCTAssertNotNil(qrCode(link.absoluteString), "no QR for the pairing link")
     }
 
     func testHistoryWindow() throws {

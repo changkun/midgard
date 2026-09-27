@@ -172,6 +172,25 @@ func MidgardShare(mime *C.char, data unsafe.Pointer, size C.int64_t) *C.char {
 	return C.CString(string(b))
 }
 
+// MidgardPairShow leaves this Mac's key for another device, and returns the
+// pairing code and link as {"code", "link"}, or {"error"}.
+//
+//export MidgardPairShow
+func MidgardPairShow() *C.char {
+	code, link, err := pairShow()
+	out := map[string]string{"code": code, "link": link}
+	if err != nil {
+		out = map[string]string{"error": err.Error()}
+	}
+	b, _ := jsonOf(out)
+	return C.CString(string(b))
+}
+
+// MidgardPairJoin takes the person's key with a pairing code.
+//
+//export MidgardPairJoin
+func MidgardPairJoin(code *C.char) *C.char { return cerr(pairJoin(C.GoString(code))) }
+
 // MidgardFree gives back what the engine returned.
 //
 //export MidgardFree

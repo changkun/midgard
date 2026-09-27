@@ -25,6 +25,8 @@ struct PopoverView: View {
                 Setup(model: model)
             case .needsSignIn:
                 SignInPrompt(model: model)
+            case .needsPairing:
+                PairPrompt(model: model)
             case .blocked(let why):
                 Notice(symbol: "exclamationmark.triangle", title: "Midgard is not syncing", text: why)
             }
@@ -200,6 +202,49 @@ struct Setup: View {
             Spacer()
         }
         .padding(24)
+    }
+}
+
+/// Pairing this Mac, in the popover: its person's copies are encrypted with
+/// a key it lacks (specs/redesign.md §11).
+struct PairPrompt: View {
+    @ObservedObject var model: Model
+    var body: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            Image(systemName: "lock.shield").font(.system(size: 34)).foregroundStyle(Color.accentColor)
+            Text("Pair this Mac").font(.title3.weight(.semibold))
+            Text("Your copies are encrypted with a key your devices share. Get a pairing code from one that has it: in its Midgard app, Settings → Encryption, or with mg pair.")
+                .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            CodeField(model: model)
+            Spacer()
+        }
+        .padding(24)
+    }
+}
+
+/// Where a pairing code goes in, and why it did not work.
+struct CodeField: View {
+    @ObservedObject var model: Model
+    @State private var code = ""
+    var body: some View {
+        VStack(spacing: 10) {
+            TextField("Pairing code", text: $code, prompt: Text("XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX"))
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+                .frame(maxWidth: 300)
+                .onSubmit { model.pairJoin(code) }
+            HStack(spacing: 8) {
+                Button("Pair") { model.pairJoin(code) }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(code.isEmpty || model.pairing)
+                if model.pairing { ProgressView().controlSize(.small) }
+            }
+            if let problem = model.pairingProblem {
+                Text(problem).font(.caption).foregroundStyle(.red).multilineTextAlignment(.center)
+            }
+        }
     }
 }
 

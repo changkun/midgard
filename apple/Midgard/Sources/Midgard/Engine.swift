@@ -97,6 +97,22 @@ enum Engine {
         throw StartError.failed(out["error"] ?? "cannot share")
     }
 
+    /// Leaves this Mac's key for another device, sealed under a new pairing
+    /// code: the code, and the link a phone opens (specs/redesign.md §11).
+    static func pairShow() throws -> (code: String, link: URL) {
+        let json = take(MidgardPairShow()) ?? "{}"
+        let out = (try? JSONDecoder().decode([String: String].self, from: Data(json.utf8))) ?? [:]
+        if let code = out["code"], !code.isEmpty, let link = out["link"].flatMap(URL.init(string:)) {
+            return (code, link)
+        }
+        throw StartError.failed(out["error"] ?? "cannot pair")
+    }
+
+    /// Takes the person's key with a pairing code another device showed.
+    static func pairJoin(_ code: String) throws {
+        try code.withCString { try check(MidgardPairJoin(UnsafeMutablePointer(mutating: $0))) }
+    }
+
     // What the engine returns is the caller's, to give back.
     private static func take(_ p: UnsafeMutablePointer<CChar>?) -> String? {
         guard let p else { return nil }
@@ -143,9 +159,31 @@ struct Status: Decodable, Equatable {
     var online = false
     var device: String?
     var name: String?
+    /// It seals with its person's key; or their key is one it lacks (§11).
+    var sealing = false
+    var needsPairing = false
 
     enum CodingKeys: String, CodingKey {
-        case configured, server, running, online, device, name
+        case configured, server, running, online, device, name, sealing
         case signedIn = "signed_in"
+        case needsPairing = "needs_pairing"
+    }
+}
+
+extension Status {
+    // Each field when it is there, as an engine from before a field was
+    // added leaves it out. In an extension, so the struct keeps its
+    // memberwise initializer.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        configured = try c.decodeIfPresent(Bool.self, forKey: .configured) ?? false
+        server = try c.decodeIfPresent(String.self, forKey: .server)
+        signedIn = try c.decodeIfPresent(Bool.self, forKey: .signedIn) ?? false
+        running = try c.decodeIfPresent(Bool.self, forKey: .running) ?? false
+        online = try c.decodeIfPresent(Bool.self, forKey: .online) ?? false
+        device = try c.decodeIfPresent(String.self, forKey: .device)
+        name = try c.decodeIfPresent(String.self, forKey: .name)
+        sealing = try c.decodeIfPresent(Bool.self, forKey: .sealing) ?? false
+        needsPairing = try c.decodeIfPresent(Bool.self, forKey: .needsPairing) ?? false
     }
 }

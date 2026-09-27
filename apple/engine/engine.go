@@ -17,6 +17,7 @@ import (
 	"changkun.de/x/midgard/internal/client"
 	"changkun.de/x/midgard/internal/config"
 	"changkun.de/x/midgard/internal/device"
+	"changkun.de/x/midgard/internal/e2e"
 	"changkun.de/x/midgard/internal/history"
 	"changkun.de/x/midgard/internal/signin"
 	"changkun.de/x/midgard/internal/types"
@@ -230,6 +231,10 @@ type status struct {
 	Online     bool   `json:"online"`
 	Device     string `json:"device,omitempty"`
 	Name       string `json:"name,omitempty"`
+	// end-to-end encryption (specs/redesign.md §11): the Mac seals with its
+	// person's key, or their key is one it lacks, and it must pair
+	Sealing      bool `json:"sealing"`
+	NeedsPairing bool `json:"needs_pairing"`
 }
 
 func statusNow() status {
@@ -240,8 +245,46 @@ func statusNow() status {
 	}
 	if e, err := running(); err == nil {
 		s.Running, s.Online, s.Device, s.Name = true, e.Online(), e.ID, e.Name
+		s.Sealing = e.Sealing()
+		s.NeedsPairing, _ = e.NeedsPairing()
 	}
 	return s
+}
+
+// pairShow leaves this Mac's key for another device, sealed under a new
+// pairing code, and returns the code and the link a phone opens.
+func pairShow() (code, link string, err error) {
+	e, err := running()
+	if err != nil {
+		return "", "", err
+	}
+	k, since := e.PersonKey()
+	if k == nil {
+		return "", "", errors.New("this Mac does not have your key: pair it first")
+	}
+	c, err := device.ShowPairing(k, since)
+	if err != nil {
+		return "", "", err
+	}
+	return c.String(), config.ServerURL() + "/midgard/#" + c.Link(), nil
+}
+
+// pairJoin takes the person's key with a code another device showed, and
+// syncs with it at once.
+func pairJoin(given string) error {
+	e, err := running()
+	if err != nil {
+		return err
+	}
+	c, err := e2e.ParseCode(given)
+	if err != nil {
+		return errors.New("that is not a pairing code: it is 26 letters and digits, as the other device shows it")
+	}
+	k, since, err := device.JoinPairing(c)
+	if err != nil {
+		return err
+	}
+	return e.SetKey(k, since)
 }
 
 // setup sets the server, for the first start.

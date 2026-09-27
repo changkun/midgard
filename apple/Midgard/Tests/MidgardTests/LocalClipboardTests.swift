@@ -87,5 +87,8 @@ final class DecodingTests: XCTestCase {
         let json = #"{"configured":true,"server":"https://changkun.de","signed_in":true,"running":true,"online":false,"device":"ab","name":"laptop"}"#
         let s = try JSONDecoder().decode(Status.self, from: Data(json.utf8))
         XCTAssertEqual(s, Status(configured: true, server: "https://changkun.de", signedIn: true, running: true, online: false, device: "ab", name: "laptop"))
+        // encryption's fields, which an older engine leaves out (above)
+        let sealed = try JSONDecoder().decode(Status.self, from: Data(#"{"configured":true,"sealing":false,"needs_pairing":true}"#.utf8))
+        XCTAssertTrue(sealed.needsPairing && !sealed.sealing && sealed.configured)
     }
 }
