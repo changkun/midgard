@@ -325,9 +325,12 @@ footer a { color: var(--faint); }
     {{template "stars"}}
     <div class="front-in">
       <svg class="logo"><use href="#logo"/></svg>
-      <h1>Not on the list</h1>
-      <p class="lede">{{.Email}} may not use this server. Ask whoever runs it to add you.</p>
-      <div class="cta"><a class="button glass" href="{{.Logout}}">Sign out</a></div>
+      <h1>This server is private</h1>
+      <p class="lede">{{.Email}} is not on its list. Midgard runs on a server of one’s own: set up yours, or ask whoever runs this one to add you.</p>
+      <div class="cta">
+        <a class="button light" href="https://github.com/changkun/midgard/blob/main/docs/install.md">Run your own</a>
+        <a class="button glass" href="{{.Logout}}">Sign out</a>
+      </div>
     </div>
     {{template "ridge"}}
   </section>

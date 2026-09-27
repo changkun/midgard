@@ -141,7 +141,7 @@ func TestWebPage(t *testing.T) {
 	t.Run("not allowed", func(t *testing.T) {
 		w := browse(t, m, http.MethodGet, "/midgard/", "", []*http.Cookie{sessionFor(t, a, "sub-eve", "eve@example.com")}, nil)
 		body := w.Body.String()
-		if !strings.Contains(body, "eve@example.com may not use this server") || strings.Contains(body, "data-signed-in") {
+		if !strings.Contains(body, "eve@example.com is not on its list") || !strings.Contains(body, "docs/install.md") || strings.Contains(body, "data-signed-in") {
 			t.Fatalf("%s, want eve turned away", body)
 		}
 	})
