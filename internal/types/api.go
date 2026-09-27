@@ -27,6 +27,12 @@ func EndpointDevices() string { return config.ServerURL() + "/midgard/api/v1/dev
 // EndpointQueue is what the server holds until every device has it.
 func EndpointQueue() string { return config.ServerURL() + "/midgard/api/v1/queue" }
 
+// EndpointKey is the id of this person's key (§11).
+func EndpointKey() string { return config.ServerURL() + "/midgard/api/v1/key" }
+
+// EndpointPair is where pairing boxes wait for new devices (§11).
+func EndpointPair() string { return config.ServerURL() + "/midgard/api/v1/pair" }
+
 // EndpointSubscribe is the websocket daemons subscribe to, as a ws:// or
 // wss:// URL.
 func EndpointSubscribe() string {
@@ -140,7 +146,8 @@ type HistoryEntry struct {
 	Created time.Time `json:"created"`
 	Type    MIME      `json:"type"`
 	Size    int       `json:"size"`
-	Preview string    `json:"preview,omitempty"` // the start of a text
+	Preview string    `json:"preview,omitempty"` // the start of a text; sealed, in base64, when Kid is set
+	Kid     string    `json:"kid,omitempty"`
 }
 
 // HistoryOutput is the answer to GET /history, newest first.
@@ -164,4 +171,22 @@ type TokenInfo struct {
 // TokensOutput is the answer to GET /tokens.
 type TokensOutput struct {
 	Tokens []TokenInfo `json:"tokens"`
+}
+
+// KeyOutput is the answer to GET /key: the id of the requester's key, ""
+// while they have none (specs/redesign.md §11).
+type KeyOutput struct {
+	Kid string `json:"kid"`
+}
+
+// PairInput leaves a pairing box in a mailbox (§11), for a new device to
+// fetch once: the key, sealed under a pairing code the server never sees.
+type PairInput struct {
+	Mailbox string `json:"mailbox"`
+	Box     string `json:"box"` // base64
+}
+
+// PairOutput is the box a mailbox held.
+type PairOutput struct {
+	Box string `json:"box"` // base64
 }

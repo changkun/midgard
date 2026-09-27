@@ -82,3 +82,28 @@ func TestMarshalChecksTheFormats(t *testing.T) {
 		t.Fatal("marshaled a payload the formats do not describe")
 	}
 }
+
+// TestSealed: a sealed copy's payload is its formats' size and the seal's,
+// and a frame that names a key but carries nothing, a hello or a welcome,
+// passes too.
+func TestSealed(t *testing.T) {
+	f := Frame{Envelope: Envelope{Type: Event, Kind: KindCopy, Kid: "k", Formats: []Format{{MIME: "text", Size: 5}}},
+		Payload: make([]byte, 5+SealOverhead)}
+	b, err := f.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := Unmarshal(b); err != nil || len(got.Payload) != 5+SealOverhead || got.Kid != "k" {
+		t.Fatalf("Unmarshal = %+v, %v", got, err)
+	}
+	f.Payload = f.Payload[:5] // the size of the text, not of the sealed text
+	if _, err := f.Marshal(); err == nil {
+		t.Error("a sealed copy the seal's size short went on the wire")
+	}
+	hello := Frame{Envelope: Envelope{Type: Hello, V: Version, Device: "d", Kid: "k"}}
+	if b, err := hello.Marshal(); err != nil {
+		t.Fatal(err)
+	} else if _, err := Unmarshal(b); err != nil {
+		t.Fatalf("a hello with a kid: %v", err)
+	}
+}

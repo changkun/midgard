@@ -6,8 +6,8 @@ package history
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"

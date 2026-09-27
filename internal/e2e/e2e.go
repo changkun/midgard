@@ -35,8 +35,9 @@ const KeySize = 32
 // to be told from this one.
 const version = 1
 
-// Overhead is how many bytes sealing adds: the version, the nonce, the tag.
-const Overhead = 1 + 12 + 16
+// Overhead is how many bytes sealing adds: the version, the nonce, the tag,
+// as the wire counts them.
+const Overhead = wire.SealOverhead
 
 // ErrOpen is what opening says of bytes not sealed with this key, sealed as
 // something else, or changed since.

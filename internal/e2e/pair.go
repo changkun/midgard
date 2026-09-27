@@ -10,6 +10,7 @@ import (
 	"crypto/hkdf"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -21,6 +22,11 @@ import (
 // The new device, given the code, fetches the box and opens it. The server
 // holds a box it cannot open without the code: 128 random bits, too many to
 // guess.
+//
+// The box also holds since: the last seq numbered before the person's key
+// was made. A copy in the clear numbered after it cannot be the person's, so
+// a device refuses it; before it, it is their history from before the key.
+// It travels in the box, as the server could otherwise say any number.
 
 // codeBits is how much of a code is random.
 const codeBits = 128
@@ -134,8 +140,8 @@ func (c Code) Mailbox() string {
 	return hex.EncodeToString(sum[:16])
 }
 
-// Seal seals the key into a box that only this code opens.
-func (c Code) Seal(k *Key) ([]byte, error) {
+// Seal seals the key, and since, into a box that only this code opens.
+func (c Code) Seal(k *Key, since uint64) ([]byte, error) {
 	aead, err := c.aead()
 	if err != nil {
 		return nil, err
@@ -145,24 +151,26 @@ func (c Code) Seal(k *Key) ([]byte, error) {
 		return nil, err
 	}
 	out := append([]byte{version}, nonce...)
-	return aead.Seal(out, nonce, k.raw, c.boxData()), nil
+	plain := binary.BigEndian.AppendUint64(append([]byte(nil), k.raw...), since)
+	return aead.Seal(out, nonce, plain, c.boxData()), nil
 }
 
-// Open opens a box this code sealed, to the key.
-func (c Code) Open(box []byte) (*Key, error) {
+// Open opens a box this code sealed, to the key and since.
+func (c Code) Open(box []byte) (*Key, uint64, error) {
 	aead, err := c.aead()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	n := aead.NonceSize()
 	if len(box) < 1+n+aead.Overhead() || box[0] != version {
-		return nil, ErrOpen
+		return nil, 0, ErrOpen
 	}
-	raw, err := aead.Open(nil, box[1:1+n], box[1+n:], c.boxData())
-	if err != nil {
-		return nil, ErrOpen
+	plain, err := aead.Open(nil, box[1:1+n], box[1+n:], c.boxData())
+	if err != nil || len(plain) != KeySize+8 {
+		return nil, 0, ErrOpen
 	}
-	return KeyFrom(raw)
+	k, err := KeyFrom(plain[:KeySize])
+	return k, binary.BigEndian.Uint64(plain[KeySize:]), err
 }
 
 func (c Code) aead() (cipher.AEAD, error) {

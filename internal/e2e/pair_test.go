@@ -52,15 +52,15 @@ func TestCode(t *testing.T) {
 func TestPairing(t *testing.T) {
 	k, _ := NewKey()
 	c, _ := NewCode()
-	box, err := c.Seal(k)
+	box, err := c.Seal(k, 41)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// the new device, given the code as the paired one showed it
 	given, _ := ParseCode(c.String())
-	got, err := given.Open(box)
-	if err != nil || got.ID() != k.ID() {
-		t.Fatalf("Open = %v, %v, want the key %s", got, err, k.ID())
+	got, since, err := given.Open(box)
+	if err != nil || got.ID() != k.ID() || since != 41 {
+		t.Fatalf("Open = %v, %d, %v, want the key %s and 41", got, since, err, k.ID())
 	}
 	if len(c.Mailbox()) != 32 || strings.Contains(c.Mailbox(), strings.ToLower(strings.ReplaceAll(c.String(), "-", ""))) {
 		t.Errorf("Mailbox = %q, want 32 hex digits, not the code", c.Mailbox())
@@ -70,11 +70,11 @@ func TestPairing(t *testing.T) {
 	if other.Mailbox() == c.Mailbox() {
 		t.Error("two codes share a mailbox")
 	}
-	if _, err := other.Open(box); !errors.Is(err, ErrOpen) {
+	if _, _, err := other.Open(box); !errors.Is(err, ErrOpen) {
 		t.Errorf("another code opened the box: %v", err)
 	}
 	box[len(box)-1] ^= 1
-	if _, err := c.Open(box); !errors.Is(err, ErrOpen) {
+	if _, _, err := c.Open(box); !errors.Is(err, ErrOpen) {
 		t.Errorf("a changed box opened: %v", err)
 	}
 }

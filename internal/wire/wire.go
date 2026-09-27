@@ -7,9 +7,9 @@
 //
 // Every message is one binary frame: an envelope, as one line of JSON, then
 // the bytes of the copy it carries, if any, one format after another. The
-// server reads envelopes and never the bytes, which it only passes on; that
-// is what lets the bytes become ciphertext later (§11) without the server
-// changing.
+// server reads envelopes and never the bytes, which it only passes on. Once a
+// person has a key, the bytes are sealed with it (§11), and the envelope says
+// which key: its kid.
 package wire
 
 import (
@@ -20,8 +20,17 @@ import (
 	"time"
 )
 
-// Version is the protocol a device speaks, sent in its hello.
-const Version = 1
+// Version is the protocol a device speaks, sent in its hello, and the server,
+// in its welcome. 2 seals copies (§11).
+const Version = 2
+
+// MinVersion is the oldest a server lets in: a device that seals nothing,
+// while its person has no key.
+const MinVersion = 1
+
+// SealOverhead is how many bytes sealing adds to a payload: a version byte,
+// a 96-bit nonce and a 128-bit tag (internal/e2e).
+const SealOverhead = 1 + 12 + 16
 
 // MaxPayload bounds the bytes a frame may carry: a copy of at most 32 MB,
 // the size of the largest share.
@@ -82,6 +91,11 @@ type Envelope struct {
 	// welcome
 	Head uint64 `json:"head,omitempty"` // the last seq given out
 
+	// hello: the key the device has; welcome: the key its person has, which
+	// a device with another must pair to get; a copy: the key its payload
+	// is sealed with
+	Kid string `json:"kid,omitempty"`
+
 	// hello and ack: the highest seq the device has applied
 	Acked uint64 `json:"acked,omitempty"`
 
@@ -117,7 +131,8 @@ type Frame struct {
 	Payload []byte
 }
 
-// Size is the number of bytes the formats say the payload holds.
+// Size is the number of bytes the formats say the copy holds: the payload's,
+// or, sealed, what opening it gives.
 func (e *Envelope) Size() int {
 	n := 0
 	for _, f := range e.Formats {
@@ -129,10 +144,18 @@ func (e *Envelope) Size() int {
 // At is the event's time.
 func (e *Envelope) At() time.Time { return time.UnixMilli(e.Time) }
 
+// payloadSize is how many bytes the payload of a frame not Bare holds.
+func (e *Envelope) payloadSize() int {
+	if e.Kid != "" {
+		return e.Size() + SealOverhead
+	}
+	return e.Size()
+}
+
 // Marshal encodes f as one websocket message.
 func (f *Frame) Marshal() ([]byte, error) {
-	if !f.Bare && f.Size() != len(f.Payload) {
-		return nil, fmt.Errorf("wire: the formats hold %d bytes, the payload %d", f.Size(), len(f.Payload))
+	if !f.Bare && f.payloadSize() != len(f.Payload) && (f.Kid == "" || len(f.Payload) > 0) {
+		return nil, fmt.Errorf("wire: the formats hold %d bytes, the payload %d", f.payloadSize(), len(f.Payload))
 	}
 	head, err := json.Marshal(&f.Envelope)
 	if err != nil {
@@ -165,8 +188,8 @@ func Unmarshal(b []byte) (Frame, error) {
 	if len(payload) > MaxPayload {
 		return Frame{}, fmt.Errorf("wire: a payload of %d bytes, over %d", len(payload), MaxPayload)
 	}
-	if !f.Bare && f.Size() != len(payload) {
-		return Frame{}, fmt.Errorf("wire: the formats hold %d bytes, the payload %d", f.Size(), len(payload))
+	if !f.Bare && f.payloadSize() != len(payload) && (f.Kid == "" || len(payload) > 0) {
+		return Frame{}, fmt.Errorf("wire: the formats hold %d bytes, the payload %d", f.payloadSize(), len(payload))
 	}
 	if len(payload) > 0 {
 		f.Payload = payload
@@ -174,7 +197,8 @@ func Unmarshal(b []byte) (Frame, error) {
 	return f, nil
 }
 
-// Parts splits the payload into the bytes of each format, in order.
+// Parts splits the payload into the bytes of each format, in order. A sealed
+// payload is opened first.
 func (f *Frame) Parts() [][]byte {
 	parts := make([][]byte, 0, len(f.Formats))
 	rest := f.Payload
