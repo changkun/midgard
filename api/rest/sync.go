@@ -52,19 +52,20 @@ func (m *Midgard) Sync(c *gin.Context) {
 		return
 	}
 	hello, err := wire.Unmarshal(b)
-	if err != nil || hello.Type != wire.Hello || hello.Device == "" {
-		reason := "the first frame must be a hello that names the device"
-		if hello.Type == wire.Hello && hello.V != wire.Version {
-			reason = "this server speaks another version; update midgard"
-		}
+	refuse := func(reason string) {
 		conn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseProtocolError, reason), time.Now().Add(ka.write))
+	}
+	if err != nil || hello.Type != wire.Hello || hello.Device == "" {
+		reason := "the first frame must be a hello that names the device"
+		if hello.Type == wire.Hello && (hello.V < wire.MinVersion || hello.V > wire.Version) {
+			reason = "this server speaks another version; update midgard"
+		}
+		refuse(reason)
 		return
 	}
-	if hello.V != wire.Version {
-		conn.WriteControl(websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseProtocolError, "this server speaks another version; update midgard"),
-			time.Now().Add(ka.write))
+	if hello.V < wire.MinVersion || hello.V > wire.Version {
+		refuse("this server speaks another version; update midgard")
 		return
 	}
 
@@ -75,8 +76,25 @@ func (m *Midgard) Sync(c *gin.Context) {
 		slog.Error("cannot open the room", "err", err)
 		return
 	}
+	switch kid, err := r.admit(ctx, rm, hello); {
+	case errors.Is(err, errUpdate):
+		refuse(err.Error())
+		return
+	case errors.Is(err, errPair):
+		// the device learns the key it lacks, and pairs
+		conn.SetWriteDeadline(time.Now().Add(ka.write))
+		conn.WriteMessage(websocket.BinaryMessage, encode(wire.Frame{Envelope: wire.Envelope{
+			Type: wire.Welcome, V: wire.Version, Kid: kid, Err: err.Error(),
+		}}))
+		conn.WriteControl(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "pair this device"), time.Now().Add(ka.write))
+		return
+	case err != nil:
+		slog.Error("cannot let a device in", "err", err)
+		return
+	}
 	l := &link{
-		id: hello.Device, name: hello.Name,
+		id: hello.Device, name: hello.Name, v: hello.V,
 		out: make(chan []byte, 256), gone: make(chan struct{}),
 		offset: time.Since(time.UnixMilli(hello.Clock)),
 	}

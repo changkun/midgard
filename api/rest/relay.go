@@ -43,6 +43,20 @@ var (
 	errNoAnswer = errors.New("your device did not answer in time")
 )
 
+// Errors a copy is refused with, once its person has a key or when it is
+// sealed under one they have not (§11).
+var (
+	errNotSealed = errors.New("your copies are encrypted: this one is not; update this client, or pair it")
+	errOtherKey  = errors.New("sealed with a key that is not your devices': pair this client again")
+	errNoKey     = errors.New("sealed with a key your devices do not have: pair a device first")
+)
+
+// What a device's hello can be refused with (§11).
+var (
+	errUpdate = errors.New("your devices encrypt their copies now: update midgard on this one")
+	errPair   = errors.New("this device's key is not your devices': pair it with one of them")
+)
+
 type relay struct {
 	store *store.Store
 	hold  holdLimits
@@ -50,10 +64,12 @@ type relay struct {
 
 	mu    sync.Mutex
 	rooms map[string]*room
+
+	pairs *mailboxes // pairing boxes waiting for new devices (pair.go)
 }
 
 func newRelay(s *store.Store) *relay {
-	return &relay{store: s, hold: defaultHold, now: time.Now, rooms: map[string]*room{}}
+	return &relay{store: s, hold: defaultHold, now: time.Now, rooms: map[string]*room{}, pairs: &mailboxes{now: time.Now}}
 }
 
 // room is one person's: their devices online, and what is held for them. A
@@ -65,6 +81,7 @@ type room struct {
 	known map[string]*store.Device // every device, from the store
 	held  []held                   // in order of seq
 	size  int                      // the bytes held
+	kid   string                   // the id of the person's key; "" while they have none (§11)
 	asks  map[string]*ask          // wants waiting for an answer, by id
 	fills map[string]bool          // devices a peer is filling in, by id
 }
@@ -80,6 +97,7 @@ type held struct {
 // link is one device's connection.
 type link struct {
 	id, name string
+	v        int           // the protocol it speaks: under 2, it seals nothing
 	out      chan []byte   // the connection's writer sends these
 	gone     chan struct{} // closed when the connection is over
 	once     sync.Once
@@ -118,15 +136,52 @@ func (r *relay) room(ctx context.Context, owner string) (*room, error) {
 	if err != nil {
 		return nil, err
 	}
+	kid, err := r.store.Kid(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
 	rm := &room{
 		owner: owner, conns: map[string]*link{}, known: map[string]*store.Device{},
-		asks: map[string]*ask{}, fills: map[string]bool{},
+		asks: map[string]*ask{}, fills: map[string]bool{}, kid: kid,
 	}
 	for _, d := range devices {
 		rm.known[d.ID] = &d
 	}
 	r.rooms[owner] = rm
 	return rm, nil
+}
+
+// admit decides whether a device that said hello may join (§11). One that
+// seals, while its person has no key, registers the key it has as theirs:
+// the first device to do so wins, and devices that cannot seal are sent
+// away, before they take a sealed copy for text. One whose key is not its
+// person's must pair; one that cannot seal is let in only while its person
+// has no key. It returns the person's key id.
+func (r *relay) admit(ctx context.Context, rm *room, hello wire.Frame) (string, error) {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	if hello.V < 2 {
+		if rm.kid != "" {
+			return rm.kid, errUpdate
+		}
+		return "", nil
+	}
+	if rm.kid == "" && hello.Kid != "" {
+		kid, err := r.store.SetKid(ctx, rm.owner, hello.Kid)
+		if err != nil {
+			return "", err
+		}
+		rm.kid = kid
+		for _, l := range rm.conns {
+			if l.v < 2 {
+				l.close()
+			}
+		}
+	}
+	if rm.kid != "" && hello.Kid != rm.kid {
+		return rm.kid, errPair
+	}
+	return rm.kid, nil
 }
 
 // join lets a device in, having said hello, and sends it what it lacks of
@@ -147,7 +202,7 @@ func (r *relay) join(ctx context.Context, rm *room, l *link, hello wire.Frame) e
 	if err != nil {
 		return err
 	}
-	l.send(encode(wire.Frame{Envelope: wire.Envelope{Type: wire.Welcome, Head: head}}))
+	l.send(encode(wire.Frame{Envelope: wire.Envelope{Type: wire.Welcome, V: wire.Version, Head: head, Kid: rm.kid}}))
 	for _, h := range rm.held {
 		if lacks(d, h.Seq) {
 			l.send(encode(h.Frame))
@@ -211,6 +266,20 @@ func (r *relay) number(ctx context.Context, rm *room, from *link, origin string,
 		}
 	}
 
+	// A copy is sealed with its person's key once they have one, and not
+	// before (§11). The relay cannot tell ciphertext from text; it goes by
+	// what the frame says, and a device refuses a copy that lies.
+	if f.Kind == wire.KindCopy && f.Kid != rm.kid {
+		switch {
+		case rm.kid == "":
+			return wire.Frame{}, errNoKey
+		case f.Kid == "":
+			return wire.Frame{}, errNotSealed
+		default:
+			return wire.Frame{}, errOtherKey
+		}
+	}
+
 	seq, err := r.store.NextSeq(ctx, rm.owner)
 	if err != nil {
 		return wire.Frame{}, err
@@ -218,7 +287,7 @@ func (r *relay) number(ctx context.Context, rm *room, from *link, origin string,
 	ev := wire.Frame{
 		Envelope: wire.Envelope{
 			Type: wire.Event, Seq: seq, Kind: f.Kind, Time: now.UnixMilli(),
-			Origin: origin, Ref: f.Ref, Formats: f.Formats,
+			Origin: origin, Ref: f.Ref, Formats: f.Formats, Kid: f.Kid,
 		},
 		Payload: f.Payload,
 	}

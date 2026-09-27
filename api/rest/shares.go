@@ -33,28 +33,19 @@ func (m *Midgard) CreateShare(c *gin.Context) {
 	}
 	owner := c.GetString(ctxOwner)
 
-	var (
-		mime string
-		data []byte
-	)
+	// A share is made by a client that can read the copy, and brings its
+	// bytes: the server never asks a device for a copy in the clear (§11),
+	// or it could have any it asked for.
 	if in.Data == "" {
-		// the newest copy, from what the relay holds or from a device (§9)
-		f, ok, err := m.newest(c)
-		if err != nil {
-			readFailed(c, err)
-			return
-		}
-		if ok && len(f.Formats) > 0 {
-			mime, data = f.Formats[0].MIME, f.Parts()[0]
-		}
-	} else {
-		raw, err := base64.StdEncoding.DecodeString(in.Data)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": "data must be base64"})
-			return
-		}
-		mime, data = cmp.Or(string(in.Type), "application/octet-stream"), raw
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "send the bytes to share: a share is made where the copy can be read"})
+		return
 	}
+	raw, err := base64.StdEncoding.DecodeString(in.Data)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "data must be base64"})
+		return
+	}
+	mime, data := cmp.Or(string(in.Type), "application/octet-stream"), raw
 	if len(data) == 0 || string(data) == "\n" {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": "nothing to share"})
 		return

@@ -6,6 +6,7 @@ package rest
 
 import (
 	"cmp"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"strconv"
@@ -30,6 +31,9 @@ func (m *Midgard) History(c *gin.Context) {
 		readFailed(c, err)
 		return
 	}
+	if sealedRefused(c, rm) {
+		return
+	}
 	answers, err := m.rel().query(ctx, rm, wire.Envelope{List: history.MaxCopies, Preview: previewLen})
 	if err != nil {
 		readFailed(c, err)
@@ -40,11 +44,17 @@ func (m *Midgard) History(c *gin.Context) {
 		if f.Kind != wire.KindCopy || len(f.Formats) == 0 {
 			continue
 		}
-		out.History = append(out.History, types.HistoryEntry{
+		e := types.HistoryEntry{
 			ID: int64(f.Seq), Device: f.Origin, Created: f.At().UTC(),
 			Type: types.MIME(f.Formats[0].MIME), Size: f.Size(),
-			Preview: validPrefix(f.Payload),
-		})
+		}
+		if f.Kid != "" {
+			// the device cut it at a character before it sealed it (§11)
+			e.Kid, e.Preview = f.Kid, base64.StdEncoding.EncodeToString(f.Payload)
+		} else {
+			e.Preview = validPrefix(f.Payload)
+		}
+		out.History = append(out.History, e)
 	}
 	c.JSON(http.StatusOK, out)
 }
@@ -72,6 +82,9 @@ func (m *Midgard) HistoryEntry(c *gin.Context) {
 	rm, err := m.rel().room(ctx, c.GetString(ctxOwner))
 	if err != nil {
 		readFailed(c, err)
+		return
+	}
+	if sealedRefused(c, rm) {
 		return
 	}
 	if f, ok := rm.copyHeld(seq); ok {

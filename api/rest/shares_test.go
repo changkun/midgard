@@ -121,21 +121,17 @@ func TestShareNames(t *testing.T) {
 
 // TestShareTheClipboard: with no data, a share is of the requester's own
 // clipboard.
-func TestShareTheClipboard(t *testing.T) {
+// TestShareNeedsTheBytes: a share brings its bytes. The server never asks a
+// device for the clipboard to share it, even with one there to ask: a copy
+// is shared where it can be read (specs/redesign.md §11), or the server could
+// have any copy in the clear by asking for it.
+func TestShareNeedsTheBytes(t *testing.T) {
 	m := testMidgard(t)
-	// the clipboard is on the devices, and none is online
-	if code, _ := share(t, m, types.ShareInput{}); code != http.StatusServiceUnavailable {
-		t.Fatalf("sharing the clipboard with no device online: %d, want 503", code)
-	}
 	if w := do(t, m, http.MethodPost, "/midgard/api/v1/clipboard", `{"type":"text","data":"copied"}`, true); w.Code != http.StatusOK {
 		t.Fatalf("copy: %d %s", w.Code, w.Body)
 	}
-	code, out := share(t, m, types.ShareInput{ExpiresIn: 3600})
-	if code != http.StatusOK || out.Type != types.MIMEPlainText || out.Expires == nil || time.Until(*out.Expires) < 59*time.Minute {
-		t.Fatalf("sharing the clipboard: %d %+v", code, out)
-	}
-	if w := do(t, m, http.MethodGet, out.URL, "", false); w.Body.String() != "copied" {
-		t.Fatalf("the share holds %q, want the clipboard", w.Body)
+	if code, _ := share(t, m, types.ShareInput{ExpiresIn: 3600}); code != http.StatusBadRequest {
+		t.Fatalf("a share without its bytes: %d, want 400", code)
 	}
 }
 
