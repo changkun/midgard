@@ -52,6 +52,7 @@ a { color: var(--brand); }
 .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
 .pill.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
 .pill.ok i { background: var(--ok); }
+.pill svg { width: 13px; height: 13px; }
 .who { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; min-width: 0; }
 .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
 .who a { white-space: nowrap; }
@@ -237,7 +238,8 @@ footer a { color: var(--faint); }
 <header class="bar"><div class="bar-in">
   <a class="brand" href="{{.Page}}"><svg><use href="#logo"/></svg>Midgard</a>
   <span class="spacer"></span>
-  {{if and .Email .Allowed}}<span class="pill" id="devices"><i></i>Connecting…</span>{{end}}
+  {{if and .Email .Allowed}}<span class="pill ok" id="e2e" hidden title="Your copies are encrypted: the server passes them, and cannot read them"><svg><use href="#i-shield"/></svg>Encrypted</span>
+  <span class="pill" id="devices"><i></i>Connecting…</span>{{end}}
   {{if .Email}}<span class="who"><span>{{.Email}}</span><a href="{{.Logout}}">Sign out</a></span>{{end}}
 </div></header>
 
@@ -300,6 +302,16 @@ footer a { color: var(--faint); }
 {{else}}
   <div class="grid">
     <div class="col">
+      <section class="card" id="pair" hidden>
+        <div class="head"><h2>Pair this browser</h2><small>your copies are encrypted</small></div>
+        <p class="muted">Your copies are encrypted with a key your devices share: this server passes them, and cannot read them. Give this browser the key with a pairing code from a device that has it: in the Midgard app on your Mac, Settings → Encryption → Pair Another Device, or with <code>mg pair</code>. On a phone, scan the code's QR.</p>
+        <div class="row">
+          <input type="text" id="pair-code" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Pairing code">
+          <button class="primary" id="pair-join">Pair</button>
+        </div>
+        <p class="note" id="pair-status" role="status"></p>
+      </section>
+
       <section class="card" id="clipboard">
         <div class="head"><h2>Your clipboard</h2><small id="clip-when"></small></div>
         <div class="clip" id="clip"><div class="empty">Loading…</div></div>
@@ -425,6 +437,14 @@ footer a { color: var(--faint); }
     const signIn = document.getElementById("sign-in");
     if (signIn) signIn.className = "button light";
   }
+  // A pairing link, #pair=<code>, from another device's QR (specs/redesign.md
+  // §11): the part after # never reaches the server. The tab keeps it through
+  // the sign-in, which would drop it, and the page pairs once signed in.
+  const fromLink = (location.hash.match(/^#pair=([0-9A-Za-z]+)$/) || [])[1];
+  if (fromLink) {
+    try { sessionStorage.setItem("midgard.pair", fromLink); } catch (_) {}
+    window.history.replaceState(null, "", location.pathname + location.search);
+  }
   if (!app.dataset.signedIn) return;
   const API = app.dataset.api, CSRF = app.dataset.csrf;
   const $ = (id) => document.getElementById(id);
@@ -476,7 +496,7 @@ footer a { color: var(--faint); }
   const iconButton = (name, label, onclick, cls) => el("button", { class: "icon " + (cls || ""), title: label, "aria-label": label, onclick }, icon(name));
 
   async function call(method, path, body) {
-    const opts = { method, headers: {}, credentials: "same-origin" };
+    const opts = { method, headers: { "Midgard-Sealed": "1" }, credentials: "same-origin" };
     if (method !== "GET") opts.headers["X-CSRF-Token"] = CSRF;
     if (body !== undefined) {
       opts.headers["Content-Type"] = "application/json";
@@ -498,6 +518,135 @@ footer a { color: var(--faint); }
     return data;
   }
   const offline = (e) => e.status === 503;
+
+  // End-to-end encryption (specs/redesign.md §11). The person's key is in
+  // this browser as a WebCrypto key it cannot export, in IndexedDB: the page
+  // seals and opens with it, and nothing can read it out, a script injected
+  // into the page included. So this browser joins by a pairing code, and
+  // gives the key to no other device; the Mac app and mg pair do that.
+  const vault = { key: null, kid: "", person: "" }; // person: the id of the person's key, "" while they have none
+  const sealing = () => !!vault.person && vault.key !== null && vault.kid === vault.person;
+  const unpaired = () => !!vault.person && !sealing();
+  const te = new TextEncoder();
+  const OVERHEAD = 29; // a version byte, a 96-bit nonce, a 128-bit tag
+  const concat = (...parts) => {
+    const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+    let at = 0;
+    for (const p of parts) { out.set(p, at); at += p.length; }
+    return out;
+  };
+  const b64 = (bytes) => {
+    let s = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const sha256 = async (...parts) => new Uint8Array(await crypto.subtle.digest("SHA-256", concat(...parts)));
+  // what a seal is bound to, as internal/e2e makes it: the key's id, the kind,
+  // and the formats as "mime:size"
+  const aad = (kind, formats) => te.encode("midgard/e2e/v1\n" + vault.kid + "\n" + kind + "\n" + formats.map((f) => f.mime + ":" + f.size).join(","));
+  async function seal(kind, formats, bytes) {
+    const nonce = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce, additionalData: aad(kind, formats) }, vault.key, bytes));
+    return concat([1], nonce, ct);
+  }
+  async function unseal(kind, formats, sealed) {
+    if (sealed[0] !== 1 || sealed.length < OVERHEAD) throw new Error("That is not a sealed copy.");
+    return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: sealed.subarray(1, 13), additionalData: aad(kind, formats) }, vault.key, sealed.subarray(13)));
+  }
+  function notPaired() {
+    const e = new Error("Your copies are encrypted: pair this browser to read them.");
+    e.pair = true;
+    return e;
+  }
+
+  // The key's keeping, in IndexedDB, under "person".
+  function keys(mode, f) {
+    return new Promise((ok, fail) => {
+      const r = indexedDB.open("midgard", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("keys");
+      r.onerror = () => fail(r.error);
+      r.onsuccess = () => {
+        const tx = r.result.transaction("keys", mode);
+        const q = f(tx.objectStore("keys"));
+        tx.oncomplete = () => ok(q && q.result);
+        tx.onerror = () => fail(tx.error);
+      };
+    });
+  }
+  async function loadKey() {
+    try {
+      const k = await keys("readonly", (s) => s.get("person"));
+      if (k) { vault.key = k.key; vault.kid = k.kid; }
+    } catch (_) {}
+  }
+  async function keepKey(raw) {
+    const kid = hex((await sha256(te.encode("midgard/key/v1 id\n"), raw)).subarray(0, 8));
+    const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+    await keys("readwrite", (s) => s.put({ key, kid }, "person"));
+    vault.key = key; vault.kid = kid;
+  }
+
+  // Joining by a pairing code (internal/e2e/pair.go): 128 bits as 26
+  // characters of Crockford's base32; its hash names the mailbox, and a key
+  // derived from it opens the box, which holds the key.
+  const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  function parseCode(given) {
+    const chars = given.toUpperCase().replace(/[-\s]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
+    if (chars.length !== 26 || [...chars].some((c) => !CROCKFORD.includes(c))) return null;
+    let n = 0n;
+    for (const c of chars) n = (n << 5n) | BigInt(CROCKFORD.indexOf(c));
+    if (n >> 128n) return null; // the first character holds 3 bits
+    const out = new Uint8Array(16);
+    for (let i = 15; i >= 0; i--) { out[i] = Number(n & 0xffn); n >>= 8n; }
+    return out;
+  }
+  async function joinPairing(given) {
+    const secret = parseCode(given);
+    if (!secret) throw new Error("That is not a pairing code: it is 26 letters and digits, as the other device shows it.");
+    const mailbox = hex((await sha256(te.encode("midgard/pair/v1 mailbox\n"), secret)).subarray(0, 16));
+    let box;
+    try { box = unb64((await call("GET", "/pair/" + mailbox)).box); }
+    catch (e) { throw e.status === 404 ? new Error("No pairing waits for that code: it was used, or ten minutes passed. Show a new one.") : e; }
+    const hk = await crypto.subtle.importKey("raw", secret, "HKDF", false, ["deriveKey"]);
+    const bk = await crypto.subtle.deriveKey({ name: "HKDF", hash: "SHA-256", salt: new Uint8Array(0), info: te.encode("midgard/pair/v1 key") },
+      hk, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    let plain;
+    try {
+      if (box[0] !== 1) throw new Error();
+      plain = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: box.subarray(1, 13), additionalData: te.encode("midgard/pair/v1\n" + mailbox) }, bk, box.subarray(13)));
+    } catch (_) { throw new Error("The code did not open what waited for it: check it was typed right."); }
+    await keepKey(plain.subarray(0, 32));
+    if (vault.kid !== vault.person) throw new Error("That code gave a key that is not your devices'. Show a new one on a device that syncs.");
+  }
+
+  // open is a copy as the API answers it, opened: text as text, an image in
+  // base64, as the rest of the page takes it.
+  async function open(d) {
+    if (!d || !d.kid) return d;
+    if (!sealing() || d.kid !== vault.kid) throw notPaired();
+    const sealed = unb64(d.data);
+    const plain = await unseal("copy", [{ mime: d.type, size: sealed.length - OVERHEAD }], sealed);
+    return { ...d, kid: "", data: d.type === "image/png" ? b64(plain) : new TextDecoder().decode(plain) };
+  }
+  const getCopy = async (path) => open(await call("GET", path));
+  // sealed is a copy to send, sealed once the person has a key.
+  async function sealed(body) {
+    if (!sealing()) return body;
+    const bytes = body.type === "image/png" ? unb64(body.data) : te.encode(body.data);
+    return { type: body.type, kid: vault.kid, data: b64(await seal("copy", [{ mime: body.type, size: bytes.length }], bytes)) };
+  }
+  // openPreviews opens the start of each text in a history list; the device
+  // cut it at a byte, which may be inside a character.
+  function openPreviews(list) {
+    return Promise.all(list.map(async (c) => {
+      if (!c.kid) return c;
+      if (!sealing() || c.kid !== vault.kid) throw notPaired();
+      const text = new TextDecoder().decode(await unseal("preview", [{ mime: c.type, size: c.size }], unb64(c.preview)));
+      return { ...c, kid: "", preview: text.replace(/�+$/, "") };
+    }));
+  }
 
   function status(id, text, bad) {
     const p = $(id);
@@ -548,7 +697,7 @@ footer a { color: var(--faint); }
   let current = null;
   async function loadClipboard() {
     try {
-      current = await call("GET", "/clipboard");
+      current = await getCopy("/clipboard");
       $("clip").replaceChildren(view(current));
       const h = history.find((c) => c.id) || null;
       $("clip-when").textContent = h ? ago(h.created) + " · " + short(h.device) : "";
@@ -556,6 +705,7 @@ footer a { color: var(--faint); }
       current = null;
       $("clip").replaceChildren(el("div", { class: "empty",
         text: offline(e) ? "None of your devices is online, and nothing is on its way." : e.message }));
+      if (e.pair) showPairing();
       $("clip-when").textContent = "";
     }
   }
@@ -566,7 +716,14 @@ footer a { color: var(--faint); }
   });
   $("clip-share").addEventListener("click", async () => {
     try {
-      const sh = await call("POST", "/shares", {});
+      // made here, from the clipboard's bytes: the server never asks a
+      // device for them (§11)
+      if (!current || !current.data) throw new Error("Your clipboard is empty.");
+      const image = current.type === "image/png";
+      const sh = await call("POST", "/shares", {
+        type: image ? "image/png" : "text/plain; charset=utf-8",
+        data: image ? current.data : b64(te.encode(current.data)),
+      });
       status("clip-status", "Shared at " + link(sh.url));
       try { await navigator.clipboard.writeText(link(sh.url)); status("clip-status", "Shared at " + link(sh.url) + ". The link is copied."); } catch (_) {}
       loadShares();
@@ -575,7 +732,7 @@ footer a { color: var(--faint); }
 
   async function send(body, text) {
     try {
-      const r = await call("POST", "/clipboard", body);
+      const r = await call("POST", "/clipboard", await sealed(body));
       if (text) remember({ seq: r.seq, text, at: Date.now() });
       status("clip-status", "Sent to your devices.");
       $("send-text").value = "";
@@ -646,12 +803,13 @@ footer a { color: var(--faint); }
   const thumbs = new Map();
   async function loadHistory() {
     try {
-      history = (await call("GET", "/history")).history || [];
+      history = await openPreviews((await call("GET", "/history")).history || []);
       renderHistory();
     } catch (e) {
       history = [];
       $("history-list").replaceChildren(el("li", { class: "empty",
         text: offline(e) ? "None of your devices is online right now; your history is on them." : e.message }));
+      if (e.pair) showPairing();
     }
   }
   function renderHistory() {
@@ -669,14 +827,14 @@ footer a { color: var(--faint); }
       const preview = el("div", { class: "preview" });
       const t = tile(c.type, c.preview, thumbs.get(c.id));
       if (isImage && !thumbs.has(c.id) && images++ < 12) {
-        call("GET", "/history/" + c.id).then((d) => {
+        getCopy("/history/" + c.id).then((d) => {
           thumbs.set(c.id, "data:image/png;base64," + d.data);
           t.replaceChildren(el("img", { src: thumbs.get(c.id), alt: "" }));
         }).catch(() => {});
       }
       const show = async () => {
         if (preview.childElementCount) return preview.replaceChildren();
-        try { preview.replaceChildren(view(await call("GET", "/history/" + c.id))); }
+        try { preview.replaceChildren(view(await getCopy("/history/" + c.id))); }
         catch (e) { preview.replaceChildren(el("p", { class: "error", text: e.message })); }
       };
       return el("li", {},
@@ -688,7 +846,7 @@ footer a { color: var(--faint); }
         el("div", { class: "acts" },
           isImage ? null : iconButton("i-eye", "Show it whole", show),
           iconButton("i-copy", "Copy to this device", async () => {
-            try { await toThisDevice(await call("GET", "/history/" + c.id)); status("clip-status", "Copied to this device."); }
+            try { await toThisDevice(await getCopy("/history/" + c.id)); status("clip-status", "Copied to this device."); }
             catch (e) { status("clip-status", e.message, true); }
           }),
           iconButton("i-back", "Make it your clipboard on every device", async () => {
@@ -884,11 +1042,39 @@ footer a { color: var(--faint); }
     grid.prepend($("iphone"));
   }
 
+  // Pairing: the card shows while the person has a key this browser lacks.
+  function showPairing() {
+    $("pair").hidden = !unpaired();
+    $("e2e").hidden = !sealing();
+  }
+  $("pair-join").addEventListener("click", async () => {
+    status("pair-status", "Pairing…");
+    try {
+      await joinPairing($("pair-code").value);
+      $("pair-code").value = "";
+      status("pair-status", "Paired: this browser has your key.");
+      showPairing();
+      refreshAll();
+    } catch (e) { status("pair-status", e.message, true); }
+  });
+  $("pair-code").addEventListener("keydown", (e) => { if (e.key === "Enter") $("pair-join").click(); });
+  async function startSealing() {
+    await loadKey();
+    try { vault.person = (await call("GET", "/key")).kid || ""; } catch (_) {}
+    let code = null;
+    try { code = sessionStorage.getItem("midgard.pair"); sessionStorage.removeItem("midgard.pair"); } catch (_) {}
+    if (code && unpaired()) {
+      try { await joinPairing(code); status("pair-status", "Paired: this browser has your key."); }
+      catch (e) { status("pair-status", e.message, true); }
+    }
+    showPairing();
+  }
+
   async function refreshAll() {
     await loadHistory();
     loadClipboard(); loadQueue();
   }
-  refreshAll(); loadShares(); loadTokens();
+  startSealing().then(() => { refreshAll(); loadShares(); loadTokens(); });
   // What is on its way changes as devices come and go.
   setInterval(() => { if (!document.hidden) loadQueue(); }, 5000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshAll(); });

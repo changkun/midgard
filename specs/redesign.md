@@ -362,8 +362,10 @@ sealed under another `kid`.
 
 The server holds a box it cannot open without the code, and 128 bits are too
 many to guess. The Mac app shows a code and QR in its Settings; `mg pair`
-shows one on a paired machine, and `mg pair <code>` joins; the web page shows
-one once paired, and joins by the link or the code.
+shows one on a paired machine, and `mg pair <code>` joins; the web page joins
+by the link or the code. It shows none: its key is a WebCrypto key it cannot
+export, so nothing can read it out of the browser, a script injected into the
+page included, and only the key's bytes make a box.
 
 ### Each client
 
@@ -371,8 +373,9 @@ one once paired, and joins by the link or the code.
   they receive. The history on a device stays in the clear, as before.
 - **`mg`** seals `mg copy` and opens `mg paste` and `mg history show`. Without
   the key it exits with a code of its own, 6, and says to pair.
-- **The web page** seals and opens in the browser. Unpaired, it shows the
-  devices, the queue, shares and tokens, and asks to pair.
+- **The web page** seals and opens in the browser, with a key it cannot
+  export. Unpaired, it shows the devices, the queue, shares and tokens, and
+  asks to pair.
 - **Shares** are made by a client that holds the key: it opens the copy and
   publishes its bytes in the clear, as a link is for people without the key.
   The server no longer asks a device for the newest copy to share: **a device
