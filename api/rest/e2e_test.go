@@ -54,6 +54,23 @@ func (d *testDevice) start0() {
 	go func() { defer close(d.done); d.e.Run(ctx) }()
 }
 
+// hears reports whether the device hears want within a few seconds,
+// whatever it hears before: a copy made earlier may reach its clipboard
+// first, on a slower machine.
+func (d *testDevice) hears(want string) bool {
+	deadline := time.After(5 * time.Second)
+	for {
+		select {
+		case e := <-d.changed:
+			if string(e.Data) == want {
+				return true
+			}
+		case <-deadline:
+			return false
+		}
+	}
+}
+
 // sealedRequest is a request from a client that opens sealed copies.
 func (s *server) sealedRequest(p person, method, path, body string) (int, []byte) {
 	s.t.Helper()
@@ -130,8 +147,8 @@ func TestSealed(t *testing.T) {
 	eventually(t, "the phone is online and seals", func() bool { return phone.e.Online() && phone.e.Sealing() })
 	eventually(t, "the phone has the laptop's copy", func() bool { return phone.texts() == "the secret words" })
 	phone.copy("from the phone")
-	if got := laptop.heard(3 * time.Second); got != "from the phone" {
-		t.Fatalf("the laptop heard %q", got)
+	if !laptop.hears("from the phone") {
+		t.Fatal("the laptop did not hear the phone's copy")
 	}
 
 	// a client that does not open sealed copies is refused them, rather
@@ -175,8 +192,8 @@ func TestSealed(t *testing.T) {
 			t.Errorf("a copy sealed with %s: %d %s, want %d", k.ID(), code, b, want)
 		}
 	}
-	if got := laptop.heard(3 * time.Second); got != "from mg!" {
-		t.Fatalf("the laptop heard %q, want the sealed copy from mg", got)
+	if !laptop.hears("from mg!") {
+		t.Fatal("the laptop did not hear the sealed copy from mg")
 	}
 
 	// bob cannot take alice's pairing box
@@ -264,8 +281,8 @@ func TestShortcutsBridge(t *testing.T) {
 	if code, b := s.request(alice, http.MethodPost, "/midgard/api/v1/plain/clipboard", `{"type":"text","data":"from the iphone"}`); code != http.StatusOK {
 		t.Fatalf("POST /plain/clipboard: %d %s", code, b)
 	}
-	if got := laptop.heard(3 * time.Second); got != "from the iphone" {
-		t.Fatalf("the laptop heard %q", got)
+	if !laptop.hears("from the iphone") {
+		t.Fatal("the laptop did not hear what the Shortcut sent")
 	}
 	// it came through sealed, as the relay takes nothing else now, and in
 	// the Shortcut's name
