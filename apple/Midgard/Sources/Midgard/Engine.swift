@@ -132,6 +132,17 @@ enum Engine {
         throw StartError.failed(out["error"] ?? "cannot pair")
     }
 
+    /// Whether a pairing code pairShow gave still waits for its new device:
+    /// false once one took the key, or its ten minutes passed; nil when the
+    /// server could not be asked.
+    static func pairWaits(_ code: String) -> Bool? {
+        switch code.withCString({ MidgardPairWaits(UnsafeMutablePointer(mutating: $0)) }) {
+        case 1: return true
+        case 0: return false
+        default: return nil
+        }
+    }
+
     /// Switches the Mac's Shortcuts bridge on or off: it hands iPhone
     /// Shortcuts copies in the clear, which the server can read (§11).
     static func setBridge(_ on: Bool) throws { try check(MidgardSetBridge(on ? 1 : 0)) }

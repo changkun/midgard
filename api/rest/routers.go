@@ -54,6 +54,7 @@ func (m *Midgard) routers() (r *gin.Engine) {
 		v1auth.GET("/key", m.Key)
 		v1auth.POST("/pair", m.LeavePairing)
 		v1auth.GET("/pair/:mailbox", m.TakePairing)
+		v1auth.HEAD("/pair/:mailbox", m.PairingWaits)
 		v1auth.GET("/devices", m.Devices)
 		v1auth.DELETE("/devices/:id", m.ForgetDevice)
 		v1auth.GET("/queue", m.Queue)

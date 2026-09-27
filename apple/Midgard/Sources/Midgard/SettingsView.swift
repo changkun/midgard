@@ -87,6 +87,7 @@ private struct Encryption: View {
     @ObservedObject var model: Model
     @State private var shown: (code: String, link: URL)?
     @State private var problem: String?
+    @State private var paired: String? // what became of the last code
     @State private var asking = false
 
     var body: some View {
@@ -96,11 +97,13 @@ private struct Encryption: View {
                     LabeledContent("Encryption", value: "On: this Mac has your key")
                     if let shown {
                         PairingCode(code: shown.code, link: shown.link)
+                            .task(id: shown.code) { await watch(shown.code) }
                     } else {
                         HStack {
+                            if let paired { Label(paired, systemImage: "checkmark.circle.fill").font(.callout).foregroundStyle(.green) }
                             Spacer()
                             if asking { ProgressView().controlSize(.small) }
-                            Button("Pair Another Device…") { show() }.disabled(asking)
+                            Button(paired == nil ? "Pair Another Device…" : "Pair Another…") { show() }.disabled(asking)
                         }
                     }
                     if let problem { Text(problem).font(.caption).foregroundStyle(.red) }
@@ -134,9 +137,30 @@ private struct Encryption: View {
         .formStyle(.grouped)
     }
 
+    /// Asks now and then whether the code shown still waits, and once it no
+    /// longer does, says why and offers a new one: a code works once, for
+    /// ten minutes, and one shown after either would not work.
+    private func watch(_ code: String) async {
+        let since = Date()
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(2))
+            guard shown?.code == code else { return }
+            let waits = await Task.detached { Engine.pairWaits(code) }.value
+            if waits == false {
+                shown = nil
+                paired = Date().timeIntervalSince(since) < 9.5 * 60
+                    ? "Paired: a device took the key."
+                    : nil
+                problem = paired == nil ? "The code expired unused: show a new one." : nil
+                return
+            }
+        }
+    }
+
     private func show() {
         asking = true
         problem = nil
+        paired = nil
         Task {
             switch await model.pairShow() {
             case .success(let s): shown = s

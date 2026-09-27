@@ -152,6 +152,22 @@ func MidgardGetWaiting(ref *C.char, mime **C.char, size *C.int64_t) unsafe.Point
 //export MidgardTakeBack
 func MidgardTakeBack(ref *C.char) *C.char { return cerr(takeBack(C.GoString(ref))) }
 
+// MidgardPairWaits reports whether a pairing code MidgardPairShow gave still
+// waits for its new device: 1 if it does, 0 if it was used or expired, -1
+// when the server could not be asked.
+//
+//export MidgardPairWaits
+func MidgardPairWaits(code *C.char) C.int {
+	waits, err := pairWaits(C.GoString(code))
+	switch {
+	case err != nil:
+		return -1
+	case waits:
+		return 1
+	}
+	return 0
+}
+
 // MidgardStatus is the engine's state as JSON: {"configured","server",
 // "signed_in","running","online","device","name"}.
 //

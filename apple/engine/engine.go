@@ -304,6 +304,16 @@ func pairShow() (code, link string, err error) {
 	return c.String(), config.ServerURL() + "/midgard/#" + c.Link(), nil
 }
 
+// pairWaits reports whether the code pairShow gave still waits for its new
+// device: no once one took the key, or its ten minutes passed.
+func pairWaits(code string) (bool, error) {
+	c, err := e2e.ParseCode(code)
+	if err != nil {
+		return false, err
+	}
+	return client.PairingWaits(c.Mailbox())
+}
+
 // setBridge switches the Mac's Shortcuts bridge on or off, and keeps it so.
 func setBridge(on bool) error {
 	e, err := running()

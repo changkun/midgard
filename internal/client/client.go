@@ -275,6 +275,18 @@ func LeavePairing(mailbox string, box []byte) error {
 	}, nil)
 }
 
+// PairingWaits reports whether the pairing box left in mailbox still waits
+// for its new device, without taking it.
+// A server from before this answers 404, an error: it cannot say.
+func PairingWaits(mailbox string) (bool, error) {
+	err := call(http.MethodHead, types.EndpointPair()+"/"+mailbox, nil, nil)
+	var gone *statusError
+	if errors.As(err, &gone) && gone.code == http.StatusGone {
+		return false, nil
+	}
+	return err == nil, err
+}
+
 // TakePairing takes the pairing box waiting in its mailbox; ErrNotFound when
 // none does, as it was used or its ten minutes passed.
 func TakePairing(mailbox string) ([]byte, error) {

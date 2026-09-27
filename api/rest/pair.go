@@ -74,6 +74,15 @@ func (mb *mailboxes) take(owner, mailbox string) ([]byte, bool) {
 	return b.box, true
 }
 
+// waits reports whether owner's mailbox holds a box, without taking it.
+func (mb *mailboxes) waits(owner, mailbox string) bool {
+	mb.mu.Lock()
+	defer mb.mu.Unlock()
+	mb.sweep()
+	_, ok := mb.boxes[owner][mailbox]
+	return ok
+}
+
 // sweep forgets the boxes past their time. mb.mu is held.
 func (mb *mailboxes) sweep() {
 	now := mb.now()
@@ -127,6 +136,20 @@ func (m *Midgard) LeavePairing(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+// PairingWaits tells the device that left a box whether it still waits: 204
+// until a new device takes it or its ten minutes pass, then 410. The device
+// can then say the code was used, and offer a new one, rather than showing
+// one that no longer works. Gone, not 404, as a server from before this
+// answers 404, and a device must not take that for a used code.
+func (m *Midgard) PairingWaits(c *gin.Context) {
+	id := c.Param("mailbox")
+	if validMailbox(id) && m.rel().pairs.waits(c.GetString(ctxOwner), id) {
+		c.Status(http.StatusNoContent)
+		return
+	}
+	c.Status(http.StatusGone)
 }
 
 // TakePairing hands a new device of the requester's the box its code names,

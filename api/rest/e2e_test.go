@@ -204,11 +204,24 @@ func TestSealed(t *testing.T) {
 	if code, _ := s.request(bob, http.MethodGet, "/midgard/api/v1/pair/"+code2.Mailbox(), ""); code != http.StatusNotFound {
 		t.Errorf("bob took alice's pairing box: %d", code)
 	}
+	// the device that left it can ask whether it waits, without taking it,
+	// and no one else can
+	for i := 0; i < 2; i++ {
+		if code, _ := s.request(alice, http.MethodHead, "/midgard/api/v1/pair/"+code2.Mailbox(), ""); code != http.StatusNoContent {
+			t.Errorf("alice's box waits, asked: %d, want 204", code)
+		}
+	}
+	if code, _ := s.request(bob, http.MethodHead, "/midgard/api/v1/pair/"+code2.Mailbox(), ""); code != http.StatusGone {
+		t.Errorf("bob learned alice's box waits: %d, want 410, as for any box not his", code)
+	}
 	if code, _ := s.request(alice, http.MethodGet, "/midgard/api/v1/pair/"+code2.Mailbox(), ""); code != http.StatusOK {
 		t.Errorf("alice could not take her own box: %d", code)
 	}
 	if code, _ := s.request(alice, http.MethodGet, "/midgard/api/v1/pair/"+code2.Mailbox(), ""); code != http.StatusNotFound {
 		t.Errorf("a box taken twice: %d, want 404", code)
+	}
+	if code, _ := s.request(alice, http.MethodHead, "/midgard/api/v1/pair/"+code2.Mailbox(), ""); code != http.StatusGone {
+		t.Errorf("a box taken, asked: %d, want 410, for its device to offer a new code", code)
 	}
 }
 
