@@ -9,11 +9,19 @@
 # It signs with $MIDGARD_SIGN, a Developer ID Application identity, when set,
 # with the hardened runtime a notarization needs; otherwise for this Mac only
 # (ad hoc), and another Mac asks once, in System Settings, before opening it.
+# With $MIDGARD_NOTARY too, a notarytool keychain profile (as xcrun notarytool
+# store-credentials keeps one), Apple notarizes the app and the disk image,
+# and their tickets are stapled to them: a Mac then opens them without asking,
+# offline too.
 set -e
 cd "$(dirname "$0")/.."
 MIN=14.0 # what Package.swift and Info.plist say
 VERSION=$(git describe --tags --always 2>/dev/null | sed 's/^v//')
 if [ "$1" = universal ]; then ARCHS="arm64 x86_64"; else ARCHS=$(uname -m); fi
+if [ -n "$MIDGARD_NOTARY" ] && [ -z "$MIDGARD_SIGN" ]; then
+	echo "MIDGARD_NOTARY needs MIDGARD_SIGN: Apple notarizes only what a Developer ID signed" >&2
+	exit 2
+fi
 
 # engine builds libmidgard for one architecture, as clang names it.
 engine() {
@@ -37,6 +45,20 @@ dmgbuild() {
 		{ "$py" -m venv "$venv" && "$venv/bin/pip" install -q "dmgbuild==1.6.7"; } >&2 || { rm -rf "$venv"; return 1; }
 	fi
 	echo "$venv/bin/dmgbuild"
+}
+
+# notarize has Apple check $1, a zip or a disk image, and waits for the
+# verdict; on a refusal it shows Apple's log, which names what to fix.
+notarize() {
+	out=apple/build/notary.json
+	xcrun notarytool submit "$1" --keychain-profile "$MIDGARD_NOTARY" --wait --output-format json >"$out" || true
+	status=$(plutil -extract status raw -o - "$out" 2>/dev/null) || status=""
+	[ "$status" = Accepted ] && return
+	echo "Apple did not notarize $1: ${status:-see above}" >&2
+	if id=$(plutil -extract id raw -o - "$out" 2>/dev/null); then
+		xcrun notarytool log "$id" --keychain-profile "$MIDGARD_NOTARY" >&2
+	fi
+	return 1
 }
 
 echo "building the engine for $ARCHS"
@@ -66,6 +88,16 @@ cp apple/Midgard/Icon/AppIcon.icns apple/Midgard/Icon/MenuBarIcon.png apple/Midg
 sed "s/VERSION/${VERSION:-0}/" apple/Midgard/Info.plist > "$app/Contents/Info.plist"
 if [ -n "$MIDGARD_SIGN" ]; then
 	codesign --force --options runtime --timestamp --sign "$MIDGARD_SIGN" "$app"
+	if [ -n "$MIDGARD_NOTARY" ]; then
+		# the app on its own first, so that it carries its ticket out of the
+		# disk image, into Applications
+		echo "notarizing the app"
+		ditto -c -k --keepParent "$app" apple/build/Midgard.zip
+		notarize apple/build/Midgard.zip
+		rm apple/build/Midgard.zip
+		xcrun stapler staple -q "$app"
+		spctl --assess --type execute "$app"
+	fi
 else
 	codesign --force --sign - "$app"
 fi
@@ -86,6 +118,11 @@ else
 	hdiutil create -quiet -volname Midgard -srcfolder "$stage" -format UDZO -ov "$dmg"
 	rm -rf "$stage"
 fi
-if [ -n "$MIDGARD_SIGN" ]; then codesign --force --sign "$MIDGARD_SIGN" "$dmg"; fi
+if [ -n "$MIDGARD_SIGN" ]; then codesign --force --timestamp --sign "$MIDGARD_SIGN" "$dmg"; fi
+if [ -n "$MIDGARD_NOTARY" ]; then
+	echo "notarizing the disk image"
+	notarize "$dmg"
+	xcrun stapler staple -q "$dmg"
+fi
 echo "$app ($(lipo -archs "$app/Contents/MacOS/Midgard"))"
 echo "$dmg"
