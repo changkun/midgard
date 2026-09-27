@@ -121,6 +121,9 @@ struct PopoverView: View {
                     NSApp.activate(ignoringOtherApps: true)
                 }
                 Toggle("Start at Login", isOn: Binding(get: { model.startsAtLogin }, set: { model.startsAtLogin = $0 }))
+                if let updates = model.updates {
+                    Button("Check for Updates…") { updates.check() }
+                }
                 if model.status.signedIn {
                     Button("Sign Out") { model.signOut() }
                 }

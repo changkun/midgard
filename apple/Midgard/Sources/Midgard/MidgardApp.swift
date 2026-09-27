@@ -32,12 +32,16 @@ struct MidgardApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = Model()
+    private var updates: Updates?
     private var welcome: NSWindow? // kept, or it goes as soon as it opens
     private var watches: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_: Notification) {
         model.start()
         followWindows()
+        let updates = Updates()
+        self.updates = updates
+        model.updates = updates
         // The first time, a window says what Midgard is and sets it up:
         // afterwards it lives in the menu bar, which is easy to miss.
         if !model.status.configured || !model.status.signedIn {

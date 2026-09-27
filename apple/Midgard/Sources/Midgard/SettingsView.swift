@@ -191,6 +191,13 @@ private struct About: View {
                 .font(.callout).multilineTextAlignment(.center).foregroundStyle(.secondary)
             Link("github.com/changkun/midgard", destination: URL(string: "https://github.com/changkun/midgard")!)
                 .font(.callout)
+            if let updates = model.updates {
+                Divider().frame(maxWidth: 240).padding(.vertical, 4)
+                Button("Check for Updates…") { updates.check() }
+                Toggle("Check for updates automatically", isOn: Binding(get: { updates.checksAutomatically },
+                                                                     set: { updates.checksAutomatically = $0 }))
+                    .toggleStyle(.checkbox).font(.callout)
+            }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

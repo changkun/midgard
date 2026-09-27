@@ -23,6 +23,14 @@
 	<!-- in the menu bar only, with no Dock icon -->
 	<key>LSUIElement</key>
 	<true/>
+	<!-- updates, through Sparkle: the newest release's appcast, whose
+	     updates are signed with the key this is the public half of -->
+	<key>SUFeedURL</key>
+	<string>https://github.com/changkun/midgard/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>7vmjuilhdNEBiAigqG2hhkYtOHfXN68vh8qpO8XwXHc=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2020-2026 Changkun Ou. GPL-3.0.</string>
 </dict>

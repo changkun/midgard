@@ -212,6 +212,9 @@ final class Model: ObservableObject {
         return image
     }
 
+    /// What keeps the app up to date; nil in tests.
+    var updates: Updates?
+
     /// The server's web page, where one signs in from a browser.
     var webPage: URL? {
         status.server.flatMap { URL(string: $0.hasSuffix("/") ? $0 + "midgard/" : $0 + "/midgard/") }

@@ -16,7 +16,11 @@
 set -e
 cd "$(dirname "$0")/.."
 MIN=14.0 # what Package.swift and Info.plist say
-VERSION=$(git describe --tags --always 2>/dev/null | sed 's/^v//')
+# $MIDGARD_VERSION and $MIDGARD_BUNDLE_ID stand in for the version and the
+# bundle's id in a test of updating one build to another, so that it
+# touches nothing of the app's own
+VERSION=${MIDGARD_VERSION:-$(git describe --tags --always 2>/dev/null | sed 's/^v//')}
+BUNDLE_ID=${MIDGARD_BUNDLE_ID:-de.changkun.midgard}
 if [ "$1" = universal ]; then ARCHS="arm64 x86_64"; else ARCHS=$(uname -m); fi
 if [ -n "$MIDGARD_NOTARY" ] && [ -z "$MIDGARD_SIGN" ]; then
 	echo "MIDGARD_NOTARY needs MIDGARD_SIGN: Apple notarizes only what a Developer ID signed" >&2
@@ -83,11 +87,34 @@ app=apple/build/Midgard.app
 rm -rf "$app" apple/build/midgard.app # the name it had, which a Mac's case-blind disk keeps
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin/Midgard" "$app/Contents/MacOS/Midgard"
+# Sparkle, which updates the app, where the binary's rpath looks for it
+mkdir -p "$app/Contents/Frameworks"
+ditto "$bin/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"
 # the icon, and the menu bar's, drawn in apple/Midgard/Icon/*.svg
 cp apple/Midgard/Icon/AppIcon.icns apple/Midgard/Icon/MenuBarIcon.png apple/Midgard/Icon/MenuBarIcon@2x.png "$app/Contents/Resources/"
-sed "s/VERSION/${VERSION:-0}/" apple/Midgard/Info.plist > "$app/Contents/Info.plist"
+sed -e "s/VERSION/${VERSION:-0}/" -e "s/de\.changkun\.midgard/$BUNDLE_ID/" apple/Midgard/Info.plist > "$app/Contents/Info.plist"
+# signed signs $1 as the app is: with a Developer ID, the hardened runtime
+# and a timestamp; or ad hoc, without the runtime, whose library validation
+# would refuse an ad hoc Sparkle.framework.
+signed() {
+	p=$1
+	shift
+	if [ -n "$MIDGARD_SIGN" ]; then
+		codesign --force --options runtime --timestamp --sign "$MIDGARD_SIGN" "$@" "$p"
+	else
+		codesign --force --sign - "$@" "$p"
+	fi
+}
+# inside out, as Sparkle's documentation has it: what the framework holds,
+# the framework, then the app, never with --deep
+fw="$app/Contents/Frameworks/Sparkle.framework/Versions/B"
+signed "$fw/XPCServices/Installer.xpc"
+signed "$fw/XPCServices/Downloader.xpc" --preserve-metadata=entitlements
+signed "$fw/Autoupdate"
+signed "$fw/Updater.app"
+signed "$app/Contents/Frameworks/Sparkle.framework"
+signed "$app"
 if [ -n "$MIDGARD_SIGN" ]; then
-	codesign --force --options runtime --timestamp --sign "$MIDGARD_SIGN" "$app"
 	if [ -n "$MIDGARD_NOTARY" ]; then
 		# the app on its own first, so that it carries its ticket out of the
 		# disk image, into Applications
@@ -98,8 +125,6 @@ if [ -n "$MIDGARD_SIGN" ]; then
 		xcrun stapler staple -q "$app"
 		spctl --assess --type execute "$app"
 	fi
-else
-	codesign --force --sign - "$app"
 fi
 
 echo "packing the disk image"
