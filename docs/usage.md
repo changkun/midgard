@@ -214,9 +214,11 @@ Every command ends with one of these exit codes:
 $ mg status
 server status: OK
 daemon status: OK
+encryption: on, this machine has your key
 ```
 
-`mg login` signs a device in, `mg logout` out. On a Mac, the app's menu says
+`mg login` signs a device in, `mg logout` out. When encryption says this
+machine does not have your key, pair it: `mg pair <code>`. On a Mac, the app's menu says
 whether it syncs.
 
 ## License

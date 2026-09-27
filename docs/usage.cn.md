@@ -147,7 +147,10 @@ $ echo "the build is green" | mg copy --json
 $ mg status
 server status: OK
 daemon status: OK
+encryption: on, this machine has your key
 ```
+
+如果 encryption 一行说这台机器没有你的密钥，请为它配对：`mg pair <配对码>`。
 
 `mg login` 登录设备，`mg logout` 退出登录。在 Mac 上，应用的菜单会显示是否正在同步。
 

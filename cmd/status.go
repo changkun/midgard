@@ -12,6 +12,7 @@ import (
 
 	"changkun.de/x/midgard/internal/client"
 	"changkun.de/x/midgard/internal/config"
+	"changkun.de/x/midgard/internal/device"
 	"changkun.de/x/midgard/internal/term"
 	"changkun.de/x/midgard/internal/types"
 	"changkun.de/x/midgard/internal/utils"
@@ -58,8 +59,33 @@ var statusCmd = &cobra.Command{
 				term.Red("not connected"))
 		}
 
+		// check encryption (specs/redesign.md §11): whether this machine has
+		// its person's key, which seals and opens their copies
+		s += encryptionStatus()
+
 		fmt.Println(s)
 	},
+}
+
+// encryptionStatus is a line on whether this machine seals: it has its
+// person's key, it must pair, or no device of theirs has made a key yet.
+func encryptionStatus() string {
+	k, _, err := device.LoadKey()
+	if err != nil {
+		return fmt.Sprintf("encryption: %s, %v\n", term.Red("cannot read this machine's key"), err)
+	}
+	kid, err := client.Kid()
+	switch {
+	case err != nil:
+		return fmt.Sprintf("encryption: %s, %v\n", term.Red("cannot ask the server"), err)
+	case kid == "":
+		return "encryption: off; the first of your devices to connect makes your key\n"
+	case k != nil && k.ID() == kid:
+		return fmt.Sprintf("encryption: %s, this machine has your key\n", term.Green("on"))
+	default:
+		return fmt.Sprintf("encryption: %s; pair it: mg pair <code>, with a code from one of your devices\n",
+			term.Red("this machine does not have your key"))
+	}
 }
 
 // connected reports whether a device of the machine called host is online.
