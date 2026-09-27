@@ -2,8 +2,8 @@
 # Use of this source code is governed by a GPL-3.0
 # license that can be found in the LICENSE file.
 
-# Builds mg for every desktop platform and, on a version tag, publishes the
-# archives on the GitHub release for that tag. On a pull request that touches
+# Builds mg for every desktop platform, and the Mac app's disk image, and,
+# on a version tag, publishes them on the GitHub release for that tag. On a pull request that touches
 # this workflow it only builds, so a change here is proven before it is used.
 #
 # macOS is built with Cgo, because the global hotkey needs it there
@@ -76,9 +76,30 @@ jobs:
         path: ${{ env.ARCHIVE }}
         if-no-files-found: error
 
+  # The Mac app, for Apple silicon and Intel both (apple/build.sh), as the
+  # disk image the web page offers. It is signed for the Mac it runs on only
+  # (ad hoc): the first time, macOS asks to allow it (docs/install.md).
+  mac_app:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0 # git describe needs the tags
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+        check-latest: true
+    - name: Build the app and its disk image
+      run: ./apple/build.sh universal
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Midgard.dmg
+        path: apple/build/Midgard.dmg
+        if-no-files-found: error
+
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [build, mac_app]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v4
@@ -91,7 +112,7 @@ jobs:
         TAG: ${{ github.ref_name }}
       run: |
         cd dist
-        sha256sum mg_* > checksums.txt
+        sha256sum mg_* Midgard.dmg > checksums.txt
         gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes "See the commits since the previous tag."
-        gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber mg_* checksums.txt
+        gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber mg_* Midgard.dmg checksums.txt
