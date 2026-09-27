@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12); §11, end-to-end encryption, designed 2026-09-26 and built 2026-09-27 |
+| **Status** | Accepted; revised 2026-09-26 (§3, §6–§8, §11–§12); §11, end-to-end encryption, designed 2026-09-26 and built 2026-09-27, released in v0.3.0. What comes next: [roadmap.md](./roadmap.md) |
 | **Decided** | 2026-09-26, with changkun: clipboards belong to individuals, behind a hard barrier; history is shared across one's own devices; login through auth.latere.ai; code2img and the GitHub backup go; the API stays `/v1` and changes in place |
 | **Revised** | 2026-09-26, with changkun: the server keeps no copy of anyone's clipboard, only relays and orders them; history lives on the devices, in one order on all of them; a tray app is what people use, `mg` stays for agents and scripts; end-to-end encryption is a must, after this |
 | **Builds on** | #35–#53 (Phase 0 and 1: safe, and easy to run) |
@@ -413,7 +413,8 @@ copies refused, and needs updating.
 **Not now**: a new key when a device is forgotten. Forgetting a device does
 not take the key from it; a new one, sent to the remaining devices by
 pairing, would. Also not now: a native mobile app (the web page covers
-phones), and peer-to-peer sync on a LAN without the server.
+phones), and peer-to-peer sync on a LAN without the server. All three are
+proposed in [roadmap.md](./roadmap.md) (§3.2, §2.2–§2.3, §2.1).
 
 ## 12. Plan
 
@@ -450,7 +451,9 @@ Each step is its own PR, with its tests, merged when green.
 10. `mg` for agents: `--json` output, copy from stdin and paste to stdout,
     stable exit codes. *Done: `mg copy`, `mg paste`, `mg history show`,
     `--json`, exit codes 0–5 (docs/usage.md).*
-11. Deploy on changkun.de, migrate, and retire the old checkout.
+11. Deploy on changkun.de, migrate, and retire the old checkout. *Done
+    2026-09-26: the server runs at changkun.de/midgard, and the old checkout
+    is kept on the host, as `midgard.old`, until it is deleted.*
 12. End-to-end encryption (§11): the key, sealing and pairing
     (`internal/e2e`); the device engine seals and opens; the relay registers
     the `kid`, refuses what is not sealed, and keeps the pairing mailbox;
